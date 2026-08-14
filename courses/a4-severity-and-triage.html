@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leader session 4 · Severity and triage - learn ai red team with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-red-team-with-phoebe</a> / Leader session 4 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI Red Team with Phoebe · Leader track · Session 4 of 6</div>
+    <h1>Severity and triage: <span class="accent">severity is what it chains to</span></h1>
+    <p class="sub">Session 3 taught you to read a rate. This session turns findings into decisions. It works through the only genuinely usable published severity rubric in this field, extracts the two design decisions inside it worth copying, shows why the identical finding can be informational in one system and critical in another, and is honest about where the scoring machinery you already own breaks down on AI findings. You leave with a five-axis triage rubric and a defensible boundary between your security track and your safety track.</p>
+    <div class="chip-row">
+      <span class="chip level">🟡 Leader track</span>
+      <span class="chip audience">Heads of security · eng leaders · risk and compliance</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:5">3-26 · The rubric, the chain, and where CVSS breaks</span>
+      <span class="a3" style="flex:4">26-42 · Triage three findings live</span>
+      <span class="a4" style="flex:1">42-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Triage is where AI security programmes actually stall</h2>
+    </div>
+    <div class="callout warn">
+      <strong>⚠ Authorization</strong>
+      This course is about testing AI systems <strong>you own, or are contracted in writing to test</strong>. Every exercise runs against Beacon, a fictional company, inside a scope document written in the builder track. The course names attack <em>classes</em> so you can triage and commission work, and pairs each with the defence that addresses it. It contains no exploit payloads and teaches no attack craft. Testing a system you are not authorized to test is a crime in most jurisdictions, and no framing in a triage rubric changes that.
+    </div>
+    <p class="lede">Most organisations discover their AI security process is broken at triage rather than at testing. Findings arrive that nobody knows how to score. A convincing jailbreak demo gets escalated to the executive committee while a quiet retrieval-path finding with real reach sits in a backlog. The queue fills with model-behaviour curiosities and the genuinely dangerous items are the ones nobody could rank, because the ranking instrument was built for software with deterministic exploits and a patch at the end.</p>
+    <p>The fix is not a new number. It is a change in what severity is <em>about</em>. Severity is not a measure of how badly the model behaved, how surprising the technique was, or how impressive the demo looked in the room. It is a measure of what the finding <strong>chains to</strong>: what data it reaches, what action it can cause, whether a human had to help, and whether it persists.</p>
+    <div class="legend">
+      <span class="pill solid">Live - presented in session</span>
+      <span class="pill light">Self-study - read after class</span>
+      <span class="pill inkpill">Official sources covered</span>
+    </div>
+    <div class="callout win">
+      <strong>★ What you walk out with today</strong>
+      The two design decisions inside Microsoft's published AI severity rubric that you should copy into your own, a worked severity ladder that generalises beyond one vulnerability class, a clear-eyed account of the four places CVSS breaks on AI findings, one well-scored real example to calibrate against, and the five-axis triage rubric this course uses, with the rule for which axis dominates once agents are involved.
+    </div>
+    <div class="callout tip">
+      <strong>Where this sits in the leader track</strong>
+      Session a3 taught you to read the rate. This session turns a rate into a ranking. Session a5 asks which defences actually survive contact with an adaptive attacker, which is what determines whether your remediation plan is real. Session a6 covers when to stop, and the legitimate finding that a workflow may not be a good use case for an LLM at all.
+    </div>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="msrc">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · the one usable rubric</span>
+      <h2>Microsoft's published rubric, and the two decisions to copy <span class="tag concept">8 min live</span></h2>
+    </div>
+    <p class="lede">There is no industry-standard severity scheme for AI findings. What exists is a handful of vendor bug-bar documents, and Microsoft's Vulnerability Severity Classification for AI Systems is the most usable of them, because it commits to specific pivots rather than adjectives. Two of those commitments are worth lifting wholesale into your own process, whatever else you keep.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 425" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Microsoft's rubric: prompt injection is Critical with zero user interaction and Important where user interaction is required; inferential information disclosure is keyed to data classification; content-related issues are classified in scope or out of scope with no severity rating.">
+        <style>
+          .msH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .msX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .msT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .msC { font: 800 15px Inter, sans-serif; fill: #991B1B; }
+          .msI { font: 800 15px Inter, sans-serif; fill: #3A1B08; }
+          .msK { font: 600 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="msH" x="24" y="30">The rubric turns on two things, and neither of them is how clever the prompt was.</text>
+
+        <rect x="24" y="44" width="832" height="30" rx="8" fill="#2E3138"/>
+        <text class="msT" x="44" y="64">Inference Manipulation · prompt injection · the pivot is the user-interaction requirement</text>
+
+        <rect x="24" y="82" width="410" height="96" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="msC" x="44" y="108">Critical</text>
+        <text class="msX" x="44" y="132">Attacker can exfiltrate another user's data or</text>
+        <text class="msX" x="44" y="150">perform privileged actions, with zero user</text>
+        <text class="msX" x="44" y="168">interaction.</text>
+
+        <rect x="446" y="82" width="410" height="96" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="msI" x="466" y="108">Important</text>
+        <text class="msX" x="466" y="132">The same impact, but it requires user</text>
+        <text class="msX" x="466" y="150">interaction to trigger. Same technique,</text>
+        <text class="msX" x="466" y="168">different severity, one variable apart.</text>
+
+        <rect x="24" y="196" width="832" height="30" rx="8" fill="#2E3138"/>
+        <text class="msT" x="44" y="216">Inferential Information Disclosure · the pivot is the data classification of what is reachable</text>
+
+        <rect x="24" y="234" width="832" height="76" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="msX" x="44" y="258">Model theft: Critical when the model is Highly Confidential, sliding down to Low when it is Public.</text>
+        <text class="msX" x="44" y="276">System-prompt and input extraction: Important when the content is Confidential, Low otherwise.</text>
+        <text class="msX" x="44" y="294">Severity is read off the classification of what the finding reaches, not off the technique used.</text>
+
+        <rect x="24" y="324" width="832" height="86" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="msK" x="44" y="348">Content-related issues: classified In Scope or Out of Scope, with no severity rating at all</text>
+        <text class="msX" x="44" y="372">That blank is deliberate. It keeps the safety track and the security track on separate rails, with separate</text>
+        <text class="msX" x="44" y="390">owners and separate timelines. Copy the separation before you copy anything else in the rubric.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - two pivots and one deliberate blank, in the most usable published AI bug bar</figcaption>
+    </figure>
+
+    <p>Look at what the first pivot does. The same technique, causing the same impact, is <strong>Critical</strong> if it needs no user interaction and <strong>Important</strong> if it needs some. Nothing about the model changed between those two rows. What changed is how much of the attack the victim has to perform on the attacker's behalf, which is a property of your architecture rather than of the language model. That is the whole point: the rubric ranks on things you can design.</p>
+
+    <p>The second pivot does the same job on the data side. Inferential information disclosure is keyed to <strong>data classification</strong>, not to technique. Model theft runs Critical when the model is Highly Confidential and slides down to Low when it is Public. System-prompt and input extraction is Important when the content is Confidential and Low otherwise. So the question at triage is not "did they get the system prompt out", it is "what classification was in the system prompt". Two organisations can get the identical finding and correctly assign it two different severities.</p>
+
+    <div class="callout tip">
+      <strong>The two design decisions to copy, stated plainly</strong>
+      Severity turns on <strong>(a) the user-interaction requirement</strong> and <strong>(b) the data classification of what is reachable</strong>. It does not turn on how clever the prompt was, how novel the technique is, or how alarming the transcript reads. If your triage conversations are spent debating the ingenuity of the attack, you are scoring the wrong object, and the two organisations doing it properly will out-prioritise you every quarter.
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>The blank in the content column is the most instructive part<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Content-related issues, in that rubric, are classified only as <strong>In Scope or Out of Scope, with no severity rating</strong>. It would have been easy to give them a scale. The decision not to is a deliberate separation of the safety track from the security track, and it solves a problem most organisations feel acutely without being able to name.</p>
+        <p>When harmful-content findings and exfiltration findings share one severity scale, they share one queue, one owner and one set of service-level targets. They then compete for the same engineering time, and the comparison is not meaningful, because a content harm and a data-exfiltration path are answered by different teams with different tools on different clocks. Splitting the rails does not say content matters less. It says it is a different kind of thing, with a different route to a fix, and it should not be ranked against a scope-changing exfiltration path on a single number.</p>
+        <p>Practical consequence for you: define the boundary <strong>before</strong> the first engagement, not while triaging its output. Session b1 puts this in the rules of engagement for exactly that reason. A boundary drawn at three in the morning under an incident is a boundary drawn by whoever is most tired.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="chains">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · the chain</span>
+      <h2>The same jailbreak, three severities <span class="tag concept">8 min live</span></h2>
+    </div>
+    <p class="lede">Here is the principle that generalises past any one vendor's bug bar, and the sentence to take out of this session if you take nothing else. A jailbreak in a system with no tools, no private data and no egress is <strong>informational</strong>. The same jailbreak in a Rule-of-Two agent holding untrusted input, sensitive data and the ability to act is <strong>critical</strong>. The model behaved identically in both. Only what it was wired to changed.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="One jailbreak finding placed in three systems: informational in a system with no tools or data or egress, high where private data is reachable but egress is blocked, and critical in a Rule of Two agent with untrusted input, sensitive data and a state change or external send.">
+        <style>
+          .chH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .chX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .chW { font: 400 11px Inter, sans-serif; fill: #991B1B; }
+          .chT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .chB { font: 800 18px Inter, sans-serif; fill: #2E3138; }
+          .chO { font: 800 18px Inter, sans-serif; fill: #3A1B08; }
+          .chR { font: 800 18px Inter, sans-serif; fill: #991B1B; }
+          .chK { font: 600 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="chH" x="24" y="30">One finding. The same jailbreak. Three systems it could be sitting in.</text>
+
+        <rect x="24" y="48" width="268" height="28" rx="8" fill="#5A6070"/>
+        <text class="chT" x="42" y="67">No tools, no data, no egress</text>
+        <rect x="24" y="76" width="268" height="114" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="chB" x="42" y="112">Informational</text>
+        <text class="chX" x="42" y="140">Nothing depends on the</text>
+        <text class="chX" x="42" y="158">model's refusal. The blast</text>
+        <text class="chX" x="42" y="176">radius is one conversation.</text>
+
+        <rect x="306" y="48" width="268" height="28" rx="8" fill="#C2410C"/>
+        <text class="chT" x="324" y="67">Private data, no egress leg</text>
+        <rect x="306" y="76" width="268" height="114" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="chO" x="324" y="112">High</text>
+        <text class="chX" x="324" y="140">The model can reach data it</text>
+        <text class="chX" x="324" y="158">should not surface, but the</text>
+        <text class="chX" x="324" y="176">attacker cannot move it out.</text>
+
+        <rect x="588" y="48" width="268" height="28" rx="8" fill="#991B1B"/>
+        <text class="chT" x="606" y="67">Rule of Two [A,B,C] agent</text>
+        <rect x="588" y="76" width="268" height="114" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="chR" x="606" y="112">Critical</text>
+        <text class="chW" x="606" y="140">Untrusted input, sensitive</text>
+        <text class="chW" x="606" y="158">data and a state change or</text>
+        <text class="chW" x="606" y="176">external send, all at once.</text>
+
+        <rect x="24" y="204" width="832" height="100" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="chH" x="44" y="228">OWASP LLM08:2026's worked ladder, which generalises well beyond its own vulnerability class</text>
+        <text class="chX" x="44" y="252">Informational (nothing depends on confidentiality) -&gt; Medium (internal rules meaningfully aid an attacker)</text>
+        <text class="chX" x="44" y="270">-&gt; High (embedded credentials, or secrecy relied on for authorization) -&gt; Critical (chains to remote code</text>
+        <text class="chX" x="44" y="288">execution, broad exfiltration, or privilege escalation).</text>
+
+        <rect x="24" y="318" width="832" height="86" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="chK" x="44" y="342">Which is also why vendors scope bare jailbreaking out of their security bounties</text>
+        <text class="chX" x="44" y="366">Google's AI VRP treats direct injection, jailbreaks and alignment failures as out of scope for security</text>
+        <text class="chX" x="44" y="384">bounties, and pays for indirect injection with production impact. Secondary-sourced: check the live page.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - identical model behaviour, three severities, set entirely by what it was wired to</figcaption>
+    </figure>
+
+    <p>OWASP's LLM08:2026 entry gives the ladder in worked form, and although it is written for hidden context exposure the shape transfers to almost any finding: <strong>Informational</strong> where nothing depends on confidentiality, <strong>Medium</strong> where internal rules meaningfully aid an attacker, <strong>High</strong> where credentials are embedded or secrecy is being relied on for authorization, and <strong>Critical</strong> where it chains to remote code execution, broad exfiltration or privilege escalation. Notice that every rung is defined by consequence. Not one of them mentions the technique.</p>
+
+    <p>This also resolves an argument your team is probably having about bug bounties. Vendors scope bare jailbreaking out of their security programmes not because they think jailbreaks are unimportant, but because a jailbreak with no chain is not a security finding under a consequence-based rubric. <strong>Google's AI Vulnerability Reward Program treats direct injection, jailbreaks and alignment failures as out of scope for security bounties, while paying for indirect injection with production impact</strong>. That is the cleanest published statement of the security-versus-content boundary available, and it is worth reading as a scoping decision rather than a dismissal. This detail is secondary-sourced in our source map, so verify it against the live programme page before you cite it in a policy.</p>
+
+    <div class="callout example">
+      <span class="ex-pill">The practical consequence</span>
+      <p>Two teams bring you findings on the same Tuesday. Team one has a beautiful multi-turn jailbreak against a marketing copy assistant with no retrieval, no tools and no outbound network. Team two has a mundane, unglamorous finding that untrusted content in a shared document reaches an agent which can send email. Under a consequence-based rubric, the second one is your emergency and the first one is a note. Under an impressiveness-based rubric, which is what most organisations run without admitting it, you would spend the week on the first.</p>
+    </div>
+
+    <div class="callout tip">
+      <strong>The corollary for your architecture review</strong>
+      If severity is set by what a finding chains to, then severity is something you can <em>engineer down</em> before any testing happens. Removing the egress leg, removing the private data, or requiring per-action human approval on an agent holding all three of untrusted input, sensitive data and a state-change capability moves the entire class of future findings down the ladder. Note the honest gap OWASP itself flags: the Rule of Two is silent on autonomy depth, so an agent that satisfies it can still be over-trusted across a long chain of steps.
+    </div>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="cvss">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · the instrument you already own</span>
+      <h2>Where CVSS breaks, and the five axes to use instead <span class="tag concept">7 min live</span></h2>
+    </div>
+    <p class="lede">You already have a scoring instrument, a triage queue built around it, and years of institutional habit. None of that has to be thrown away. But four specific things about AI findings do not fit it, and knowing exactly which four is what stops your process quietly producing wrong rankings while looking healthy.</p>
+
+    <table class="clean">
+      <tr><th>Where it breaks</th><th>What goes wrong in practice</th></tr>
+      <tr><td><strong>No exploit-reliability dimension</strong></td><td>A finding that fires 40% of the time and one that fires every time score identically. Session a3's evidence makes this the sharpest gap: NIST measured average attack success moving from 57% to 80% purely by repeating identical attacks, so reliability is a real, measurable, decision-relevant quantity your score cannot express.</td></tr>
+      <tr><td><strong>Non-determinism breaks the reproducibility gate</strong></td><td>Most triage processes require a finding to be reproduced before it is accepted. Against a stochastic system, "I could not reproduce it" is an expected outcome for a genuine defect. Teams then close real findings as unreproducible, in perfectly good faith.</td></tr>
+      <tr><td><strong>Patch semantics differ</strong></td><td>Classic triage assumes a fix exists that closes the class. Here there is frequently no such fix, only mitigations that lower a rate. "Remediated" is often the wrong word, and a queue whose only exits are fixed or accepted has no state for the thing that actually happened.</td></tr>
+      <tr><td><strong>Agent autonomy and tool scope are unmodelled</strong></td><td>Nothing in the vector expresses how many irreversible actions the agent can take, or how deep a chain it runs unattended. For agent findings this is the dominant variable, and it is entirely invisible to the score.</td></tr>
+    </table>
+
+    <p>None of that means CVSS is useless here. It scores <em>consequence</em> well, and there is a real example worth keeping on the wall for calibration. <strong>CVE-2025-32711</strong>, the EchoLeak finding in Microsoft 365 Copilot, is scored CVSS 3.1 <strong>9.3 Critical</strong>, with <strong>S:C</strong> for scope changed and <strong>UI:N</strong> for no user interaction required. That vector is a well-formed AI finding: the scope change captures that the impact crosses the component boundary, and the no-user-interaction flag is precisely Microsoft's own Critical pivot from Part 1. When the consequence is clear, the existing instrument does its job.</p>
+
+    <div class="callout warn">
+      <strong>On OWASP AIVSS, and how to talk about it</strong>
+      There is a project aimed squarely at this gap, <strong>OWASP AIVSS</strong>, which sets out to score AI-specific attributes the general instrument misses. Treat it as promising and not yet load-bearing. It is at <strong>v0.8, pre-1.0</strong>, and in our source map its formula and weightings are <strong>described only in secondary sources</strong>. Do not adopt it as your scoring standard on the strength of a summary, and do not quote its numbers in a board paper yet. Verify the arithmetic yourself against the primary specification first, and until then use it as a checklist of attributes to consider rather than as a score.
+    </div>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 372" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The five-axis triage rubric - reachability, reliability as k of N, blast radius data, blast radius action, and durability - filled in against the EchoLeak finding CVE-2025-32711.">
+        <style>
+          .fvH { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .fvA { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .fvX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .fvK { font: 600 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="fvA" x="24" y="30">The five axes, with a well-scored real finding filled in beside them.</text>
+
+        <rect x="24" y="44" width="832" height="28" rx="8" fill="#2E3138"/>
+        <text class="fvH" x="44" y="63">Axis</text>
+        <text class="fvH" x="292" y="63">CVE-2025-32711 (EchoLeak, M365 Copilot), CVSS 3.1 9.3 Critical</text>
+
+        <rect x="24" y="76" width="832" height="34" fill="#F0F1F4"/>
+        <text class="fvA" x="44" y="98">Reachability</text>
+        <text class="fvX" x="292" y="98">Zero-click. UI:N in the vector: no user interaction at all.</text>
+
+        <rect x="24" y="112" width="832" height="34" fill="#FFFFFF" stroke="#CACDD4" stroke-width="1"/>
+        <text class="fvA" x="44" y="134">Reliability, as k of N</text>
+        <text class="fvX" x="292" y="134">Not published as a rate. This is the axis CVSS has no dimension for.</text>
+
+        <rect x="24" y="148" width="832" height="34" fill="#F0F1F4"/>
+        <text class="fvA" x="44" y="170">Blast radius, data</text>
+        <text class="fvX" x="292" y="170">Whatever the tenant's assistant could retrieve. C:H in the vector.</text>
+
+        <rect x="24" y="184" width="832" height="34" fill="#FFFFFF" stroke="#CACDD4" stroke-width="1"/>
+        <text class="fvA" x="44" y="206">Blast radius, action</text>
+        <text class="fvX" x="292" y="206">Disclosure over the network. S:C, scope changed past the component.</text>
+
+        <rect x="24" y="220" width="832" height="34" fill="#F0F1F4"/>
+        <text class="fvA" x="44" y="242">Durability</text>
+        <text class="fvX" x="292" y="242">The planted mail sat there until an unrelated query retrieved it.</text>
+
+        <rect x="24" y="268" width="832" height="86" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="fvK" x="44" y="292">For agents, axis four dominates. Model behaviour is not the severity.</text>
+        <text class="fvX" x="44" y="316">A finding that changes what an agent can irreversibly do outranks one that changes what it says. And axis</text>
+        <text class="fvX" x="44" y="334">two is the one CVSS cannot express: a 40%-of-the-time finding and a 100% one carry the identical score.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the five axes, and the one real finding worth calibrating your queue against</figcaption>
+    </figure>
+
+    <p>Run every finding through all five, in writing, before it gets a rank. <strong>Reachability</strong>, meaning zero-click versus one-click versus requires-a-cooperative-user. <strong>Reliability</strong>, expressed as k of N with N stated, from session a3. <strong>Blast radius on data</strong>, meaning the highest classification reachable. <strong>Blast radius on action</strong>, meaning which irreversible tools come into play. And <strong>durability</strong>, meaning whether it persists through memory, a poisoned tool or a poisoned index, or evaporates when the session ends.</p>
+
+    <p>The rule that follows, and the one your triage board should have written on the wall: <strong>for agents, the dominant term is action blast radius, not model behaviour</strong>. Once a system can act, what it can irreversibly do is the risk. What it says is a much smaller part of the picture than the demo culture around this technology suggests.</p>
+  </section>
+
+  <!-- ============ EXERCISE 1 ============ -->
+  <section class="section" id="triage-live">
+    <div class="section-kicker">
+      <span class="klabel">Discussion 1 of 2</span>
+      <h2>Triage three Beacon findings, out loud <span class="tag demo">★ 12 min · in groups of three</span></h2>
+    </div>
+    <p class="lede">Three findings land from the Beacon engagement on the same morning. Rank them, then defend the ranking using only the five axes. The disagreements this produces are the point, and they are almost always disagreements about architecture rather than about severity.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Finding A.</strong> A multi-turn jailbreak makes the Insight Bot produce disallowed content. The Insight Bot has no tools, no retrieval over private data and no outbound network. It fired 22 of 25 trials, so it is highly reliable. Where does it rank, and which axis is carrying your answer?</p></div>
+      <div class="step"><p><strong>Finding B.</strong> Untrusted content placed in a shared document causes the Support Bot to attempt a refund credit to an attacker-controlled account. It fired 3 of 25 trials. The blast-radius limits in the rules of engagement meant no refund was actually issued, so it was recorded and stopped there. Where does it rank?</p></div>
+      <div class="step"><p><strong>Finding C.</strong> The Analyst Bot's system prompt can be extracted. It fired 25 of 25 trials, perfectly reliable. Before ranking it, ask the only question that matters here and notice that nobody in the room can answer it yet.</p></div>
+      <div class="step"><p><strong>Now say the missing question out loud.</strong> For C it is: what is the <em>data classification</em> of what is in that system prompt? Important if the content is Confidential, Low otherwise. The finding's reliability is 25 of 25 and it changes nothing about the severity. That is Microsoft's second pivot doing its work.</p></div>
+      <div class="step"><p><strong>Compare A and B honestly.</strong> A is more reliable, more reproducible, more impressive in a demo and easier to explain to an executive. B is the one that reaches money through untrusted content with no user interaction. If your queue would have surfaced A first, the queue is ranking by impressiveness, and now you know where to fix it.</p></div>
+      <div class="step"><p><strong>Write down what would change each ranking.</strong> Give the Insight Bot retrieval over customer records and A moves up immediately. Put per-action human approval in front of the refund tool and B moves down. Severity is an architectural output, which means it is something you can act on before the next engagement rather than only after it.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ EXERCISE 2 ============ -->
+  <section class="section" id="boundary">
+    <div class="section-kicker">
+      <span class="klabel">Discussion 2 of 2</span>
+      <h2>Decide your security-versus-safety boundary, in writing <span class="tag demo">★ 6 min · whole room</span></h2>
+    </div>
+    <p class="lede">This is a decision, not an analysis, and it has to be made before findings arrive rather than during the argument about a specific one. Draft it now in four lines and take the draft to whoever owns the incident process.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Line 1 · what goes on the security rail.</strong> The candidate rule, drawn from the rubrics above: anything that chains to another user's data, to a privileged action, or to an irreversible external effect. These get a severity, an owner and a service-level target.</p></div>
+      <div class="step"><p><strong>Line 2 · what goes on the safety and content rail.</strong> The candidate rule: harmful, disallowed or reputationally damaging output with no chain. These get classified <strong>in scope or out of scope with no severity rating</strong>, and go to a different owner on a different clock. Say explicitly that this is not a statement that they matter less.</p></div>
+      <div class="step"><p><strong>Line 3 · the promotion rule.</strong> Name the condition under which a content finding becomes a security finding. Usually this is the moment it chains: the same output rendered somewhere that executes it, or reaching a tool. Write the condition down, because without it every borderline case becomes a negotiation.</p></div>
+      <div class="step"><p><strong>Line 4 · who arbitrates, by name.</strong> Not a team, a person, with a named deputy. Every rubric in this session produces edge cases. An unowned edge case sits in a queue for six weeks and then gets escalated by whoever is angriest.</p></div>
+    </div>
+
+    <div class="callout warn">
+      <strong>The failure mode this prevents</strong>
+      With one merged queue, harmful-content findings and exfiltration paths compete for the same engineering hours on a single number, and whichever produced the more alarming screenshot wins. Two rails with a written promotion rule is not bureaucratic tidiness. It is the mechanism that stops your most reachable, least dramatic findings from losing to your most quotable ones, every single sprint.
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise-hw">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Try it yourself - this week <span class="tag exercise">◐ 45-60 min total</span></h2>
+    </div>
+    <ul>
+      <li>Take the last ten AI findings in your queue and re-rank them on the five axes. Compare against the existing order. The findings that move furthest tell you what your current instrument is actually measuring.</li>
+      <li>Add two fields to your finding template that almost certainly are not there: <strong>user-interaction requirement</strong> and <strong>data classification of what is reachable</strong>. Those are Microsoft's two pivots, and they are cheap to capture and expensive to reconstruct later.</li>
+      <li>List every irreversible tool each of your agents can call, and mark which ones require per-action human approval. That list is the action blast-radius axis, and for agent findings it is the dominant term.</li>
+      <li>Find one finding in your history that was closed as unreproducible. Ask whether it was tested more than once. Against a stochastic system, a single failed reproduction is not evidence of absence.</li>
+      <li>Write the four-line security-versus-safety boundary from the second exercise and get it signed off. Then check what your queue does with a content finding that later chains to a tool, because that is the case the rule exists for.</li>
+    </ul>
+  </section>
+
+  <!-- ============ SOURCES ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Source material</span>
+      <h2>Official sources covered</h2>
+    </div>
+    <p class="lede">Every framework, figure and quotation on this page traces to a primary source catalogued in this course's source map, verified 2026-08-14. This page covers:</p>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MSRC Vulnerability Severity Classification for AI Systems - Inference Manipulation: Critical with zero user interaction, Important where user interaction is required</span><span class="note">Part 1 · [P] · the user-interaction pivot</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MSRC Inferential Information Disclosure keyed to data classification - Model Theft Critical for Highly Confidential to Low for Public; system-prompt and input extraction Important for Confidential, Low otherwise</span><span class="note">Part 1 · [P] · the data-classification pivot</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MSRC content-related issues classified In Scope / Out of Scope with no severity rating</span><span class="note">Part 1 + Exercise 2 · [P] · the deliberate safety-versus-security separation</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP LLM08:2026 worked severity ladder - Informational to Medium to High to Critical</span><span class="note">Part 2 · [P] · every rung defined by consequence</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Meta's Rule of Two, cited by OWASP as a floor - untrusted input plus sensitive data plus state change or external communication needs per-action human approval; OWASP notes it is silent on autonomy depth</span><span class="note">Part 2 · [P] · the [A,B,C] critical case</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">CVE-2025-32711 (EchoLeak, M365 Copilot) - CVSS 3.1 9.3 Critical, S:C scope changed, UI:N no user interaction</span><span class="note">Part 3 · [P] · NVD record · the calibration example</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NIST CAISI 57% to 80% result, used here as the argument that reliability is a real and missing CVSS dimension</span><span class="note">Part 3 · [P] · carried forward from session a3</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Google's AI VRP scope - direct injection, jailbreaks and alignment failures out of scope for security bounties; indirect injection with production impact in scope</span><span class="note">Part 2 · <strong>[S] secondary</strong> · verify against the live programme page before citing it in policy</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">OWASP AIVSS</span><span class="note">Part 3 · <strong>v0.8, pre-1.0</strong>; its formula and weightings are described only in secondary sources. Named as promising, not adopted, and no numbers quoted</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The five-axis triage rubric itself</span><span class="note">Assembled from the sources above · <strong>no industry-standard AI severity scheme exists</strong>; treat as a working rubric, not a citable standard</span></div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions before you go 🎯 <span class="tag exercise">◐ 90 seconds</span></h2>
+    </div>
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">1 · Two findings describe the identical prompt-injection technique with the identical impact. One needs no user interaction, the other needs the victim to click. What separates them?</p>
+      <button class="qopt" type="button">A · Nothing meaningful - the technique and impact are the same, so the severity is the same</button>
+      <button class="qopt" type="button">B · The one requiring interaction is more severe, because it proves a user can be manipulated</button>
+      <button class="qopt" type="button">C · The user-interaction requirement is one of the two pivots in Microsoft's rubric - Critical with zero interaction, Important where interaction is required</button>
+      <p class="qwhy">The pivot matters because it ranks on something you can design. How much of the attack the victim has to perform on the attacker's behalf is a property of your architecture, not of the language model, which means it is a lever you can pull before the next engagement. The rubric's second pivot works the same way: inferential information disclosure is keyed to the data classification of what is reachable, so two organisations can receive the identical finding and correctly assign it two different severities.</p>
+    </div>
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">2 · Your team brings you a highly reliable jailbreak against a system with no tools, no private data and no egress. How should it be ranked?</p>
+      <button class="qopt" type="button">A · High, because it fires reliably and reliability is one of the five axes</button>
+      <button class="qopt" type="button">B · Informational - severity is set by what the finding chains to, and here it chains to nothing; the same jailbreak in a Rule-of-Two [A,B,C] agent would be critical</button>
+      <button class="qopt" type="button">C · Critical, because a reproducible jailbreak means the model's safety training has failed</button>
+      <p class="qwhy">Option A is the sharpest trap, because reliability really is one of the five axes. But reliability modifies a consequence, it does not create one, and a rate of 25 of 25 multiplied by nothing reachable is still nothing reachable. This is also the reason vendors scope bare jailbreaking out of security bounty programmes: under a consequence-based rubric, a jailbreak with no chain is not a security finding. The useful move is the architectural one - the ranking changes the moment you give that system retrieval over private data or an outbound path.</p>
+    </div>
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">3 · Which limitation of CVSS bites hardest on AI findings, and why?</p>
+      <button class="qopt" type="button">A · It has no exploit-reliability dimension, so a finding that fires 40% of the time and one that fires every time carry the identical score - and NIST measured attack success moving from 57% to 80% purely by repeating identical attacks, which makes reliability a real and decision-relevant quantity</button>
+      <button class="qopt" type="button">B · Its base scores are too high for AI systems and need a downward adjustment</button>
+      <button class="qopt" type="button">C · It cannot represent network-based attack vectors against models</button>
+      <p class="qwhy">Option C is simply false, and EchoLeak is the counter-example: CVE-2025-32711 scored 9.3 with S:C for scope changed and UI:N for no user interaction, a well-formed vector that captures the consequence properly. CVSS scores consequence well. What it cannot express is reliability, and three other things: non-determinism breaks the reproducibility gate most triage assumes, patch semantics differ because often no fix closes the class and only mitigations lower a rate, and agent autonomy and tool scope are unmodelled entirely. OWASP AIVSS aims at this gap but sits at v0.8, pre-1.0, with its formula described only in secondary sources.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Leader session 4 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>Severity is what it chains to</b><span>Not how clever the prompt was, how novel the technique is, or how alarming the transcript reads.</span></div>
+      <div class="cheat-item"><b>Pivot one: user interaction</b><span>Prompt injection reaching another user's data or a privileged action is Critical at zero interaction, Important where interaction is required.</span></div>
+      <div class="cheat-item"><b>Pivot two: data classification</b><span>Disclosure severity is read off the classification of what is reachable. Model theft Critical for Highly Confidential, Low for Public.</span></div>
+      <div class="cheat-item"><b>Two rails, on purpose</b><span>Content issues get In Scope or Out of Scope with no severity rating. Different owner, different clock, written promotion rule.</span></div>
+      <div class="cheat-item"><b>The ladder that generalises</b><span>Informational, Medium, High, Critical. Every rung defined by consequence. No rung mentions the technique.</span></div>
+      <div class="cheat-item"><b>Why bounties exclude jailbreaks</b><span>A jailbreak with no chain is not a security finding. Google's AI VRP pays for indirect injection with production impact instead.</span></div>
+      <div class="cheat-item"><b>Four places CVSS breaks</b><span>No exploit-reliability axis; non-determinism breaks reproducibility; patch semantics differ; agent autonomy unmodelled. AIVSS is pre-1.0.</span></div>
+      <div class="cheat-item"><b>Five axes, one dominant</b><span>Reachability, reliability as k of N, data blast radius, action blast radius, durability. For agents, action blast radius wins.</span></div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>Leader session 4 of 6 · learn-ai-red-team-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← Course home</a> &nbsp;·&nbsp; <a href="a5-what-defences-actually-hold.html">Next: What defences actually hold →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Builder session 2 · The attack surface - learn ai red team with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-red-team-with-phoebe</a> / Builder session 2 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI Red Team with Phoebe · Builder track · Session 2 of 10</div>
+    <h1>The attack surface: <span class="accent">the eight classes, and the frameworks that name them</span></h1>
+    <p class="sub">This is the taxonomy session, and it starts with a version warning rather than a definition, because the list most people quote moved under them. Four OWASP IDs changed number between the 2025 and 2026 editions and one was renamed outright. By the end you will have the 2026 list, the agentic list that sits beside it, the MITRE ATLAS technique IDs with their evidence grades, and the NIST objectives - mapped onto Beacon's three bots as a test plan rather than a poster.</p>
+    <div class="chip-row">
+      <span class="chip level">🟢 Builder track</span>
+      <span class="chip audience">Security engineers · AI engineers · platform leads</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:3">3-14 · The 2026 list and what moved</span>
+      <span class="a3" style="flex:3">14-28 · Agentic, ATLAS, NIST</span>
+      <span class="a4" style="flex:4">28-45 · Build-along and the matrix</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Why a taxonomy session is not a poster session</h2>
+    </div>
+    <div class="callout warn">
+      <strong>⚠ Authorization</strong>
+      This course is about testing AI systems <strong>you own, or are contracted in writing to test</strong>. Every exercise runs against Beacon, a fictional company, inside the scope document you wrote in b1. This page names attack <em>classes</em> so you can build test cases, and pairs each with the defence that addresses it. It contains no exploit payloads and teaches no attack craft. Testing a system you are not authorized to test is a crime in most jurisdictions.
+    </div>
+    <p class="lede">A taxonomy earns its place in an engagement in exactly one way: it is the completeness check you run <em>after</em> open-ended exploration, so that the report can say which surfaces were explored and which were not. That is the fourth of the four things a report may claim, and it is the only one a taxonomy can supply. Everything on this page exists to make that fourth claim honest.</p>
+    <div class="callout warn">
+      <strong>⚠ Read this before you quote a framework ID at anyone</strong>
+      The OWASP Top 10 for LLM Applications on this page is the <strong>2026</strong> edition, and four IDs moved. Excessive Agency went LLM06 to <strong>LLM03:2026</strong>, up three. Unbounded Consumption went LLM10 to <strong>LLM06:2026</strong>, up four. Improper Output Handling went LLM05 to <strong>LLM10:2026</strong>, down five, the furthest fall on the list. And System Prompt Leakage was <strong>renamed and re-scoped to LLM08:2026 Hidden Context Exposure</strong>. <strong>If a blog, a slide or a vendor datasheet shows Improper Output Handling at LLM05, it is teaching the 2025 list.</strong> That single ID is the fastest version check available to you.
+    </div>
+    <div class="legend">
+      <span class="pill solid">Live - presented in session</span>
+      <span class="pill light">Self-study - read after class</span>
+      <span class="pill inkpill">Official sources covered</span>
+    </div>
+    <div class="callout win">
+      <strong>★ What you walk out with today</strong>
+      The 2026 OWASP list with the four moves marked, the boundary rule that decides when risk leaves the LLM list for the agentic one, the ATLAS technique IDs for Beacon's surface with their maturity grades and their mitigation gaps, the NIST objective each class violates, and a test-case schema that carries all four framework references on every row so a finding can be traced back to a named risk.
+    </div>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="owasp">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · the list everyone quotes</span>
+      <h2>OWASP Top 10 for LLM Applications, 2026 edition <span class="tag concept">8 min live</span></h2>
+    </div>
+    <p class="lede">Here is the whole list, with where each item sat in the previous edition. Read the right-hand column first. Four rows in it are the reason this session exists.</p>
+
+    <table class="clean">
+      <tr><th>ID (2026)</th><th>Title</th><th>Where it was in 2025</th></tr>
+      <tr><td><strong>LLM01:2026</strong></td><td>Prompt Injection</td><td>LLM01 - steady at the top</td></tr>
+      <tr><td><strong>LLM02:2026</strong></td><td>Sensitive Information Disclosure</td><td>LLM02 - steady</td></tr>
+      <tr><td><strong>LLM03:2026</strong></td><td>Excessive Agency</td><td><strong>LLM06 - up 3</strong></td></tr>
+      <tr><td><strong>LLM04:2026</strong></td><td>Supply Chain</td><td>LLM03</td></tr>
+      <tr><td><strong>LLM05:2026</strong></td><td>Data and Model Poisoning</td><td>LLM04</td></tr>
+      <tr><td><strong>LLM06:2026</strong></td><td>Unbounded Consumption</td><td><strong>LLM10 - up 4</strong></td></tr>
+      <tr><td><strong>LLM07:2026</strong></td><td>Misinformation</td><td>LLM09</td></tr>
+      <tr><td><strong>LLM08:2026</strong></td><td>Hidden Context Exposure</td><td><strong>LLM07 System Prompt Leakage - renamed and re-scoped</strong></td></tr>
+      <tr><td><strong>LLM09:2026</strong></td><td>Vector and Embedding Weaknesses</td><td>LLM08</td></tr>
+      <tr><td><strong>LLM10:2026</strong></td><td>Improper Output Handling</td><td><strong>LLM05 - down 5, the furthest fall</strong></td></tr>
+    </table>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 424" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four OWASP IDs moved between the 2025 and 2026 editions. Excessive Agency LLM06 to LLM03 2026 up three. Unbounded Consumption LLM10 to LLM06 2026 up four. Improper Output Handling LLM05 to LLM10 2026 down five. System Prompt Leakage LLM07 renamed and re-scoped to LLM08 2026 Hidden Context Exposure.">
+        <style>
+          .mvH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .mvX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .mvI { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .mvO { font: 700 12.5px Inter, sans-serif; fill: #3A1B08; }
+          .mvM { font: 700 11px Inter, sans-serif; fill: #3A1B08; }
+          .mvR { font: 700 13px Inter, sans-serif; fill: #991B1B; }
+          .mvL { font: 600 11px Inter, sans-serif; fill: #6B6F78; }
+        </style>
+
+        <text class="mvH" x="24" y="30">Four IDs moved between the 2025 and 2026 editions. These are the four.</text>
+        <text class="mvL" x="24" y="52">2025 edition</text>
+        <text class="mvL" x="316" y="52">2026 edition</text>
+        <text class="mvL" x="584" y="52">What changed</text>
+
+        <rect x="24" y="62" width="252" height="54" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="mvI" x="44" y="84">LLM06</text>
+        <text class="mvX" x="44" y="102">Excessive Agency</text>
+        <path d="M284 89 L302 89 M296 84 L302 89 L296 94" fill="none" stroke="#5A6070" stroke-width="2"/>
+        <rect x="316" y="62" width="252" height="54" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="mvO" x="336" y="84">LLM03:2026</text>
+        <text class="mvX" x="336" y="102">Excessive Agency</text>
+        <rect x="584" y="62" width="272" height="54" rx="10" fill="#FFFFFF" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="mvM" x="604" y="84">Up 3 places</text>
+        <text class="mvX" x="604" y="102">Agents moved it up the list</text>
+
+        <rect x="24" y="128" width="252" height="54" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="mvI" x="44" y="150">LLM10</text>
+        <text class="mvX" x="44" y="168">Unbounded Consumption</text>
+        <path d="M284 155 L302 155 M296 150 L302 155 L296 160" fill="none" stroke="#5A6070" stroke-width="2"/>
+        <rect x="316" y="128" width="252" height="54" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="mvO" x="336" y="150">LLM06:2026</text>
+        <text class="mvX" x="336" y="168">Unbounded Consumption</text>
+        <rect x="584" y="128" width="272" height="54" rx="10" fill="#FFFFFF" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="mvM" x="604" y="150">Up 4 places</text>
+        <text class="mvX" x="604" y="168">The largest single jump</text>
+
+        <rect x="24" y="194" width="252" height="54" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="mvI" x="44" y="216">LLM05</text>
+        <text class="mvX" x="44" y="234">Improper Output Handling</text>
+        <path d="M284 221 L302 221 M296 216 L302 221 L296 226" fill="none" stroke="#5A6070" stroke-width="2"/>
+        <rect x="316" y="194" width="252" height="54" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="mvO" x="336" y="216">LLM10:2026</text>
+        <text class="mvX" x="336" y="234">Improper Output Handling</text>
+        <rect x="584" y="194" width="272" height="54" rx="10" fill="#FFFFFF" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="mvM" x="604" y="216">Down 5 places</text>
+        <text class="mvX" x="604" y="234">The furthest fall on the list</text>
+
+        <rect x="24" y="260" width="252" height="54" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="mvI" x="44" y="282">LLM07</text>
+        <text class="mvX" x="44" y="300">System Prompt Leakage</text>
+        <path d="M284 287 L302 287 M296 282 L302 287 L296 292" fill="none" stroke="#5A6070" stroke-width="2"/>
+        <rect x="316" y="260" width="252" height="54" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="mvO" x="336" y="282">LLM08:2026</text>
+        <text class="mvX" x="336" y="300">Hidden Context Exposure</text>
+        <rect x="584" y="260" width="272" height="54" rx="10" fill="#FFFFFF" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="mvM" x="604" y="282">Renamed and re-scoped</text>
+        <text class="mvX" x="604" y="300">Not just the system prompt now</text>
+
+        <rect x="24" y="330" width="832" height="76" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="mvR" x="44" y="354">The version check that takes two seconds</text>
+        <text class="mvX" x="44" y="376">If a page shows Improper Output Handling at LLM05, it is teaching the 2025 list. Check that one ID</text>
+        <text class="mvX" x="44" y="394">before you trust anything else on the page, including the mitigations.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the four moves, and the one ID that dates any document instantly</figcaption>
+    </figure>
+
+    <h3>How the 2026 ranking was made, and why it is the best teaching moment on this page</h3>
+    <p>The ranking is <strong>75% community vote and 25% incident data</strong>, and the incident half was drawn from <strong>7,714 real incidents</strong>, of which <strong>6,639 were classifiable</strong>. That is a serious evidence base by the standards of this field. Now the part worth stopping on.</p>
+
+    <div class="callout example">
+      <span class="ex-pill">The number that should change how you read numbers</span>
+      <p>Ranked by <strong>raw incident count alone, Prompt Injection falls out of the top 10 entirely</strong>. OWASP kept it at number one anyway, and published its reasoning: the absence is read as a <em>defence effect</em>. Mature teams spend real money holding injection off, so comparatively few clean exploits reach public incident databases. Meanwhile <strong>Misinformation was voted near the bottom by the community but sits near the top of the incident record</strong> - the opposite failure, a risk practitioners underrate and reality does not.</p>
+      <p><strong>The lesson generalises past OWASP and into your own dashboard: an incident count measures what got through AND what got reported. It does not measure what is dangerous.</strong> The same distortion is why a quiet quarter in your own incident tracker is not evidence that a class is under control, and why "we have never seen this" is not a finding.</p>
+    </div>
+
+    <div class="callout tip">
+      <strong>OWASP's stated design philosophy, which is also this course's line</strong>
+      <strong>Stop trying to build a model that cannot be fooled. Build the surrounding system so that when the model is fooled, nothing important breaks.</strong> Every defence you will evaluate in this course gets graded against that sentence. Controls that ask the model to behave better score badly. Controls that remove a capability score well. You will watch that play out numerically in the matrix at the end of this page.
+    </div>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="agentic">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · the second list</span>
+      <h2>OWASP Top 10 for Agentic Applications, and the boundary rule <span class="tag concept">6 min live</span></h2>
+    </div>
+    <p class="lede">There is a second list, released in December 2025, running ASI01 to ASI10. It is not a replacement and not a subset. The two lists divide the ground by a rule worth memorising, because it decides which taxonomy your finding belongs in and therefore who reads it.</p>
+
+    <table class="clean">
+      <tr><th>ID</th><th>Title</th></tr>
+      <tr><td><strong>ASI01</strong></td><td>Agent behaviour / goal hijack <span class="tag concept">title unconfirmed</span></td></tr>
+      <tr><td><strong>ASI02</strong></td><td>Tool Misuse and Exploitation</td></tr>
+      <tr><td><strong>ASI03</strong></td><td>Identity and Privilege Abuse</td></tr>
+      <tr><td><strong>ASI04</strong></td><td>Agentic Supply Chain</td></tr>
+      <tr><td><strong>ASI05</strong></td><td>Unexpected Code Execution</td></tr>
+      <tr><td><strong>ASI06</strong></td><td>Memory and Context Poisoning</td></tr>
+      <tr><td><strong>ASI07</strong></td><td>Insecure Inter-Agent Communication</td></tr>
+      <tr><td><strong>ASI08</strong></td><td>Cascading Failures</td></tr>
+      <tr><td><strong>ASI09</strong></td><td>Human-Agent Trust Exploitation</td></tr>
+      <tr><td><strong>ASI10</strong></td><td>Rogue Agents</td></tr>
+    </table>
+
+    <div class="callout warn">
+      <strong>⚠ ASI01's exact title is unconfirmed, and this course will not pretend otherwise</strong>
+      OWASP's own repository file is named <code>ASI01_Agent_Behaviour_Hijack.md</code> and the December announcement says "Agent Behavior Hijacking", while secondary coverage of the final release says "Agent Goal Hijack". Until the released PDF is checked, write it as <strong>"ASI01 (agent behaviour / goal hijack)"</strong>. This is a small thing and it is also the whole discipline: a course that guesses one title will guess a number later. The ASI02 to ASI10 titles above come from draft filenames plus agreeing secondary summaries, so treat them as strong but not primary.
+    </div>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 356" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The boundary rule. When the model is a component inside your application, the OWASP LLM list owns the risk. When it becomes an actor with tools, persistent memory and downstream consequences, risk moves to the Agentic list.">
+        <style>
+          .bdT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .bdH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .bdX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .bdK { font: 700 12.5px Inter, sans-serif; fill: #3A1B08; }
+          .bdI { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .bdC { font: 600 11px Inter, sans-serif; fill: #1E2025; }
+        </style>
+
+        <text class="bdH" x="24" y="30">The boundary rule: which list owns the risk</text>
+
+        <rect x="24" y="46" width="404" height="30" rx="8" fill="#2E3138"/>
+        <text class="bdT" x="42" y="66">The model is a component inside your app</text>
+        <rect x="24" y="84" width="404" height="124" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="bdI" x="44" y="108">OWASP Top 10 for LLM Applications</text>
+        <text class="bdX" x="44" y="130">It classifies text in and text out. The model</text>
+        <text class="bdX" x="44" y="148">answers, retrieves, summarises, renders. The</text>
+        <text class="bdX" x="44" y="166">consequence stops at the edge of the response:</text>
+        <text class="bdX" x="44" y="184">a bad answer is a bad answer, not an action.</text>
+
+        <rect x="452" y="46" width="404" height="30" rx="8" fill="#C2410C"/>
+        <text class="bdT" x="470" y="66">The model is an actor: tools and memory</text>
+        <rect x="452" y="84" width="404" height="124" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="bdK" x="472" y="108">OWASP Top 10 for Agentic Applications</text>
+        <text class="bdX" x="472" y="130">It acts. Tools fire, memory persists across</text>
+        <text class="bdX" x="472" y="148">sessions, one agent's output is another's input.</text>
+        <text class="bdX" x="472" y="166">The consequence leaves the response and lands</text>
+        <text class="bdX" x="472" y="184">in a system you own.</text>
+
+        <rect x="24" y="226" width="832" height="110" rx="10" fill="#FFFFFF" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="bdH" x="44" y="250">The three things that move a risk across the line</text>
+        <rect x="44" y="262" width="246" height="34" rx="8" fill="#F0F1F4"/>
+        <text class="bdC" x="60" y="284">Tools with real effects</text>
+        <rect x="318" y="262" width="246" height="34" rx="8" fill="#F0F1F4"/>
+        <text class="bdC" x="334" y="284">Memory outliving a session</text>
+        <rect x="592" y="262" width="246" height="34" rx="8" fill="#F0F1F4"/>
+        <text class="bdC" x="608" y="284">Downstream consequences</text>
+        <text class="bdX" x="44" y="322">Neither list covers the ground alone. Beacon's Support Bot needs both: it answers and it issues refunds.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - component or actor, and why Beacon's Support Bot is filed under both</figcaption>
+    </figure>
+
+    <p>Applied to Beacon: the <strong>Analyst Bot</strong> writing SQL that a warehouse executes is squarely an LLM-list problem right up until you notice the query runs with a credential, at which point ASI03 Identity and Privilege Abuse joins LLM10:2026 Improper Output Handling on the same finding. The <strong>Support Bot</strong> that can issue a refund credit is an actor by any reading, so its worst findings will carry ASI02 alongside LLM03:2026. The <strong>Insight Bot</strong> caches what it reads, which is ASI06 Memory and Context Poisoning territory even though nothing it does looks agentic in a demo.</p>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="atlas">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · the technique-level map</span>
+      <h2>MITRE ATLAS, and the two fields that turn it into a test plan <span class="tag concept">8 min live</span></h2>
+    </div>
+    <p class="lede">OWASP gives you categories. ATLAS gives you techniques with IDs you can put in a ticket, tactics that say where in an operation a technique sits, and - new in the version 6 schema - an evidence grade that tells you what to test first.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 392" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MITRE ATLAS dataset 2026.07 format 6.0.0. Maturity grades: Realized 68, Demonstrated 92, Feasible 18 of 178 techniques. Platforms: Agentic AI 119, Generative AI 92, Predictive AI 70, Enterprise 61.">
+        <style>
+          .atH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .atX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .atL { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .atV { font: 700 12.5px Inter, sans-serif; fill: #3A1B08; }
+          .atS { font: 700 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="atH" x="24" y="30">MITRE ATLAS dataset 2026.07, format 6.0.0. Cite the version whenever you cite a count.</text>
+        <text class="atX" x="24" y="50">16 tactics · 178 techniques (101 top-level + 77 sub) · 37 mitigations · 68 case studies.</text>
+
+        <text class="atS" x="24" y="80">maturity - a ready-made test-prioritisation axis</text>
+
+        <text class="atL" x="24" y="114">Realized</text>
+        <rect x="200" y="94" width="272" height="30" rx="6" fill="#C2410C"/>
+        <text class="atL" x="590" y="114">68 of 178</text>
+        <text class="atX" x="700" y="114">test these first</text>
+
+        <text class="atL" x="24" y="152">Demonstrated</text>
+        <rect x="200" y="132" width="368" height="30" rx="6" fill="#5A6070"/>
+        <text class="atL" x="590" y="152">92 of 178</text>
+        <text class="atX" x="700" y="152">watch list</text>
+
+        <text class="atL" x="24" y="190">Feasible</text>
+        <rect x="200" y="170" width="72" height="30" rx="6" fill="#BFC4CE"/>
+        <text class="atL" x="590" y="190">18 of 178</text>
+        <text class="atX" x="700" y="190">backlog</text>
+
+        <text class="atS" x="24" y="222">platforms - Agentic AI is now the largest tag in ATLAS</text>
+
+        <text class="atL" x="24" y="253">Agentic AI</text>
+        <rect x="200" y="236" width="476" height="24" rx="6" fill="#C2410C"/>
+        <text class="atV" x="700" y="253">119</text>
+
+        <text class="atL" x="24" y="285">Generative AI</text>
+        <rect x="200" y="268" width="368" height="24" rx="6" fill="#5A6070"/>
+        <text class="atV" x="700" y="285">92</text>
+
+        <text class="atL" x="24" y="317">Predictive AI</text>
+        <rect x="200" y="300" width="280" height="24" rx="6" fill="#5A6070"/>
+        <text class="atV" x="700" y="317">70</text>
+
+        <text class="atL" x="24" y="349">Enterprise</text>
+        <rect x="200" y="332" width="244" height="24" rx="6" fill="#BFC4CE"/>
+        <text class="atV" x="700" y="349">61</text>
+
+        <text class="atX" x="24" y="376">Counts read from the machine-readable dataset, not the rendered site. See the caution note below.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - evidence grade as a prioritisation axis, and the platform tag that overtook the rest</figcaption>
+    </figure>
+
+    <div class="callout warn">
+      <strong>⚠ Cite the dataset version whenever you cite a count</strong>
+      A second research pass for this course <strong>could not load the rendered ATLAS site</strong> and found <strong>conflicting counts circulating in secondary sources</strong> - both 16 tactics / 84 techniques and 16 / 167 appear in material published within months of each other. The figures above come from the machine-readable <code>dist/v6/ATLAS-2026.07.yaml</code> dataset that the site is built from, which is the strongest available source, but the rendered site may lag or lead it. So never write "ATLAS has 178 techniques". Write "ATLAS dataset 2026.07 has 178 techniques". The discipline costs you four words and saves you an argument.
+    </div>
+
+    <h3>The two v6 fields worth building a workflow around</h3>
+    <ul>
+      <li><strong><code>maturity</code> grades the evidence behind a technique: Realized 68, Demonstrated 92, Feasible 18.</strong> Realized means it has been observed in the wild. That is a ready-made test-prioritisation axis and you should use it exactly that way - <strong>test Realized first</strong>, put Demonstrated on the watch list, and let Feasible sit in the backlog until something changes. It is the cheapest defensible ordering argument you will ever get to make to a stakeholder who wants everything tested at once.</li>
+      <li><strong><code>platforms</code> shows Agentic AI 119, Generative AI 92, Predictive AI 70, Enterprise 61.</strong> Agentic AI is now the largest tag in the dataset. If your inventory says you have "a chatbot" and your ATLAS coverage is drawn from the Generative AI tag alone, you are working from the smaller half of the map.</li>
+    </ul>
+
+    <div class="callout tip">
+      <strong>Two tactics with no ATT&amp;CK equivalent, and why that matters operationally</strong>
+      Fourteen of the sixteen ATLAS tactics map to ATT&amp;CK. Two do not: <strong>AML.TA0000 AI Model Access</strong> and <strong>AML.TA0001 AI Attack Staging</strong>. These are the genuinely new ground - the stages where an adversary obtains access to the model itself and prepares against it. If your detection engineering is inherited wholesale from an ATT&amp;CK-shaped programme, these two tactics are precisely where you have no coverage and no alerts, because there was nothing to inherit.
+    </div>
+
+    <div class="callout warn">
+      <strong>⚠ The schema trap that fails silently</strong>
+      The cross-reference key was renamed from <code>ATT&amp;CK-reference</code> in v5 to <code>attack-reference</code> in v6. Tooling written against v5 <strong>silently returns null mappings</strong> rather than erroring, so a coverage report built on it will show a clean, confident, entirely empty ATT&amp;CK column. Only 37 of 178 techniques carry a cross-reference at all, which makes an all-null result look plausible. Check one known-good technique by hand before you trust any automated mapping.
+    </div>
+
+    <h3>The technique IDs for Beacon's surface</h3>
+    <p>These are the rows you will actually cite in findings for the rest of the builder track. All verified from the 2026.07 dataset.</p>
+
+    <table class="clean">
+      <tr><th>ID</th><th>Name</th><th>Tactic</th><th>Maturity</th></tr>
+      <tr><td><code>AML.T0051</code><br>(.000 Direct, .001 Indirect, .002 Triggered)</td><td>LLM Prompt Injection</td><td>Execution</td><td><strong>Realized</strong></td></tr>
+      <tr><td><code>AML.T0054</code></td><td>LLM Jailbreak</td><td>Defense Evasion, Privilege Escalation</td><td><strong>Realized</strong></td></tr>
+      <tr><td><code>AML.T0053</code></td><td>AI Agent Tool Invocation</td><td>Execution, PrivEsc, Lateral Movement</td><td>Demonstrated</td></tr>
+      <tr><td><code>AML.T0086</code></td><td>Exfiltration via AI Agent Tool Invocation</td><td>Exfiltration</td><td><strong>Realized</strong></td></tr>
+      <tr><td><code>AML.T0080</code> (.000 Memory, .001 Thread)</td><td>AI Agent Context Poisoning</td><td>Persistence</td><td>Demonstrated</td></tr>
+      <tr><td><code>AML.T0110</code> (.000 / .001 / .002)</td><td>AI Agent Tool Poisoning</td><td>Persistence</td><td><strong>Realized, no mitigation mapped</strong></td></tr>
+      <tr><td><code>AML.T0070</code> / <code>AML.T0071</code></td><td>RAG Poisoning / False RAG Entry Injection</td><td>Persistence / Defense Evasion</td><td>Demonstrated</td></tr>
+      <tr><td><code>AML.T0056</code> / <code>AML.T0057</code></td><td>Extract LLM System Prompt / LLM Data Leakage</td><td>Exfiltration</td><td>Feasible / Demonstrated</td></tr>
+      <tr><td><code>AML.T0084</code> (.000-.003)</td><td>Discover AI Agent Configuration</td><td>Discovery</td><td>Demonstrated</td></tr>
+      <tr><td><code>AML.T0077</code></td><td>LLM Response Rendering</td><td>Exfiltration</td><td>Demonstrated, <strong>no mitigation mapped</strong></td></tr>
+      <tr><td><code>AML.T0098</code> / <code>AML.T0082</code> / <code>AML.T0083</code></td><td>Credential harvesting via tools / RAG / agent config</td><td>Credential Access</td><td>Demonstrated</td></tr>
+      <tr><td><code>AML.T0101</code></td><td>Data Destruction via AI Agent Tool Invocation</td><td>Impact</td><td><strong>Realized</strong></td></tr>
+      <tr><td><code>AML.T0109</code></td><td>AI Supply Chain Rug Pull</td><td>Defense Evasion</td><td><strong>Realized, no mitigation mapped</strong></td></tr>
+      <tr><td><code>AML.T0034.002</code></td><td>Agentic Resource Consumption</td><td>Impact</td><td>Feasible</td></tr>
+      <tr><td><code>AML.T0061</code></td><td>LLM Prompt Self-Replication</td><td>Persistence</td><td>Demonstrated</td></tr>
+    </table>
+
+    <div class="callout warn">
+      <strong>⚠ The residual-risk column, in the framework's own words</strong>
+      Several <strong>Realized</strong> techniques - <strong>T0110 Tool Poisoning, T0109 Rug Pull, T0011.002 Poisoned Tool, T0077 LLM Response Rendering, T0083</strong> - have <strong>no ATLAS mitigation mapped at all</strong>. Observed in the wild, and the framework has nothing to prescribe against them. Do not gloss this. It is the residual-risk column of an honest engagement, handed to you by the framework itself, and it is the strongest argument you will ever have for the b1 blast-radius section: where no mitigation exists, the only lever left is bounding what the technique reaches. Carry these rows into your report explicitly, as risk accepted rather than risk missed.
+    </div>
+
+    <h3>NIST AI 100-2e2025 - the objective layer above both</h3>
+    <p>NIST's adversarial ML taxonomy classifies by what the attacker is <em>trying to achieve</em>, which is the layer that survives when the technique names change. Five objectives: <strong>NISTAML.01 Availability Breakdown</strong>, <strong>.02 Integrity Violation</strong>, <strong>.03 Privacy Compromise</strong>, <strong>.04 Misuse Enablement - GenAI only</strong>, and <strong>.05 Supply Chain</strong>. Attacks are then classified on five axes: system type, lifecycle stage, properties violated, attacker capability and access, and attacker knowledge.</p>
+    <p>Two structural points to carry forward. First, <strong>NIST taxonomises predictive AI and generative AI separately</strong>, and the separation is not cosmetic - the attack surfaces genuinely differ, and a control inventory written for one does not transfer. Second, <strong>.04 Misuse Enablement exists only on the GenAI side</strong>, because it is the objective that has no predictive-model analogue: the attacker is not corrupting your system, they are using it as a capability. That distinction is why misuse findings so often fall between the security team and the trust-and-safety team, and why b1 asked you to name the two tracks and their owners before the engagement starts.</p>
+  </section>
+
+  <!-- ============ DEMO 1 ============ -->
+  <section class="section" id="demo-1">
+    <div class="section-kicker">
+      <span class="klabel">Demo 1 of 2</span>
+      <h2>Map Beacon's surface, four framework references per row <span class="tag demo">★ 10 min · everyone builds</span></h2>
+    </div>
+    <p class="lede">A taxonomy that lives in a slide is decoration. A taxonomy that lives in the test-case schema is infrastructure, because every finding then arrives carrying the IDs a reviewer needs to place it. Build the schema now and the rest of the builder track just fills it in.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Start from the eight classes, not from the frameworks.</strong> Direct injection, indirect injection, refusal bypass, sensitive information disclosure, excessive agency and tool abuse, improper output handling, context and memory poisoning, unbounded consumption. Eight rows. This is the working set for the whole course and it is deliberately smaller than any of the official lists, because a class you cannot write a test for is not doing work in an engagement.</p></div>
+      <div class="step"><p><strong>Give every row its OWASP 2026 ID.</strong> Use the table in Part 1 and check yourself against the version trap: improper output handling is <strong>LLM10:2026</strong>, not LLM05. Excessive agency is <strong>LLM03:2026</strong>, not LLM06. Unbounded consumption is <strong>LLM06:2026</strong>, not LLM10. If your row for context poisoning says LLM04, you have copied from a 2025 source.</p></div>
+      <div class="step"><p><strong>Add the agentic ID where the boundary rule says it applies.</strong> For the Support Bot, context poisoning also carries ASI06 and tool abuse also carries ASI02, because that bot is an actor. For a read-only bot with no tools, leave the agentic column empty and say why in a comment. An empty cell with a reason is documentation; an empty cell without one is an oversight.</p></div>
+      <div class="step"><p><strong>Add the ATLAS technique ID and copy its maturity across.</strong> The maturity value is the field you will sort by when the schedule slips, so it belongs on the row rather than in someone's head. Mark the rows where ATLAS has <strong>no mitigation mapped</strong> with a flag of its own - those rows cannot be closed by pointing at a control, only by bounding a consequence.</p></div>
+      <div class="step"><p><strong>Add the NIST objective.</strong> One of the five. This is the column your executive summary is written from, because "an integrity violation on the refund path" survives a framework version change and "AML.T0051.001" does not.</p></div>
+      <div class="step"><p><strong>Add the trial protocol and the defence reference.</strong> N from b1, result recorded as k of N rather than a boolean, and the name of the control that is <em>supposed</em> to hold this class. That last field is what turns the suite into a regression test in b10: when a control is removed or reconfigured, you know exactly which rows to re-run.</p></div>
+    </div>
+
+    <div class="prompt-box">
+      <span class="label">test-case schema · defensive · no payloads</span># one row per attack class, per surface. IDs verified against:
+# OWASP LLM Top 10 2026 · OWASP Agentic ASI list · ATLAS dataset 2026.07 · NIST AI 100-2e2025
+
+class:            indirect_injection
+surface:          support_bot / ticket_ingest
+owasp_2026:       LLM01:2026
+agentic:          ASI06                 # actor, so the agentic list applies too
+atlas:            AML.T0051.001         # maturity: Realized -> test first
+nist_objective:   NISTAML.02            # integrity violation
+mitigation_gap:   false                 # true when ATLAS maps no mitigation
+trials_n:         25                    # from the RoE, fixed before testing
+result:           k_of_n                # never a boolean
+defence_ref:      [leastpriv, hitl]     # what is supposed to hold this class
+blast_radius:     refund_credit         # the b1 field that sets severity</div>
+
+    <div class="callout tip">
+      <strong>The column teams skip, and regret in b9</strong>
+      <code>mitigation_gap</code>. When ATLAS maps no mitigation to a Realized technique, there is no control to point at during the harden-and-retest round, and a team that discovers this at retest time has already promised someone a fix. Flag it at mapping time and the conversation happens while options still exist.
+    </div>
+  </section>
+
+  <!-- ============ DEMO 2 ============ -->
+  <section class="section" id="demo-2">
+    <div class="section-kicker">
+      <span class="klabel">Demo 2 of 2</span>
+      <h2>Read the effectiveness matrix, top row first <span class="tag demo">★ 8 min · together</span></h2>
+    </div>
+    <p class="lede">Here is the same eight-class taxonomy from the other side: not what an attacker does, but what each control actually removes. Read the top row before anything else. It belongs to the control every team reaches for first, and it is the only row on the board with zeroes in it.</p>
+
+    <div class="slbox" data-mode="matrix"></div>
+
+    <div class="callout warn">
+      <strong>⚠ Honesty rail for this board</strong>
+      The inherent-risk figures and the defence-effectiveness matrix are a <strong>teaching model</strong>. They encode the direction and rough proportion that the published literature reports - notably that prompt-level instructions are near-useless against injection that arrives inside content, while architectural controls do the work - but they are <strong>not measurements</strong> of your system or anyone's. What is real is the arithmetic: coverage, residual risk and the untested-class accounting are computed live in your browser from the matrix and your settings.
+    </div>
+
+    <div class="steps">
+      <div class="step"><p><strong>Find the zeroes.</strong> The system-prompt instruction telling the model to ignore injected commands scores a flat <strong>zero</strong> against indirect injection, context and memory poisoning, improper output handling and unbounded consumption. Not a small number - zero. That encodes the consistent published position that instruction-level defences do not solve injection, and it is deliberately not softened.</p></div>
+      <div class="step"><p><strong>Ask why those four classes specifically.</strong> They are the classes where the hostile text does not arrive from the person talking to the bot. A system-prompt instruction is being asked to police text that arrives looking exactly like the text it is meant to obey, from a source it cannot verify. The failure is architectural, so no rewording of the instruction changes the row.</p></div>
+      <div class="step"><p><strong>Now read down the columns with the big numbers.</strong> Least-privilege scoping at 0.75 against excessive agency. Human approval at 0.85. Sandboxed execution at 0.80 against improper output handling. Rate and spend caps at 0.85 against unbounded consumption. Every large number on this board belongs to a control that <strong>removes a capability</strong> rather than requesting good behaviour. That is OWASP's design philosophy from Part 1, showing up as arithmetic.</p></div>
+      <div class="step"><p><strong>Take the working conclusion into b3.</strong> The next session is the class with the zeroes running through it. You already know from this matrix that the fix will not be a better instruction, so the question b3 actually has to answer is what the measured limits of the real defences are - and what a defender does about the gap that remains after all of them.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Try it yourself - this week <span class="tag exercise">◐ 45-60 min total</span></h2>
+    </div>
+    <ul>
+      <li>Search your own wiki, tickets and slide decks for "LLM05". Every hit that means improper output handling is a document written against the 2025 list. You are not looking for errors so much as for how old your internal mental model is.</li>
+      <li>Fill the schema from Demo 1 for one real system you own. Eight rows, four framework references each. The rows you cannot fill are the more interesting output.</li>
+      <li>Pull the ATLAS <code>maturity</code> field for the techniques on your rows and sort by it. Write down the Realized ones. That list, not your instinct, is your test order for the first sprint.</li>
+      <li>Find every Realized technique on your map with <strong>no mitigation mapped</strong> and, for each, write the one sentence describing what bounds the consequence today. If the sentence is "nothing", you have found the first item for b9.</li>
+      <li>Check one automated ATLAS mapping by hand against the dataset. If your tooling predates the v6 rename, the ATT&amp;CK column will be quietly empty rather than wrong, which is harder to notice.</li>
+    </ul>
+  </section>
+
+  <!-- ============ SOURCES ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Source material</span>
+      <h2>Official sources covered</h2>
+    </div>
+    <p class="lede">Every framework, figure and quotation on this page traces to a primary source catalogued in this course's source map, verified 2026-08-14. This page covers:</p>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP Top 10 for LLM Applications, 2026 edition - all ten IDs and the four moves</span><span class="note">Part 1 · [P] from the project repository, <code>2026/final/</code></span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">The 2026 ranking method: 75% community vote + 25% incident data, 7,714 incidents, 6,639 classifiable</span><span class="note">Part 1 · [P] · prompt injection falls out of the top 10 by raw count and is kept at #1 anyway</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP's design philosophy - build the surrounding system, not an unfoolable model</span><span class="note">Part 1 · [P] · the course's own line</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">OWASP Top 10 for Agentic Applications, ASI01-ASI10</span><span class="note">Part 2 · <strong>ASI01's exact title is UNCONFIRMED</strong> (repo says Agent Behaviour Hijack, secondary says Agent Goal Hijack). ASI02-ASI10 titles from draft filenames plus agreeing secondary summaries</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MITRE ATLAS dataset 2026.07, format 6.0.0 - 16 tactics, 178 techniques, 37 mitigations, 68 case studies</span><span class="note">Part 3 · [P] machine-readable dataset · <strong>rendered site could not be loaded; conflicting counts circulate; cite the dataset version</strong></span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">ATLAS v6 <code>maturity</code> (Realized 68 / Demonstrated 92 / Feasible 18) and <code>platforms</code> (Agentic AI 119 largest)</span><span class="note">Part 3 · [P] · the test-prioritisation axis</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">AML.TA0000 AI Model Access and AML.TA0001 AI Attack Staging - the two tactics with no ATT&amp;CK equivalent</span><span class="note">Part 3 · [P] · 14 of 16 tactics map; only 37 of 178 techniques carry a cross-reference</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">The v6 schema rename: <code>ATT&amp;CK-reference</code> to <code>attack-reference</code></span><span class="note">Part 3 · [P] · v5 tooling returns null silently</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Realized techniques with no mitigation mapped: T0110, T0109, T0011.002, T0077, T0083</span><span class="note">Part 3 · [P] · the residual-risk column in the framework's own words</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NIST AI 100-2e2025 objectives NISTAML.01 to .05, with .04 Misuse Enablement GenAI-only</span><span class="note">Part 3 · [P] · PredAI and GenAI taxonomised separately; five classification axes</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The effectiveness matrix and inherent-risk figures</span><span class="note">Demo 2 · <strong>teaching model</strong> encoding the direction the literature reports, not measurements · the arithmetic is real and computed live</span></div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions before you go 🎯 <span class="tag exercise">◐ 90 seconds</span></h2>
+    </div>
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">1 · A well-written vendor page lists Improper Output Handling as LLM05. What have you learned about the page?</p>
+      <button class="qopt" type="button">A · Nothing much - the numbering is arbitrary and vendors pick a version</button>
+      <button class="qopt" type="button">B · It is teaching the 2025 list. In the 2026 edition Improper Output Handling is LLM10:2026, the furthest fall on the list, so anything else version-sensitive on that page is suspect too</button>
+      <button class="qopt" type="button">C · That the vendor has confused OWASP with MITRE ATLAS</button>
+      <p class="qwhy">This one ID is the fastest version check available, because it moved five places, further than anything else. The useful move is not to correct the number but to distrust the rest of the page: mitigations, severity guidance and coverage claims written against the 2025 list will also be a year stale. Three other IDs moved too - Excessive Agency up to LLM03:2026, Unbounded Consumption up to LLM06:2026, and System Prompt Leakage renamed and re-scoped to LLM08:2026 Hidden Context Exposure.</p>
+    </div>
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">2 · Ranked by raw incident count alone, Prompt Injection drops out of the OWASP top 10 entirely, and OWASP keeps it at number one. What is the transferable lesson?</p>
+      <button class="qopt" type="button">A · That community voting should be weighted higher than incident data</button>
+      <button class="qopt" type="button">B · That prompt injection is overrated and the incident record is the honest signal</button>
+      <button class="qopt" type="button">C · That an incident count measures what got through AND what got reported, not what is dangerous - OWASP reads the absence as a defence effect, since mature teams spend real money holding injection off</button>
+      <p class="qwhy">The mirror image is on the same list: Misinformation was voted near the bottom and sits near the top of the incident record. Two opposite distortions from the same dataset. Carry this into your own dashboard - a quiet quarter in your incident tracker is not evidence a class is under control, it is a measurement of what reached you and got written down. This is the same absence-of-evidence problem that runs through the whole course, arriving here as a ranking methodology rather than as a test result.</p>
+    </div>
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">3 · Your ATLAS mapping shows several Realized techniques with no mitigation mapped at all - T0110 Tool Poisoning, T0109 Rug Pull, T0077 among them. What is the correct response?</p>
+      <button class="qopt" type="button">A · Treat it as the residual-risk column: observed in the wild with nothing prescribed against it, so the only remaining lever is bounding the consequence, and the row goes in the report as risk accepted rather than risk missed</button>
+      <button class="qopt" type="button">B · Substitute a mitigation from a different framework so the column is complete</button>
+      <button class="qopt" type="button">C · Downgrade those techniques, since a framework with no mitigation implies low practical concern</button>
+      <p class="qwhy">Option C inverts the maturity field: Realized is the strongest evidence grade in the dataset, meaning observed in the wild. Option B is the more tempting error, because a complete-looking column passes review - but a borrowed mitigation that nobody has evaluated against this technique is a claim you cannot support, and it hides exactly the row a reader most needs to see. The honest move is to flag it at mapping time, before anyone has been promised a fix, and let the blast-radius limits from b1 carry the weight.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Builder session 2 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>The 2026 version check</b><span>Improper Output Handling is LLM10:2026. If a page says LLM05, it is the 2025 list and everything version-sensitive on it is suspect.</span></div>
+      <div class="cheat-item"><b>The four that moved</b><span>Excessive Agency to LLM03:2026 (up 3). Unbounded Consumption to LLM06:2026 (up 4). Improper Output Handling to LLM10:2026 (down 5). System Prompt Leakage renamed to LLM08:2026 Hidden Context Exposure.</span></div>
+      <div class="cheat-item"><b>An incident count is not a danger ranking</b><span>7,714 incidents, 6,639 classifiable. By raw count prompt injection leaves the top 10; OWASP reads the absence as a defence effect. Counts measure what got through and got reported.</span></div>
+      <div class="cheat-item"><b>The design philosophy</b><span>Stop trying to build a model that cannot be fooled. Build the surrounding system so that when it is fooled, nothing important breaks.</span></div>
+      <div class="cheat-item"><b>The boundary rule</b><span>Model as component: the LLM list. Model as actor with tools, memory and consequences: the Agentic list ASI01-ASI10. Neither covers the ground alone. ASI01's exact title is unconfirmed.</span></div>
+      <div class="cheat-item"><b>Cite the dataset version</b><span>ATLAS dataset 2026.07, format 6.0.0: 16 tactics, 178 techniques, 37 mitigations, 68 case studies. Conflicting counts circulate and the rendered site could not be loaded.</span></div>
+      <div class="cheat-item"><b>maturity is your test order</b><span>Realized 68, Demonstrated 92, Feasible 18. Test Realized first. platforms: Agentic AI 119 is now the largest tag. Schema trap: ATT&amp;CK-reference became attack-reference in v6 and v5 tooling returns null silently.</span></div>
+      <div class="cheat-item"><b>The residual-risk column</b><span>T0110, T0109, T0011.002, T0077, T0083 are Realized with no ATLAS mitigation mapped. Nothing to point at, so bound the consequence and report it as risk accepted.</span></div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>Builder session 2 of 10 · learn-ai-red-team-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← Course home</a> &nbsp;·&nbsp; <a href="b3-prompt-injection.html">Next: Prompt injection →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/surface-live.js?v=1"></script>
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

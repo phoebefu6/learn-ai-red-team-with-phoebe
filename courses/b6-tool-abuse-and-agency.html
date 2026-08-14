@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Builder session 6 · Tool abuse and agency - learn ai red team with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-red-team-with-phoebe</a> / Builder session 6 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI Red Team with Phoebe · Builder track · Session 6 of 10</div>
+    <h1>Tool abuse and agency: <span class="accent">severity is what the credential can do</span></h1>
+    <p class="sub">This is the agentic session, and it is the one where the findings stop being about text. Once a model can call a tool, the interesting question is no longer what it said but what ran, under whose credential, and whether anybody could undo it. This session builds the permission manifest that bounds that, runs the test that needs no attacker at all, and makes the structural point about MCP security that changes who in your organisation owns this work.</p>
+    <div class="chip-row">
+      <span class="chip level">🟠 Builder track</span>
+      <span class="chip audience">Security engineers · AI engineers · platform leads</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-22 · Excessive agency, the technique map, MCP</span>
+      <span class="a3" style="flex:5">22-40 · Build-along: manifest and pre-deployment checks</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Where the model stops being a component and becomes an actor</h2>
+    </div>
+    <div class="callout warn">
+      <strong>⚠ Authorization</strong>
+      This session is about testing AI systems <strong>you own, or are contracted in writing to test</strong>, inside the scope document you wrote in b1. It names attack <em>classes</em> so you can build test cases and pairs each with the defence that addresses it. There are <strong>no payloads, no injection strings and no attack craft on this page</strong>. Note b1's blast-radius rule especially here: if confirming a finding would require actually issuing the refund, sending the mail or deleting the record, you record the finding and you do not fire the action. Testing a system you are not authorized to test is a crime in most jurisdictions.
+    </div>
+    <p class="lede">OWASP draws the boundary cleanly: the LLM Top 10 owns risk while the model is a <em>component inside</em> your application, and once it becomes an <em>actor</em> - tools, cross-session memory, downstream consequences - risk moves to the Agentic list. Neither list covers the ground alone. The framework data agrees: in ATLAS collection 2026.07, <strong>Agentic AI is now the largest platform tag</strong>, with 119 techniques carrying it against 92 for generative AI and 70 for predictive AI.</p>
+    <div class="legend">
+      <span class="pill solid">Live - presented in session</span>
+      <span class="pill light">Self-study - read after class</span>
+      <span class="pill inkpill">Official sources covered</span>
+    </div>
+    <div class="callout win">
+      <strong>★ What you walk out with today</strong>
+      A tool permission manifest for Beacon with every tool marked reversible or irreversible and every credential scoped to a task rather than to a system, the hallucination-alone test run against all three bots, an MCP consent and token check you can hand to whoever operates your servers, and the two pre-deployment heuristics - the lethal trifecta and the Rule of Two - applied to a real workflow.
+    </div>
+    <div class="callout tip">
+      <strong>Where this sits in the track</strong>
+      b3 and b4 covered getting the model to do something. b5 covered getting the system to reveal something, and ended on the discovery of tool definitions and call chains, which is the reconnaissance for this session. b7 turns all of it into a suite with measured coverage.
+    </div>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="agency">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · the root causes</span>
+      <h2>Excessive Agency, and the test that needs no attacker <span class="tag concept">7 min live</span></h2>
+    </div>
+    <p class="lede"><strong>LLM03:2026 Excessive Agency</strong> moved up three places in the 2026 list, from LLM06 in 2025, and the reason is simply that more applications now have tools than had them a year ago. OWASP splits it into three root causes, and the split is useful precisely because each one has a different owner and a different fix.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 350" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The three root causes of excessive agency. Excessive functionality: the agent can call tools the task does not need. Excessive permissions: the tool's credential can do more than the agent needs. Excessive autonomy: the action fires with no human and cannot be undone. The test that matters removes the attacker entirely and asks whether a model mistake alone can trigger a damaging action.">
+        <style>
+          .eaT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .eaH { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .eaB { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .eaK { font: 600 11px Inter, sans-serif; fill: #C2410C; }
+          .eaX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+        </style>
+
+        <text class="eaB" x="24" y="32">Three root causes, three different owners, three different fixes.</text>
+
+        <rect x="24" y="48" width="264" height="28" rx="8" fill="#2E3138"/>
+        <text class="eaT" x="42" y="67">Excessive functionality</text>
+        <rect x="24" y="76" width="264" height="140" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="eaX" x="44" y="100">The agent can call tools the</text>
+        <text class="eaX" x="44" y="118">task does not need, or tools</text>
+        <text class="eaX" x="44" y="136">that do more than the task</text>
+        <text class="eaX" x="44" y="154">needs them to do.</text>
+        <text class="eaK" x="44" y="182">Test</text>
+        <text class="eaX" x="44" y="202">Remove it. See what breaks.</text>
+
+        <rect x="308" y="48" width="264" height="28" rx="8" fill="#2E3138"/>
+        <text class="eaT" x="326" y="67">Excessive permissions</text>
+        <rect x="308" y="76" width="264" height="140" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="eaX" x="328" y="100">The tool's credential can do</text>
+        <text class="eaX" x="328" y="118">more than the agent needs -</text>
+        <text class="eaX" x="328" y="136">write where read would do,</text>
+        <text class="eaX" x="328" y="154">all tenants where one would.</text>
+        <text class="eaK" x="328" y="182">Test</text>
+        <text class="eaX" x="328" y="202">Whose credential, and what</text>
+        <text class="eaX" x="328" y="220">else does it reach?</text>
+
+        <rect x="592" y="48" width="264" height="28" rx="8" fill="#2E3138"/>
+        <text class="eaT" x="610" y="67">Excessive autonomy</text>
+        <rect x="592" y="76" width="264" height="140" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="eaX" x="612" y="100">The action fires with no</text>
+        <text class="eaX" x="612" y="118">human and cannot be undone.</text>
+        <text class="eaX" x="612" y="136">Autonomy is only safe where</text>
+        <text class="eaX" x="612" y="154">undo is cheap.</text>
+        <text class="eaK" x="612" y="182">Test</text>
+        <text class="eaX" x="612" y="202">List every irreversible tool.</text>
+        <text class="eaX" x="612" y="220">That list is the risk.</text>
+
+        <rect x="24" y="248" width="832" height="88" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="eaH" x="44" y="272">The test that matters, and it needs no attacker at all</text>
+        <text class="eaX" x="44" y="296">Take the adversary out of the picture entirely. If the model simply gets something wrong - and it will,</text>
+        <text class="eaX" x="44" y="314">because that is what these systems do - can that mistake ALONE trigger a damaging action? If the</text>
+        <text class="eaX" x="44" y="332">answer is yes, the finding exists today, with nobody attacking you, and its name is excessive agency.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the three causes, and the one question that does not require an adversary</figcaption>
+    </figure>
+
+    <p>Run that last test first, in every engagement, because it is the cheapest finding you will ever write and the hardest to argue with. There is no attack chain to reproduce and no k of N to defend: you are simply asking whether a known property of the system - that it is sometimes wrong - is sufficient to cause harm. Anthropic's own disclosure of an AI-run espionage campaign contains the same observation from the attacker's side, noting the model "occasionally hallucinated credentials". The attacker's tooling was unreliable in exactly the way yours is. Build for that, not for the adversary you imagine.</p>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="techniques">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · the technique map</span>
+      <h2>What ATLAS has actually observed, and where the map runs out <span class="tag concept">7 min live</span></h2>
+    </div>
+    <p class="lede">Use the <code>maturity</code> field as a test-prioritisation axis: <strong>Realized</strong> means observed in the wild, and it is where an engagement with finite time should start. Three of the techniques below are Realized, and two of those have <strong>no ATLAS mitigation mapped at all</strong>.</p>
+
+    <table class="clean">
+      <tr><th>ID</th><th>Technique</th><th>Tactic</th><th>Maturity</th></tr>
+      <tr><td><strong>AML.T0053</strong></td><td>AI Agent Tool Invocation</td><td>Execution, PrivEsc, Lateral Movement</td><td>Demonstrated</td></tr>
+      <tr><td><strong>AML.T0086</strong></td><td>Exfiltration via AI Agent Tool Invocation</td><td>Exfiltration</td><td><strong>Realized</strong></td></tr>
+      <tr><td><strong>AML.T0101</strong></td><td>Data Destruction via AI Agent Tool Invocation</td><td>Impact</td><td><strong>Realized</strong></td></tr>
+      <tr><td><strong>AML.T0080</strong> (.000 Memory, .001 Thread)</td><td>AI Agent Context Poisoning</td><td>Persistence</td><td>Demonstrated</td></tr>
+      <tr><td><strong>AML.T0110</strong></td><td>AI Agent Tool Poisoning</td><td>Persistence</td><td><strong>Realized - no mitigation mapped</strong></td></tr>
+      <tr><td><strong>AML.T0109</strong></td><td>AI Supply Chain Rug Pull</td><td>Defense Evasion</td><td><strong>Realized - no mitigation mapped</strong></td></tr>
+      <tr><td><strong>AML.T0077</strong></td><td>LLM Response Rendering</td><td>Exfiltration</td><td>Demonstrated - <strong>no mitigation mapped</strong></td></tr>
+    </table>
+
+    <p>Two of those deserve a sentence each, because they break the mental model most people arrive with. <strong>Tool poisoning</strong> and <strong>rug pull</strong> are not attacks on your model or your prompt at all: they are attacks on the definitions your agent trusts, where a tool that behaved correctly during review changes behaviour afterwards. Your test for these is not a probe, it is a supply-chain control - pinning, review of changed definitions, and alerting when a tool description changes under a running agent. <strong>Response rendering</strong> is the egress leg: a client that renders whatever the model returns, as an image or a link or markup, is a channel out. GitHub's durable fix for the Copilot Chat image-exfiltration finding in August 2025 was to <strong>disable image rendering in Copilot Chat entirely</strong>, which is the shape of every fix that has actually held.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 425" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A four-step chain: untrusted content reaches the agent, the agent is convinced to call a tool, the tool runs under a credential you granted, and what that credential can do is the severity. Steps one and two cannot be fixed, since twelve recent defences were later bypassed above ninety percent and all eight evaluated indirect-injection defences for agents were bypassed. Steps three and four can be bounded by scoping credentials, restricting tool invocation on untrusted data, human approval on irreversible actions and segmentation.">
+        <style>
+          .chT { font: 600 11px Inter, sans-serif; fill: #FFFFFF; }
+          .chW { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .chH { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .chB { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .chX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+        </style>
+
+        <text class="chB" x="24" y="32">Follow the chain to the end. The severity is at the end, not at the start.</text>
+
+        <rect x="24" y="52" width="182" height="64" rx="10" fill="#5A6070"/>
+        <text class="chT" x="42" y="82">Untrusted content</text>
+        <text class="chT" x="42" y="100">reaches the agent</text>
+        <path d="M212 84 L224 84 M218 79 L224 84 L218 89" stroke="#BFC4CE" stroke-width="2" fill="none"/>
+
+        <rect x="230" y="52" width="182" height="64" rx="10" fill="#5A6070"/>
+        <text class="chT" x="248" y="82">The agent decides</text>
+        <text class="chT" x="248" y="100">to call a tool</text>
+        <path d="M418 84 L430 84 M424 79 L430 84 L424 89" stroke="#BFC4CE" stroke-width="2" fill="none"/>
+
+        <rect x="436" y="52" width="182" height="64" rx="10" fill="#2E3138"/>
+        <text class="chT" x="454" y="82">The tool runs with a</text>
+        <text class="chT" x="454" y="100">credential you gave</text>
+        <path d="M624 84 L636 84 M630 79 L636 84 L630 89" stroke="#BFC4CE" stroke-width="2" fill="none"/>
+
+        <rect x="642" y="52" width="214" height="64" rx="10" fill="#C2410C"/>
+        <text class="chW" x="660" y="82">What that credential</text>
+        <text class="chW" x="660" y="100">can do IS the severity</text>
+
+        <rect x="24" y="140" width="404" height="30" rx="8" fill="#991B1B"/>
+        <text class="chW" x="42" y="160">Steps 1 and 2: you cannot fix these</text>
+        <rect x="24" y="178" width="404" height="132" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="chX" x="44" y="204">You cannot make an agent immune to being</text>
+        <text class="chX" x="44" y="222">convinced. Twelve recent defences, most originally</text>
+        <text class="chX" x="44" y="240">reporting near-zero success, were later bypassed</text>
+        <text class="chX" x="44" y="258">above 90%. All eight evaluated indirect-injection</text>
+        <text class="chX" x="44" y="276">defences for agents were bypassed, consistently</text>
+        <text class="chX" x="44" y="294">above 50%.</text>
+
+        <rect x="452" y="140" width="404" height="30" rx="8" fill="#2E3138"/>
+        <text class="chW" x="470" y="160">Steps 3 and 4: you can bound these</text>
+        <rect x="452" y="178" width="404" height="132" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="chX" x="472" y="204">Scope the credential to the task. Restrict which</text>
+        <text class="chX" x="472" y="222">tools untrusted data may reach at all. Put a human</text>
+        <text class="chX" x="472" y="240">on the irreversible ones. Segment so a compromised</text>
+        <text class="chX" x="472" y="258">agent reaches one tenant. None of this makes the</text>
+        <text class="chX" x="472" y="276">agent harder to fool. It makes being fooled cheap,</text>
+        <text class="chX" x="472" y="294">which is the only version anybody has achieved.</text>
+
+        <rect x="24" y="326" width="832" height="84" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="chH" x="44" y="350">Say this part out loud, because a framework rarely admits it</text>
+        <text class="chX" x="44" y="376">ATLAS maps NO mitigation at all to several Realized techniques on this page: AML.T0110 tool poisoning</text>
+        <text class="chX" x="44" y="394">and AML.T0109 rug pull, plus AML.T0077 response rendering. That is the residual-risk column.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - two halves of the chain, only one of which you can do anything about</figcaption>
+    </figure>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>The same ground on the OWASP Agentic list<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>OWASP released its Top 10 for Agentic Applications in December 2025. The mapping below is the one to keep next to the ATLAS table, because ATLAS tells you what has been observed and the ASI list tells you what to design against.</p>
+        <table class="clean">
+          <tr><th>ASI</th><th>What it covers</th><th>Nearest ATLAS technique</th></tr>
+          <tr><td><strong>ASI02</strong> Tool Misuse and Exploitation</td><td>The tool does something the workflow never needed it to do</td><td>AML.T0053, AML.T0086, AML.T0101</td></tr>
+          <tr><td><strong>ASI03</strong> Identity and Privilege Abuse</td><td>Whose credential the tool call runs under, and what else it reaches</td><td>AML.T0053 under PrivEsc</td></tr>
+          <tr><td><strong>ASI06</strong> Memory and Context Poisoning</td><td>Something written once that changes behaviour later</td><td>AML.T0080, .000 Memory, .001 Thread</td></tr>
+          <tr><td><strong>ASI07</strong> Insecure Inter-Agent Communication</td><td>One agent trusting another agent's output as instruction</td><td>AML.T0051 family, applied between agents</td></tr>
+          <tr><td><strong>ASI08</strong> Cascading Failures</td><td>One bad step becoming many, because each step trusts the last</td><td>AML.T0080 plus call chains from AML.T0084.003</td></tr>
+          <tr><td><strong>ASI09</strong> Human-Agent Trust Exploitation</td><td>The approval that gets clicked because it always gets clicked</td><td>The failure mode of M0029, discussed in Part 3</td></tr>
+          <tr><td><strong>ASI10</strong> Rogue Agents</td><td>An agent running outside the inventory anybody is watching</td><td>AML.T0109, AML.T0110</td></tr>
+        </table>
+        <p><strong>An honesty note on ASI01.</strong> This course does not state its final title. OWASP's own repository file is <code>ASI01_Agent_Behaviour_Hijack.md</code> and the December announcement says "Agent Behavior Hijacking", while secondary coverage of the final release says "Agent Goal Hijack". Until the released PDF is checked, write it as <strong>ASI01 (agent behaviour / goal hijack)</strong> and do not put either title in a report as if it were settled. The same caution applies more weakly to the exact final wording of ASI02 to ASI10, which come from draft filenames plus agreeing secondary summaries.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="mcp">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · MCP, and what actually bounds this</span>
+      <h2>Almost none of it is AI-specific <span class="tag concept">8 min live</span></h2>
+    </div>
+    <p class="lede">Here is the structural point of the session, and it changes who owns the work. Read the documented Model Context Protocol threats one by one and notice what class each belongs to. They are OAuth problems, SSRF problems, session problems and supply-chain problems, arriving in a new component with a new name.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 450" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Five documented MCP threats mapped to their underlying non-AI class and the required control. Confused deputy is an OAuth problem requiring per-client consent and exact-match redirect URIs. Token passthrough is an audience problem: servers must not accept tokens not issued for them. SSRF on OAuth metadata discovery requires blocking private and reserved ranges including cloud metadata. Session hijacking requires that sessions must not be used for authentication. Over-broad scopes is a least-privilege problem.">
+        <style>
+          .mtT { font: 700 11px Inter, sans-serif; fill: #FFFFFF; }
+          .mtM { font: 600 11px Inter, sans-serif; fill: #3A1B08; }
+          .mtH { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .mtB { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .mtX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+        </style>
+
+        <text class="mtB" x="24" y="32">The documented threat, what it actually is, and the control that is already written down.</text>
+
+        <rect x="24" y="48" width="222" height="46" rx="8" fill="#2E3138"/>
+        <text class="mtT" x="42" y="70">Confused deputy</text>
+        <text class="mtT" x="42" y="86">(proxy servers)</text>
+        <rect x="254" y="48" width="170" height="46" rx="8" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="mtM" x="270" y="76">An OAuth problem</text>
+        <rect x="432" y="48" width="424" height="46" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="mtX" x="450" y="70">Proxy servers MUST get per-client consent. Exact-match</text>
+        <text class="mtX" x="450" y="86">redirect URI, no wildcards; single-use state value.</text>
+
+        <rect x="24" y="102" width="222" height="46" rx="8" fill="#2E3138"/>
+        <text class="mtT" x="42" y="130">Token passthrough</text>
+        <rect x="254" y="102" width="170" height="46" rx="8" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="mtM" x="270" y="130">An audience problem</text>
+        <rect x="432" y="102" width="424" height="46" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="mtX" x="450" y="124">Servers MUST NOT accept a token that was not issued</text>
+        <text class="mtX" x="450" y="140">for them. Validate the audience on every request.</text>
+
+        <rect x="24" y="156" width="222" height="46" rx="8" fill="#2E3138"/>
+        <text class="mtT" x="42" y="178">SSRF on OAuth</text>
+        <text class="mtT" x="42" y="194">metadata discovery</text>
+        <rect x="254" y="156" width="170" height="46" rx="8" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="mtM" x="270" y="184">An SSRF problem</text>
+        <rect x="432" y="156" width="424" height="46" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="mtX" x="450" y="178">Block private and reserved ranges on discovery fetches,</text>
+        <text class="mtX" x="450" y="194">including 169.254/16 cloud metadata.</text>
+
+        <rect x="24" y="210" width="222" height="46" rx="8" fill="#2E3138"/>
+        <text class="mtT" x="42" y="238">Session hijacking</text>
+        <rect x="254" y="210" width="170" height="46" rx="8" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="mtM" x="270" y="238">A session problem</text>
+        <rect x="432" y="210" width="424" height="46" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="mtX" x="450" y="232">Sessions MUST NOT be used for authentication. Bind the</text>
+        <text class="mtX" x="450" y="248">session to a user and verify the credential per call.</text>
+
+        <rect x="24" y="264" width="222" height="46" rx="8" fill="#2E3138"/>
+        <text class="mtT" x="42" y="292">Over-broad scopes</text>
+        <rect x="254" y="264" width="170" height="46" rx="8" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="mtM" x="270" y="286">A least-privilege</text>
+        <text class="mtM" x="270" y="302">problem</text>
+        <rect x="432" y="264" width="424" height="46" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="mtX" x="450" y="286">Request the narrowest scope the workflow needs, and</text>
+        <text class="mtX" x="450" y="302">re-request rather than hold a broad one.</text>
+
+        <rect x="24" y="330" width="832" height="104" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="mtH" x="44" y="354">Read the middle column again</text>
+        <text class="mtX" x="44" y="376">Almost none of the documented MCP threats are AI-specific. They are OAuth, SSRF, session and</text>
+        <text class="mtX" x="44" y="394">supply-chain problems arriving in a new component, which is Google's lesson - that traditional security</text>
+        <text class="mtX" x="44" y="412">controls significantly mitigate many of these attacks - in its most concrete available form.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - five threats, five familiar classes, five controls somebody in your org already knows</figcaption>
+    </figure>
+
+    <p>The practical consequence is a staffing decision rather than a research programme. If your MCP review is being run entirely by the AI team, it is being run by the wrong people, or at least not only by the right ones. Google's published lesson from its own AI red team says traditional security controls significantly mitigate many attacks, and this is what that sentence looks like when it reaches an implementation. Pair an application-security reviewer with an AI engineer, hand the first one the OAuth and SSRF rows, and the review gets better the same afternoon.</p>
+
+    <div class="callout example">
+      <span class="ex-pill">Real world</span>
+      <p>The Amazon Q Developer incident is the cleanest published illustration of an old control failing in a new place. AWS's own security bulletin gives the root cause as <strong>"an inappropriately scoped GitHub token in their CodeBuild configuration"</strong>, which let an outside actor land code in a release. The injected instruction told the assistant to wipe resources. It did not execute, the bulletin notes, "unsuccessful in executing due to a syntax error" - which is luck, not a control. The failure was token scope. The AI was the payload's delivery vehicle, not its cause.</p>
+    </div>
+
+    <h3 style="margin-top:2rem">The defences that actually bound this</h3>
+    <p>ATLAS names them, and they line up exactly with the right-hand half of the chain in Part 2. None of them makes the agent harder to fool. All of them make being fooled cheaper.</p>
+
+    <table class="clean">
+      <tr><th>Mitigation</th><th>What it does</th><th>Where it bites</th></tr>
+      <tr><td><strong>M0026 / M0027 / M0028</strong></td><td>Permission configuration across the agent, its tools and its data</td><td>The credential at step 3. The highest-leverage control in this list</td></tr>
+      <tr><td><strong>M0029</strong> Human In-the-Loop</td><td>A person approves before the action fires</td><td>Irreversible tools only. See the honesty note below</td></tr>
+      <tr><td><strong>M0030</strong> Restrict Tool Invocation on Untrusted Data</td><td>Content from an untrusted source cannot reach the tools that matter</td><td>Cuts the chain between step 1 and step 2, which is the only place it can be cut</td></tr>
+      <tr><td><strong>M0031</strong> Memory Hardening</td><td>Bounds what can be written to memory and what memory can cause</td><td>AML.T0080 and ASI06. Persistence is the difference between an incident and a recurring one</td></tr>
+      <tr><td><strong>M0032</strong> Segmentation</td><td>A compromised agent reaches one tenant, one dataset, one environment</td><td>Blast radius. This is what turns a Critical into a High</td></tr>
+    </table>
+
+    <div class="callout warn">
+      <strong>Honesty note on human-in-the-loop, and on what we do not know</strong>
+      M0029 degrades under approval fatigue: a human who approves forty prompts a day is a rubber stamp with a salary, and OWASP concedes the point directly - which is also what ASI09 Human-Agent Trust Exploitation is about. What nobody can currently give you is a number. <strong>This course's source map found no primary study of approval-fatigue rates for AI agents</strong>; every available source is a vendor or practitioner blog. So treat it as a well-founded hypothesis rather than a measured quantity, and if you need supporting literature, cite the general security-warning habituation research and label it explicitly as a <strong>non-AI analog</strong>. The design consequence stands either way: put approval on the few irreversible actions, not on everything, because an approval queue you can clear without reading is worse than no queue at all.
+    </div>
+  </section>
+
+  <!-- ============ DEMO 1 ============ -->
+  <section class="section" id="demo-1">
+    <div class="section-kicker">
+      <span class="klabel">Demo 1 of 2</span>
+      <h2>Beacon's tool permission manifest <span class="tag demo">★ 12 min · everyone builds</span></h2>
+    </div>
+    <p class="lede">Support Bot is the T3 bot that can issue refund credits, so it is the manifest to write first. This artefact is the input to nearly every severity decision for the rest of the engagement, and most teams have never written it down at all. One row per tool, and the two columns everyone forgets are <code>reversible</code> and <code>untrusted_data_may_invoke</code>.</p>
+
+    <div class="prompt-box good"><span class="label">beacon/agents/support-bot.tools.yaml</span># One row per tool. If you cannot fill every field, the tool is not reviewed.
+# Maps to ATLAS M0026/27/28 permission configuration and M0030.
+
+agent: support-bot
+credential_principal: svc-support-bot     # NOT the calling user, NOT a shared admin
+segmentation: tenant-scoped               # M0032 - one tenant per session
+
+tools:
+  - name: lookup_order
+    scope: read:orders:own-tenant
+    reversible: true
+    untrusted_data_may_invoke: true       # safe: read-only, tenant-scoped
+    human_approval: false
+
+  - name: issue_refund_credit
+    scope: write:credits:max-50-per-day   # least privilege, with a ceiling
+    reversible: false                     # this is the column that sets severity
+    untrusted_data_may_invoke: false      # M0030 - untrusted input cannot reach this
+    human_approval: required              # M0029 - and ONLY on tools like this one
+
+  - name: send_customer_email
+    scope: write:mail:templated-only      # no free-text body = no egress channel
+    reversible: false
+    untrusted_data_may_invoke: false
+    human_approval: required
+
+renderer:
+  images: disabled                        # AML.T0077 - the egress leg, closed
+  links: text-only-no-auto-fetch</div>
+
+    <div class="steps">
+      <div class="step"><p><strong>Fill the <code>reversible</code> column first, for every tool.</strong> This is the b1 homework arriving with interest. Reversible tools can tolerate autonomy; irreversible ones cannot, and the whole of M0029 should be spent on that short list rather than spread across everything.</p></div>
+      <div class="step"><p><strong>Name the credential principal explicitly.</strong> If the answer is "it runs as the calling user", you have inherited every permission that user has, including the ones the workflow never needed. If the answer is a shared service account with broad rights, step 4 of the chain is as wide as that account, and that is your severity.</p></div>
+      <div class="step"><p><strong>Set <code>untrusted_data_may_invoke</code> honestly.</strong> Any tool reachable while untrusted content is in context is reachable by that content. This is M0030 written as configuration rather than as a hope, and it is the one place the chain between steps 1 and 2 can actually be cut.</p></div>
+      <div class="step"><p><strong>Now run the hallucination-alone test.</strong> For each irreversible tool, ask: if the model simply invents a reason to call this, with nobody attacking, what happens? On Beacon's Support Bot the answer was a credit issued to the wrong account, which is a finding with no adversary in it and no k of N to argue about.</p></div>
+      <div class="step"><p><strong>Close the renderer.</strong> AML.T0077 has no ATLAS mitigation mapped, and the durable real-world fix has been to remove the channel: GitHub disabled image rendering in Copilot Chat outright. Beacon does the same, and the manifest is where that decision is recorded so that a future feature request has to argue with it.</p></div>
+    </div>
+
+    <div class="callout tip">
+      <strong>Why the manifest is the deliverable and the transcript is not</strong>
+      A finding that says "we got the agent to call the refund tool" ages out at the next prompt change. A manifest row that says this tool is irreversible, holds a write-scoped credential with a daily ceiling, is unreachable from untrusted content, and requires approval, is a control that survives the next three model upgrades. Write the second one.
+    </div>
+  </section>
+
+  <!-- ============ DEMO 2 ============ -->
+  <section class="section" id="demo-2">
+    <div class="section-kicker">
+      <span class="klabel">Demo 2 of 2</span>
+      <h2>The MCP check, and the two pre-deployment heuristics <span class="tag demo">★ 8 min · in pairs</span></h2>
+    </div>
+    <p class="lede">Two artefacts to finish on. The first is the review checklist for any MCP server your agent talks to, written as assertions rather than as prose so that it can be automated. The second is the pair of heuristics that decide whether a workflow should ship as an agent at all.</p>
+
+    <div class="prompt-box good"><span class="label">beacon/checks/mcp_review.py - assertions, not prose</span># Every assertion below is a general security control, not an AI control.
+# Failing any one of them is a finding regardless of what the model does.
+
+def review(server, client, request):
+    # Confused deputy: a proxy server must not consent on a client's behalf
+    assert server.obtains_consent_per_client(client)
+    assert server.redirect_uri_match == "exact"        # no wildcards, ever
+    assert request.state.single_use and request.state.stored_after_consent
+
+    # Token passthrough: audience is not optional
+    assert request.token.audience == server.identifier
+
+    # SSRF on OAuth metadata discovery
+    assert server.discovery_fetch.blocks_private_and_reserved_ranges
+    assert "169.254.0.0/16" in server.discovery_fetch.denied  # cloud metadata
+
+    # Sessions are not an authentication mechanism
+    assert not server.authenticates_by_session
+    assert server.verifies_credential_per_call
+
+    # Scope minimization
+    assert server.requested_scopes == workflow.minimum_scopes</div>
+
+    <div class="steps">
+      <div class="step"><p><strong>Run the checklist against one real MCP server, in pairs, four minutes.</strong> Then note which of the six assertions your AI team could have answered and which needed the application-security team. That split is the staffing argument from Part 3, made with your own system.</p></div>
+      <div class="step"><p><strong>Apply the lethal trifecta.</strong> Simon Willison's heuristic: access to private data, exposure to untrusted content, and the ability to communicate externally. Any one alone is safe. All three together mean attacker text can move your data out, and <strong>removing any one leg removes the risk</strong>. Walk Beacon's three bots through it and write down which leg you would cut on each.</p></div>
+      <div class="step"><p><strong>Apply the Rule of Two.</strong> Meta's formulation, which OWASP cites as a floor: treat simultaneous (A) untrusted input, (B) sensitive data and (C) state change or external communication as high risk, and require <strong>per-action human approval</strong> for an agent holding all three. Note OWASP's own caveat while you use it: the rule is <strong>silent on autonomy depth</strong>, so an agent with three legs and forty sequential steps scores the same as one with three legs and two steps, which is a real gap rather than a quibble.</p></div>
+      <div class="step"><p><strong>Write the sentence that closes the session.</strong> For each Beacon bot: this workflow is safe to run as an agent because the credential can only do X, or this workflow should not run as an agent, which is a legitimate finding rather than a failure. NCSC's phrasing is the one to borrow when it lands that way: if the system's security cannot tolerate the remaining risk, it may not be a good use case for LLMs.</p></div>
+    </div>
+
+    <div class="callout win">
+      <strong>★ The line to leave the room with</strong>
+      You cannot make the model refuse to be fooled. You can bound what being fooled gets an attacker. Every durable real-world fix in this course's incident list cut the egress leg or the untrusted-content leg, and not one of them fixed the model.
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Try it yourself - this week <span class="tag exercise">◐ 45-60 min total</span></h2>
+    </div>
+    <ul>
+      <li>Write the permission manifest for one real agent you own, including the credential principal. Most teams discover during this exercise that a tool runs under a broader identity than anybody intended, and that discovery is worth more than the rest of the session.</li>
+      <li>Run the hallucination-alone test on every irreversible tool. Any tool where a plain model mistake causes harm is a finding you can file today with no attack chain attached.</li>
+      <li>Take the six MCP assertions to whoever operates your servers and ask which are already true. Note how many of the answers come from a security engineer rather than an AI engineer.</li>
+      <li>Pick your loudest agentic roadmap item and score it on both the lethal trifecta and the Rule of Two. If it holds all three legs, the honest recommendation is per-action approval or a leg removed, and you now have two published heuristics to say so with.</li>
+    </ul>
+  </section>
+
+  <!-- ============ SOURCES ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Source material</span>
+      <h2>Official sources covered</h2>
+    </div>
+    <p class="lede">Every framework, figure and quotation on this page traces to a primary source catalogued in this course's source map, verified 2026-08-14. This page covers:</p>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP <strong>LLM03:2026 Excessive Agency</strong> (up three places from 2025's LLM06) and its three root causes: excessive functionality, permissions, autonomy</span><span class="note">Part 1 · OWASP GenAI Top 10, 2026 edition · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MITRE ATLAS <strong>AML.T0053</strong>, <strong>AML.T0086</strong> (Realized), <strong>AML.T0101</strong> (Realized), <strong>AML.T0080</strong> with .000 Memory and .001 Thread, <strong>AML.T0110</strong> and <strong>AML.T0109</strong> (Realized, no mitigation mapped), <strong>AML.T0077</strong> (no mitigation mapped)</span><span class="note">Part 2 · ATLAS collection 2026.07, format-version 6.0.0 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">ATLAS platform tags: Agentic AI 119, Generative AI 92, Predictive AI 70 - Agentic AI is now the largest tag</span><span class="note">Part 0 · cited from the machine-readable dataset, not the rendered site · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP Agentic Top 10: <strong>ASI02, ASI03, ASI06, ASI07, ASI08, ASI09, ASI10</strong> mapped to ATLAS techniques</span><span class="note">Part 2 card · released 9-10 Dec 2025 · [P] with the caveat below</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MCP security: confused deputy and per-client consent, exact-match redirect URI, single-use state; token passthrough and audience validation; SSRF on metadata discovery including 169.254/16; sessions MUST NOT authenticate; scope minimization</span><span class="note">Part 3 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">ATLAS mitigations <strong>M0026/27/28</strong>, <strong>M0029</strong> Human In-the-Loop, <strong>M0030</strong> Restrict Tool Invocation on Untrusted Data, <strong>M0031</strong> Memory Hardening, <strong>M0032</strong> Segmentation</span><span class="note">Part 3 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Bypass evidence: 12 recent defences bypassed above 90% ASR (Nasr, Carlini et al. 2025); all 8 evaluated indirect-injection defences for agents bypassed, consistently above 50% (Zhan et al., NAACL 2025)</span><span class="note">Part 2 figure · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Amazon Q Developer: AWS Security Bulletin AWS-2025-015, root cause an inappropriately scoped GitHub token; GitHub disabling image rendering in Copilot Chat, 14 Aug 2025; Google's "traditional security controls significantly mitigate" lesson</span><span class="note">Parts 2-3 · [P] · <strong>no CVE is cited for either incident</strong>, per the source map's corrections</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Lethal trifecta (Willison) and Meta's Rule of Two, with OWASP's caveat that the rule is silent on autonomy depth</span><span class="note">Demo 2 · [P]</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name"><strong>ASI01's final title</strong></span><span class="note"><strong>COULD NOT VERIFY.</strong> Repo file says "Agent Behaviour Hijack", the December announcement says "Agent Behavior Hijacking", secondary coverage says "Agent Goal Hijack". Written here as ASI01 (agent behaviour / goal hijack) only</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name"><strong>Approval-fatigue rates for AI agents</strong></span><span class="note"><strong>COULD NOT VERIFY.</strong> No primary study located; all sources are vendor and practitioner blogs. Taught as a hypothesis, with the general security-warning habituation literature named as an explicitly non-AI analog</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The manifest schema and the MCP assertion file</span><span class="note">Assembled for this course from the controls above · <strong>no published standard manifest format exists</strong>; treat as a starting structure. Beacon values are illustrative</span></div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions before you go 🎯 <span class="tag exercise">◐ 90 seconds</span></h2>
+    </div>
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">1 · Which excessive-agency test can you run before any attacker is involved, and why is it the one to run first?</p>
+      <button class="qopt" type="button">A · Attempt an indirect injection through a document the agent will retrieve</button>
+      <button class="qopt" type="button">B · Enumerate the tool definitions to see what an attacker would learn</button>
+      <button class="qopt" type="button">C · Ask whether a model mistake ALONE, with nobody attacking, can trigger a damaging action - it needs no attack chain to reproduce and no k of N to defend</button>
+      <p class="qwhy">A and B are both real tests and both cost time, need N trials, and produce findings someone can argue with. The hallucination-alone test costs a reading of your own tool list and produces a finding that cannot be disputed, because it relies only on a property everyone already agrees the system has: it is sometimes wrong. If a plain mistake can issue a credit or delete a record, that is excessive agency today, and the adversary is a distraction.</p>
+    </div>
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">2 · Your review of an MCP server finds no per-client consent in the proxy, a token accepted without audience validation, and discovery fetches that reach link-local addresses. What kind of findings are these?</p>
+      <button class="qopt" type="button">A · Ordinary OAuth, audience and SSRF findings that happen to live in an AI component - which is why an application-security reviewer should be in the room, and why traditional controls carry most of the mitigation here</button>
+      <button class="qopt" type="button">B · Novel AI vulnerabilities requiring AI-specific defences</button>
+      <button class="qopt" type="button">C · Model-behaviour findings, since the agent is what talks to the server</button>
+      <p class="qwhy">The tell is that every control is already written down somewhere older than the protocol: exact-match redirect URIs, single-use state stored only after consent, audience validation, and blocking private and reserved ranges including 169.254/16 for cloud metadata. Treating these as AI problems routes them to the team least likely to have the relevant muscle memory, which is the staffing failure this session exists to prevent.</p>
+    </div>
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">3 · You propose human approval on every agent action as the fix. What is the strongest honest objection?</p>
+      <button class="qopt" type="button">A · Approval adds latency that users will not tolerate</button>
+      <button class="qopt" type="button">B · Approval degrades under fatigue, so blanket approval produces a queue cleared without reading - and note we have no primary study of AI approval-fatigue rates, so this is a well-founded hypothesis rather than a measured number. Put approval on irreversible actions only</button>
+      <button class="qopt" type="button">C · ATLAS does not list human-in-the-loop as a mitigation</button>
+      <p class="qwhy">C is simply false: M0029 Human In-the-Loop is a named ATLAS mitigation, and a good one when it is aimed. A is true and is a product argument rather than a security one. B is the security argument, and the honesty matters as much as the point: OWASP concedes that human-in-the-loop degrades under fatigue and ASI09 Human-Agent Trust Exploitation is built on it, but the specific rates circulating in vendor blogs have no primary study behind them. Say the mechanism, decline to quote a number, and put the approvals where the irreversible actions are.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Builder session 6 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>LLM03:2026 Excessive Agency</b><span>Up three places. Three root causes: excessive functionality, excessive permissions, excessive autonomy.</span></div>
+      <div class="cheat-item"><b>The test with no attacker</b><span>Can a hallucination ALONE trigger a damaging action? If yes, the finding exists today.</span></div>
+      <div class="cheat-item"><b>Realized first</b><span>T0086 exfiltration and T0101 data destruction via tool invocation are Realized. Test those before the theoretical ones.</span></div>
+      <div class="cheat-item"><b>Where the map runs out</b><span>T0110 tool poisoning and T0109 rug pull are Realized with <strong>no ATLAS mitigation mapped</strong>. T0077 rendering likewise.</span></div>
+      <div class="cheat-item"><b>Severity is the credential</b><span>Steps 1 and 2 of the chain cannot be fixed. Steps 3 and 4 can be bounded. That is the whole job.</span></div>
+      <div class="cheat-item"><b>MCP is not an AI problem</b><span>Per-client consent, exact-match redirect URI, audience validation, block 169.254/16, sessions never authenticate, minimum scopes.</span></div>
+      <div class="cheat-item"><b>M0030 over M0029</b><span>Restrict which tools untrusted data may reach; reserve human approval for irreversible actions, because approval degrades under fatigue.</span></div>
+      <div class="cheat-item"><b>Trifecta and Rule of Two</b><span>Private data + untrusted content + external comms. Cut a leg. [A,B,C] needs per-action approval, and the rule is silent on autonomy depth.</span></div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>Builder session 6 of 10 · learn-ai-red-team-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← Course home</a> &nbsp;·&nbsp; <a href="b7-build-the-suite.html">Next: Build the suite →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

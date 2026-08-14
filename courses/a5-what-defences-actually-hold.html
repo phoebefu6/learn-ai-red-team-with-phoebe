@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leader session 5 · What defences actually hold - learn ai red team with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-red-team-with-phoebe</a> / Leader session 5 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI Red Team with Phoebe · Leader track · Session 5 of 6</div>
+    <h1>What defences actually hold: <span class="accent">prompt-level controls reduce rates, architecture removes capabilities</span></h1>
+    <p class="sub">This is the evidence session. Your teams are about to ask you to fund one of two things: better guardrails, or a smaller blast radius. The published record is unusually clear about which of those two has ever held up under an attacker who was allowed to adapt, and it is clear in a way that costs money and product surface to act on. Nothing here is opinion. Every number on this page is measured, published, and attached to a source you can hand to a sceptical engineer.</p>
+    <div class="chip-row">
+      <span class="chip level">🟠 Leader track</span>
+      <span class="chip audience">Heads of security · eng leaders · risk and compliance</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-20 · The bypass record and the honest wins</span>
+      <span class="a3" style="flex:4">20-40 · Stacking, incidents, and the ordering</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Why this session exists, and the line it does not cross</h2>
+    </div>
+    <div class="callout warn">
+      <strong>⚠ Authorization</strong>
+      This course is about testing AI systems <strong>you own, or are contracted in writing to test</strong>. Every exercise runs against Beacon, a fictional company, inside a scope document written in the builder track. The course names defence <em>classes</em> and the published evidence about each one. It contains no exploit payloads and teaches no attack craft. Testing a system you are not authorized to test is a crime in most jurisdictions, and no framing in a slide deck changes that.
+    </div>
+    <p class="lede">Sessions 1 to 4 taught you to read a finding. This one teaches you to read a <em>fix</em>. The pattern you are about to see repeats so consistently across independent research groups that it functions as a decision rule: <strong>a defence that lives in the prompt or in a classifier reduces a rate, and a defence that lives in the architecture removes a capability.</strong> Rates come back. Removed capabilities do not.</p>
+    <div class="legend">
+      <span class="pill solid">Live - presented in session</span>
+      <span class="pill light">Self-study - read after class</span>
+      <span class="pill inkpill">Official sources covered</span>
+    </div>
+    <div class="callout win">
+      <strong>★ What you walk out with today</strong>
+      The measured bypass record for the defence classes your vendors are selling you, the four defences that genuinely moved a number and exactly what each one cost, the LLMail-Inject stacking result that shows defence in depth is real and insufficient at the same time, and a funding order you can defend in a budget meeting: architecture before detection before instruction.
+    </div>
+    <div class="callout tip">
+      <strong>Where this sits in the track</strong>
+      Session 3 taught you that a near-zero attack success rate is a claim about a testing configuration, not about a system. This session is the receipts for that. Session 6 takes the same evidence and asks the question it forces: when do you decline to ship the workflow at all.
+    </div>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="bypass">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · the bypass record</span>
+      <h2>Three results that should change how you read a vendor claim <span class="tag concept">7 min live</span></h2>
+    </div>
+    <p class="lede">Start with the uncomfortable block, because everything afterwards is easier to price once you have seen it. These are three independent studies, published in 2025, against defences that were not obscure and were not weak on the day they shipped.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 410" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three published bypass results: twelve recent defences bypassed above ninety percent attack success rate, all eight agent indirect-injection defences bypassed above fifty percent, and six production guardrails evaded by character injection with up to one hundred percent evasion success.">
+        <style>
+          .bpH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .bpX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .bpL { font: 600 11px Inter, sans-serif; fill: #FFFFFF; }
+          .bpN { font: 800 22px Inter, sans-serif; fill: #FFFFFF; }
+          .bpS { font: 400 11px Inter, sans-serif; fill: #FCA5A5; }
+        </style>
+
+        <text class="bpH" x="24" y="32">Published 2025. Independent groups. Defences that had reported strong numbers first.</text>
+
+        <rect x="24" y="48" width="250" height="88" rx="10" fill="#991B1B"/>
+        <text class="bpL" x="42" y="72">12 recent defences</text>
+        <text class="bpN" x="42" y="102">&gt;90% ASR</text>
+        <text class="bpS" x="42" y="122">originally near-zero ASR</text>
+        <rect x="286" y="48" width="570" height="88" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="bpX" x="306" y="78">Nasr, Carlini, Sitawarin, Schulhoff, Hayes, Shumailov, Terzis, Tramer</text>
+        <text class="bpX" x="306" y="96">et al., Oct 2025. Gradient descent, RL, random search, human-guided</text>
+        <text class="bpX" x="306" y="114">search. Most of the twelve had originally reported near-zero success.</text>
+
+        <rect x="24" y="148" width="250" height="88" rx="10" fill="#991B1B"/>
+        <text class="bpL" x="42" y="172">All 8 agent defences</text>
+        <text class="bpN" x="42" y="202">&gt;50% ASR</text>
+        <text class="bpS" x="42" y="222">indirect injection, agents</text>
+        <rect x="286" y="148" width="570" height="88" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="bpX" x="306" y="178">Zhan et al., NAACL 2025 Findings. Every one of the eight evaluated</text>
+        <text class="bpX" x="306" y="196">defences against indirect prompt injection for agents was bypassed,</text>
+        <text class="bpX" x="306" y="214">consistently above a 50% attack success rate. Eight of eight.</text>
+
+        <rect x="24" y="248" width="250" height="88" rx="10" fill="#991B1B"/>
+        <text class="bpL" x="42" y="272">6 production guardrails</text>
+        <text class="bpN" x="42" y="302">up to 100%</text>
+        <text class="bpS" x="42" y="322">evasion success in cases</text>
+        <rect x="286" y="248" width="570" height="88" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="bpX" x="306" y="278">Character injection: zero-width characters, Unicode tags, homoglyphs,</text>
+        <text class="bpX" x="306" y="296">emoji smuggling. Shipped commercial guardrails, including ones your</text>
+        <text class="bpX" x="306" y="314">organisation may already be paying for. In some instances, 100%.</text>
+
+        <rect x="24" y="348" width="832" height="56" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="bpH" x="44" y="372">Read this as a class result, not a league table of bad products</text>
+        <text class="bpX" x="44" y="392">Each defence here reported a strong number first. That number was real - it was measured non-adaptively.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - what happens to a defence when the attacker is allowed to move second</figcaption>
+    </figure>
+
+    <p>The title of the first paper is the whole lesson: <strong>the attacker moves second</strong>. A defence is proposed, evaluated against the attacks that existed when it was written, and reports a number close to zero. Then somebody optimises against the defence itself, and the number is above ninety percent. Nothing was faked and nobody was careless. The evaluation simply measured a different thing from the one the number was later used to claim.</p>
+
+    <div class="callout warn">
+      <strong>The character-injection result deserves a separate flag for procurement</strong>
+      Zero-width characters, Unicode tag blocks, homoglyphs and emoji smuggling are not exotic research artefacts. They are properties of text encoding that a guardrail sees differently from the model behind it. If your guardrail vendor cannot tell you how they normalise input before classifying it, you do not yet know what you have bought. This is a question for a contract renewal, not for an engineer.
+    </div>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="honest-wins">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · the honest wins</span>
+      <h2>Four defences that genuinely move a number, and the bill attached to each <span class="tag concept">8 min live</span></h2>
+    </div>
+    <p class="lede">If Part 1 were the whole story, the correct decision would be to stop building. It is not. Four published results move real numbers, and every one of them comes with a cost that is stated in the paper and quietly dropped from the summary deck. Your job as a funder is to keep the cost attached to the number.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four defences with real measured gains and their costs: spotlighting, instruction hierarchy, constitutional classifiers, and CaMeL.">
+        <style>
+          .hwH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .hwX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .hwN { font: 800 19px Inter, sans-serif; fill: #C2410C; }
+          .hwT { font: 700 13px Inter, sans-serif; fill: #2E3138; }
+        </style>
+
+        <text class="hwH" x="24" y="30">Four results that hold up, each with the cost the summary deck usually drops.</text>
+
+        <rect x="24" y="44" width="404" height="140" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="hwT" x="44" y="70">Spotlighting</text>
+        <text class="hwN" x="44" y="98">&gt;50% ASR down to &lt;2%</text>
+        <text class="hwX" x="44" y="120">non-adaptively. Then LLMail-Inject measured a Team</text>
+        <text class="hwX" x="44" y="138">Success Rate of 0.529 against it, and DeepMind found</text>
+        <text class="hwX" x="44" y="156">it much less effective against adaptive attacks.</text>
+
+        <rect x="452" y="44" width="404" height="140" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="hwT" x="472" y="70">Instruction hierarchy</text>
+        <text class="hwN" x="472" y="98">up to +63% robustness</text>
+        <text class="hwX" x="472" y="120">generalising to unseen attacks, which is rare and</text>
+        <text class="hwX" x="472" y="138">valuable. The cost: documented over-refusal</text>
+        <text class="hwX" x="472" y="156">regressions. Always fund a benign set alongside.</text>
+
+        <rect x="24" y="196" width="404" height="140" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="hwT" x="44" y="222">Constitutional Classifiers</text>
+        <text class="hwN" x="44" y="250">86% down to 4.4%</text>
+        <text class="hwX" x="44" y="272">jailbreak success, with a refusal increase of only</text>
+        <text class="hwX" x="44" y="290">0.38%. The cost: 23.7% compute overhead. A real</text>
+        <text class="hwX" x="44" y="308">defence with a real and quantified bill.</text>
+
+        <rect x="452" y="196" width="404" height="140" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="hwT" x="472" y="222">CaMeL</text>
+        <text class="hwN" x="472" y="250">77% vs 84% of tasks</text>
+        <text class="hwX" x="472" y="272">on AgentDojo. The 77% carries PROVABLE security,</text>
+        <text class="hwX" x="472" y="290">the 84% is undefended. Seven points of utility</text>
+        <text class="hwX" x="472" y="308">traded for a guarantee rather than for a rate.</text>
+
+        <rect x="24" y="348" width="832" height="76" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="hwH" x="44" y="370">The pattern across all four</text>
+        <text class="hwX" x="44" y="390">Each strong number costs something measurable: utility, compute, or over-refusal. None removes the class. Compare</text>
+        <text class="hwX" x="44" y="408">defences on a Pareto plot, as NIST instructs: better on one axis and worse on another is not an improvement.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the four honest wins, with the price tag left attached</figcaption>
+    </figure>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Why CaMeL is the odd one out, and why leaders should notice<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Three of the four defences above lower a rate. CaMeL does something categorically different: it produces a system where certain outcomes are <strong>provably</strong> unreachable, and pays for that with seven percentage points of task completion. That is a trade a business can actually reason about, because the thing on the other side of the trade is a guarantee rather than a better average.</p>
+        <p>NIST's taxonomy sets out the reasoning that leads there. Because current mitigations do not offer full protection, designers may build on the assumption that <strong>prompt injection is possible whenever a model is exposed to untrusted input</strong> - for instance by running multiple models with different permissions, or by allowing interaction with untrusted sources only through well-defined interfaces. CaMeL and the dual-model patterns are what that assumption looks like once it is implemented.</p>
+        <p>The leadership translation: a seven-point utility loss is a product conversation, and product conversations can be won. A twelve-defence bypass rate is not a product conversation, it is a discovery that the thing you funded does not do what the slide said.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="stacking">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · stacking, and the incident record</span>
+      <h2>Defence in depth is measurably real and measurably insufficient <span class="tag concept">7 min live</span></h2>
+    </div>
+    <p class="lede">LLMail-Inject, run by Microsoft's MSRC with IEEE SaTML 2025, is the largest public adaptive-injection dataset there is: 370,724 submissions in the first phase and 90,916 in the second, against a realistic email assistant with real defences switched on. It is the closest thing the field has to a controlled experiment on stacking, and it is the centrepiece of this session.</p>
+
+    <table class="clean">
+      <tr><th>Defence, Phase 1 Level 4</th><th>Team Success Rate</th><th>What that number means</th></tr>
+      <tr><td><strong>Prompt Shield</strong></td><td><strong>0.600</strong></td><td>Sixty percent of the teams that attempted this level got past it</td></tr>
+      <tr><td><strong>Spotlighting</strong></td><td><strong>0.529</strong></td><td>The same defence that reported greater than 50% down to under 2% when measured non-adaptively</td></tr>
+      <tr><td><strong>TaskTracker</strong></td><td><strong>0.440</strong></td><td>Beaten by a little under half the teams that tried</td></tr>
+      <tr><td><strong>LLM Judge</strong></td><td><strong>0.318</strong></td><td>The strongest single defence in the set, and still beaten by roughly a third</td></tr>
+      <tr><td><strong>All four combined</strong></td><td><strong>0.166</strong></td><td>Stacking roughly halves the best single result. It does not reach zero</td></tr>
+    </table>
+
+    <div class="callout win">
+      <strong>★ The two numbers to take into a budget meeting</strong>
+      <strong>Every individual defence was beaten by between a third and sixty percent of the teams that tried it. Stacking all four cut that to 16.6%, and not to zero.</strong> Both halves matter. If you only quote the first, you will defund layered defence, which measurably works. If you only quote the second, you will let a stack of prompt-level controls stand in for an architectural limit, which measurably does not.
+    </div>
+
+    <p>Note also what the same competition reports about <em>end-to-end</em> success: 0.8% in the first phase and 0.3% in the second. Those are much smaller figures than the per-defence rates, because completing a full attack chain is harder than getting one instruction past one filter. Both sets of numbers are true, and a vendor is free to quote whichever one flatters the product. Ask which is being quoted, every time.</p>
+
+    <p class="lede">Now put the research beside the incidents. Session 2 gave you the lethal trifecta: access to private data, exposure to untrusted content, and the ability to communicate externally. Every incident this course cites is a case of all three legs being present at once, and the fixes tell you something the research cannot.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four real incidents where the durable control cut the egress leg or the untrusted-content leg, and none of them changed the model.">
+        <style>
+          .lgH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .lgX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .lgT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .lgS { font: 400 11px Inter, sans-serif; fill: #BFC4CE; }
+          .lgN { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+        </style>
+
+        <text class="lgH" x="24" y="30">All three legs present. The durable control always cut a leg, never the model.</text>
+
+        <rect x="24" y="46" width="268" height="64" rx="10" fill="#5A6070"/>
+        <text class="lgT" x="42" y="72">Access to private data</text>
+        <text class="lgS" x="42" y="94">mailbox, repo, warehouse, CRM</text>
+
+        <rect x="306" y="46" width="268" height="64" rx="10" fill="#2E3138"/>
+        <text class="lgT" x="324" y="72">Untrusted content</text>
+        <text class="lgS" x="324" y="94">inbound mail, PR comments, docs</text>
+
+        <rect x="588" y="46" width="268" height="64" rx="10" fill="#2E3138"/>
+        <text class="lgT" x="606" y="72">Ability to communicate out</text>
+        <text class="lgS" x="606" y="94">image loads, links, tool calls</text>
+
+        <rect x="24" y="130" width="832" height="42" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1"/>
+        <text class="lgN" x="44" y="156">CamoLeak (Copilot Chat)</text>
+        <text class="lgX" x="252" y="156">Fix, 14 Aug 2025: image rendering disabled in Copilot Chat entirely. Egress leg.</text>
+
+        <rect x="24" y="178" width="832" height="42" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1"/>
+        <text class="lgN" x="44" y="204">ChatGPT url_safe</text>
+        <text class="lgX" x="252" y="204">The egress allowlist failed because URLs from bing.com were always allowed.</text>
+
+        <rect x="24" y="226" width="832" height="42" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1"/>
+        <text class="lgN" x="44" y="252">ForcedLeak (Agentforce)</text>
+        <text class="lgX" x="252" y="252">The allowlisted domain had expired and was re-registrable for $5. Researcher [S].</text>
+
+        <rect x="24" y="274" width="832" height="42" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1"/>
+        <text class="lgN" x="44" y="300">EchoLeak (M365 Copilot)</text>
+        <text class="lgX" x="252" y="300">Zero-click: hidden instructions in inbound mail, retrieved later by RAG. CVSS 9.3.</text>
+
+        <rect x="24" y="328" width="832" height="56" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="lgH" x="44" y="352">Not one of these was fixed by making the model better at spotting instructions</text>
+        <text class="lgX" x="44" y="372">Three cut or tightened the egress leg. One shows what happens when untrusted content reaches retrieval unbounded.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - four incidents, and the leg each durable control had to cut</figcaption>
+    </figure>
+
+    <div class="callout example">
+      <span class="ex-pill">Real world</span>
+      <p>GitHub's remediation for CamoLeak is the cleanest illustration on the page. The exfiltration channel was a pre-computed dictionary of validly signed image-proxy URLs, one per character, so leaked bytes travelled out as image loads from GitHub's own trusted domain and defeated content security policy. The fix, on 14 August 2025, was to <strong>disable image rendering in Copilot Chat entirely</strong>. A whole product capability was removed, because that was the leg. Note also the correction the source map insists on: <strong>do not cite a CVE for CamoLeak</strong>. The CVE number circulating alongside it describes a different, unrelated vulnerability, and the widely quoted severity score is the researcher's rating rather than a national database record.</p>
+    </div>
+
+    <div class="callout tip">
+      <strong>One published before-and-after worth knowing</strong>
+      The promptware work against Gemini assistants rated 73% of the analysed threats High-Critical to end users, and after Google deployed dedicated mitigations the same authors reassessed them to Very Low-Medium. It is the best available published before-and-after on a real vendor's mitigations, and it shows that mitigation genuinely moves severity. It does not show that a class was closed.
+    </div>
+  </section>
+
+  <!-- ============ DISCUSSION 1 ============ -->
+  <section class="section" id="discussion-1">
+    <div class="section-kicker">
+      <span class="klabel">Discussion 1 of 2</span>
+      <h2>Price the two proposals in front of you <span class="tag demo">★ 10 min · in threes</span></h2>
+    </div>
+    <p class="lede">Beacon's Support Bot can issue refund credits. Two teams have submitted proposals for the same finding: attacker-controlled text in a customer email is reaching the bot and steering it. You can fund one this quarter. Work through it as a group, and be explicit about what you are buying.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Proposal A - a guardrail contract.</strong> An input classifier plus an output filter, from a vendor quoting a near-zero attack success rate on their own evaluation. Ask the three questions this session gives you: was the evaluation adaptive, how is input normalised before classification, and what is the over-refusal rate on a benign set? A vendor who has no answer to the second question has not been tested against character injection.</p></div>
+      <div class="step"><p><strong>Proposal B - remove the capability.</strong> Refund issuance moves behind human approval, the bot's credentials lose write access, and outbound calls go to an allowlist. It costs product surface and it will slow some customers down. Nothing about it depends on the model getting better.</p></div>
+      <div class="step"><p><strong>Now decide, and say what each one buys.</strong> Proposal A lowers a rate you will have to re-measure after every model, prompt and tool change. Proposal B removes an outcome from the space of reachable outcomes. The honest answer in most organisations is that you eventually want both, and that funding A first is how you arrive at next year with a rate you cannot verify and a capability you never bounded.</p></div>
+      <div class="step"><p><strong>Write down the sentence you would say to the board.</strong> The one this session supports is roughly: we reduced the measured rate by this much, and separately we removed the ability to move money without a human, which is the part that does not depend on the attacker's next idea.</p></div>
+    </div>
+
+    <div class="callout warn">
+      <strong>The trap in this exercise</strong>
+      Proposal A always looks cheaper, because its cost is a line item and Proposal B's cost is a product argument with a colleague who owns the roadmap. That asymmetry, not the evidence, is why most organisations buy the classifier first. Naming the asymmetry out loud is most of the work of this session.
+    </div>
+  </section>
+
+  <!-- ============ DISCUSSION 2 ============ -->
+  <section class="section" id="discussion-2">
+    <div class="section-kicker">
+      <span class="klabel">Discussion 2 of 2</span>
+      <h2>Order your own controls, then check the order against the evidence <span class="tag demo">★ 8 min · in pairs</span></h2>
+    </div>
+    <p class="lede">Take one AI system your organisation actually runs. In pairs, list every control that stands between untrusted text and something irreversible, then sort each control into one of the three bands below. Most teams discover their spend is concentrated in the weakest band.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Band 1 - architecture. Removes a capability.</strong> Least privilege on the agent's credentials, human approval on irreversible actions, sandboxing, egress allowlists, separating the model that sees untrusted content from the model that holds permissions. These hold because they do not ask the model to judge anything.</p></div>
+      <div class="step"><p><strong>Band 2 - detection. Lowers a rate, and needs monitoring.</strong> Classifiers, judges, spotlighting, task trackers. LLMail-Inject says these are worth having and worth stacking, and says the stack still lets one attempt in six through. Every control in this band needs a re-measurement trigger attached to it.</p></div>
+      <div class="step"><p><strong>Band 3 - instruction. Nearly free, nearly worthless on its own.</strong> System-prompt text telling the model to ignore injected instructions. The course simulator prices this honestly: on the fully hardened Beacon configuration, deleting the prompt guard entirely costs 0.63 risk points, and it scores a flat zero against indirect injection, context poisoning, improper output handling and unbounded consumption. Keep it. Never count it.</p></div>
+      <div class="step"><p><strong>The check.</strong> Count your controls per band, then count your spend per band. If Band 3 has the most entries and Band 1 has the fewest, you have an instruction-shaped defence, and the record in Part 1 is a fair prediction of how it will perform against somebody who adapts.</p></div>
+    </div>
+
+    <div class="callout tip">
+      <strong>Say the ordering out loud, because it is the takeaway</strong>
+      <strong>Architecture beats detection beats instruction.</strong> Not because instruction is worthless, but because only the first band changes what is reachable. The other two change how often something is reached, and how often is a number that an attacker gets a vote on.
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Try it yourself - this week <span class="tag exercise">◐ 45-60 min total</span></h2>
+    </div>
+    <ul>
+      <li>Take the most recent security claim a vendor made to you about an AI product, and ask in writing whether the evaluation was adaptive. Keep the reply. It is the single highest-value paragraph you will collect this quarter.</li>
+      <li>Find the egress leg in one system you own. List every way bytes can leave: rendered images, links, outbound HTTP, tool calls, logs a third party reads. Most teams have never enumerated this, and it is the leg that every durable incident fix in Part 3 had to cut.</li>
+      <li>For every detection-band control you run, write the re-measurement trigger next to it: base-model version change, system-prompt change, new tool or connector, new renderer, new user population, any permission-scope change. A detection control with no trigger is a control with an unknown current value.</li>
+      <li>Ask your team for the over-refusal number alongside the last security improvement they shipped. If nobody measured it, that is the finding, and the instruction-hierarchy result is the reason to care.</li>
+      <li>Read the LLMail-Inject table to your leadership group and stop after the last row. The silence after 0.166 does more work than any slide you could write about it.</li>
+    </ul>
+  </section>
+
+  <!-- ============ SOURCES ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Source material</span>
+      <h2>Official sources covered</h2>
+    </div>
+    <p class="lede">Every framework, figure and quotation on this page traces to a primary source catalogued in this course's source map, verified 2026-08-14. This page covers:</p>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Nasr, Carlini, Sitawarin, Schulhoff, Hayes, Shumailov, Terzis, Tramer et al., Oct 2025 - 12 recent defences bypassed at &gt;90% ASR</span><span class="note">Part 1 · most had originally reported near-zero ASR · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Zhan et al., NAACL 2025 Findings - all 8 agent indirect-injection defences bypassed, consistently &gt;50% ASR</span><span class="note">Part 1 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Character injection against six production guardrails - up to 100% evasion success in some instances</span><span class="note">Part 1 · zero-width, Unicode tags, homoglyphs, emoji smuggling · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Spotlighting: &gt;50% to &lt;2% non-adaptively; TSR 0.529 in LLMail-Inject; DeepMind on adaptive attacks</span><span class="note">Part 2 + Part 3 · [P] both sides of the result</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Instruction hierarchy: up to +63% robustness generalising to unseen attacks, with over-refusal regressions</span><span class="note">Part 2 · [P] OpenAI</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Constitutional Classifiers: 86% to 4.4% jailbreak success, 0.38% refusal increase, 23.7% compute overhead</span><span class="note">Part 2 · [P] Anthropic</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">CaMeL: 77% of AgentDojo tasks with provable security vs 84% undefended</span><span class="note">Part 2 · [P] Google Research · a 7-point utility cost for a guarantee</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">LLMail-Inject (MSRC + IEEE SaTML 2025) - Phase 1 Level 4 Team Success Rates and the combined 0.166</span><span class="note">Part 3 · 370,724 + 90,916 submissions; end-to-end 0.8% then 0.3% · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NIST AI 100-2e2025 §3.4.4 and §4.1.3 - assume injection is possible; compare on a Pareto plot</span><span class="note">Part 2 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">CamoLeak - GitHub disabled image rendering in Copilot Chat entirely, 14 Aug 2025</span><span class="note">Part 3 · [P-researcher] · <strong>no CVE is cited: the circulating number is a different vulnerability</strong></span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">EchoLeak CVE-2025-32711 (CVSS 3.1 9.3 Critical) and the ChatGPT url_safe bypass, Tenable TRA-2025-06</span><span class="note">Part 3 · [P] both</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">ForcedLeak / Agentforce - expired allowlisted domain, re-registrable for $5</span><span class="note">Part 3 · <strong>[S] researcher rating, no NVD entry, no primary vendor advisory</strong> · used only for the shape of the control failure</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Promptware against Gemini assistants - 73% High-Critical reassessed to Very Low-Medium after mitigations</span><span class="note">Part 3 · [P] · shows severity moving, not a class closing</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Beacon simulator figures (0.63 points, flat zero in the matrix)</span><span class="note">Discussion 2 · teaching model - the arithmetic is real, the inherent-risk weights encode the direction the literature reports</span></div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions before you go 🎯 <span class="tag exercise">◐ 90 seconds</span></h2>
+    </div>
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">1 · A vendor shows you a defence with a near-zero attack success rate. What is the first question, and why?</p>
+      <button class="qopt" type="button">A · Which model does it support, since coverage matters more than the rate</button>
+      <button class="qopt" type="button">B · Was the evaluation adaptive - because 12 recent defences, most of which originally reported near-zero ASR, were later bypassed above 90% by attackers optimising against the defence itself</button>
+      <button class="qopt" type="button">C · What is the latency overhead, since that determines whether it can ship</button>
+      <p class="qwhy">The near-zero number is usually real. It was measured against the attacks that existed when the defence was written, which is a different claim from the one it gets used to make. Latency and coverage are reasonable procurement questions, but they are questions about a defence that works; adaptivity is the question about whether it works at all. The follow-up for guardrail products specifically is how input is normalised before classification, because six production guardrails were evaded by character injection with up to 100% evasion success in some instances.</p>
+    </div>
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">2 · In LLMail-Inject Phase 1 Level 4, the best single defence had a Team Success Rate of 0.318 and all four combined had 0.166. What is the correct reading?</p>
+      <button class="qopt" type="button">A · Stacking does not help, so fund one strong defence instead of four weak ones</button>
+      <button class="qopt" type="button">B · The combined figure is close enough to zero to treat the stack as a control</button>
+      <button class="qopt" type="button">C · Both halves are true: defence in depth measurably works, roughly halving the best single result, and it measurably does not reach zero - so a stack of prompt-level controls cannot stand in for an architectural limit</button>
+      <p class="qwhy">Option A misreads the data, since 0.166 is meaningfully better than 0.318 and every individual defence was beaten by between a third and sixty percent of the teams that tried. Option B is the expensive error: 16.6% of teams still got through, and a control you would accept at that rate is not a control, it is a filter. The decision this supports is to keep the stack, monitor it, and separately bound what a successful attempt can reach.</p>
+    </div>
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">3 · What do EchoLeak, CamoLeak, ForcedLeak and the ChatGPT url_safe bypass have in common once you look at the fixes?</p>
+      <button class="qopt" type="button">A · Every durable fix cut the egress leg or the untrusted-content leg, and none of them fixed the model - GitHub's remediation for CamoLeak was to disable image rendering in Copilot Chat entirely</button>
+      <button class="qopt" type="button">B · All four were resolved by retraining the underlying model on adversarial examples</button>
+      <button class="qopt" type="button">C · All four were caught by guardrails before customer impact</button>
+      <p class="qwhy">This is the generalisation the whole session builds towards, and it is why the ordering is architecture, then detection, then instruction. A capability was removed in each durable case: image rendering, an egress allowlist, a domain that should never have been trusted. Note the two honesty flags that travel with this answer - do not cite a CVE for CamoLeak, because the circulating one describes a different vulnerability, and ForcedLeak's severity score is a researcher rating with no national database entry behind it.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Leader session 5 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>The attacker moves second</b><span>12 recent defences, most originally near-zero ASR, bypassed above 90%. Ask whether the evaluation was adaptive, every time.</span></div>
+      <div class="cheat-item"><b>Eight of eight</b><span>All 8 evaluated indirect-injection defences for agents bypassed, consistently above 50% ASR.</span></div>
+      <div class="cheat-item"><b>Character injection</b><span>Six production guardrails evaded by zero-width characters, Unicode tags, homoglyphs and emoji smuggling. Up to 100% in some instances. Ask how input is normalised.</span></div>
+      <div class="cheat-item"><b>Non-adaptive numbers decay</b><span>Spotlighting: &gt;50% to &lt;2% non-adaptively, then a 0.529 Team Success Rate against real adaptive teams.</span></div>
+      <div class="cheat-item"><b>Every win has a bill</b><span>Instruction hierarchy +63% with over-refusal regressions. Constitutional Classifiers 86% to 4.4% at 23.7% compute. Keep the cost attached to the number.</span></div>
+      <div class="cheat-item"><b>CaMeL is the different trade</b><span>77% of AgentDojo tasks with provable security vs 84% undefended. Seven points of utility for a guarantee, not for a rate.</span></div>
+      <div class="cheat-item"><b>0.600 · 0.529 · 0.440 · 0.318 · 0.166</b><span>LLMail-Inject. Each defence beaten by a third to sixty percent of teams. Stacking cut it to 16.6%, not to zero.</span></div>
+      <div class="cheat-item"><b>Architecture beats detection beats instruction</b><span>Least privilege, human approval on irreversible actions, sandboxing, egress allowlists. Every durable incident fix cut a leg. None fixed the model.</span></div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>Leader session 5 of 6 · learn-ai-red-team-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← Course home</a> &nbsp;·&nbsp; <a href="a6-when-to-stop.html">Next: When to stop →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Builder session 1 · Scope and rules of engagement - learn ai red team with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-red-team-with-phoebe</a> / Builder session 1 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI Red Team with Phoebe · Builder track · Session 1 of 10</div>
+    <h1>Scope and rules of engagement: <span class="accent">authorization is not a sentence you type</span></h1>
+    <p class="sub">Every engagement in this course is against a system Beacon owns, with written permission, inside a defined window. This session writes that permission down properly: which endpoints are in scope, which tools the agent may actually call while you test, how many trials constitute a finding, and what happens to the people doing the testing. It ends with a rules-of-engagement document you could hand to a general counsel, and one hard lesson from a real campaign about where authorization must live.</p>
+    <div class="chip-row">
+      <span class="chip level">🟢 Builder track</span>
+      <span class="chip audience">Security engineers · AI engineers · platform leads</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-18 · Authorization, layers, and the trial rule</span>
+      <span class="a3" style="flex:5">18-40 · Build-along: write Beacon's RoE</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>What this course is, and the line it does not cross</h2>
+    </div>
+    <div class="callout warn">
+      <strong>⚠ Authorization</strong>
+      This course is about testing AI systems <strong>you own, or are contracted in writing to test</strong>. Every exercise runs against Beacon, a fictional company, inside a scope document you will write in this session. The course names attack <em>classes</em> so you can build test cases and pairs each with the defence that addresses it. It contains no exploit payloads and teaches no attack craft. Testing a system you are not authorized to test is a crime in most jurisdictions, and no framing in a scope document changes that.
+    </div>
+    <p class="lede">MITRE ATLAS defines the practice precisely, in mitigation <strong>AML.M0035</strong>: an AI red team runs <strong>recurring, authorized, threat-informed</strong> exercises, before deployment and throughout operation. Three adjectives, and every one of them is doing work. Recurring, because a point-in-time result decays. Authorized, because that is what separates this from the thing it resembles. Threat-informed, because otherwise you are just poking at a chatbot.</p>
+    <div class="legend">
+      <span class="pill solid">Live - presented in session</span>
+      <span class="pill light">Self-study - read after class</span>
+      <span class="pill inkpill">Official sources covered</span>
+    </div>
+    <div class="callout win">
+      <strong>★ What you walk out with today</strong>
+      A completed rules-of-engagement document for the Beacon engagement, the layer map showing which endpoints you will test and which you will not, a trial protocol that makes every finding a rate rather than a boast, and the blast-radius limits that keep an authorized test from becoming an incident of its own.
+    </div>
+    <div class="callout tip">
+      <strong>Where this sits among its siblings</strong>
+      <a href="https://phoebefu6.github.io/learn-agent-launch-with-phoebe/">Agent Launch</a> has a safety gate that requires an adversarial slice, and does not teach you to build one. That is this course. <a href="https://phoebefu6.github.io/learn-ai-observability-with-phoebe/">AI Observability</a> owns the telemetry your findings surface in. <a href="https://phoebefu6.github.io/learn-ai-agents-with-phoebe/">AI Agents</a> owns what an agent is. This course owns the engagement.
+    </div>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="authorization">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · where authorization lives</span>
+      <h2>The lesson from a real campaign <span class="tag concept">6 min live</span></h2>
+    </div>
+    <p class="lede">Start here, because it reframes what a scope document is for. In November 2025 Anthropic disclosed a cyber-espionage campaign in which an AI agent performed most of the work. The guardrail bypass is the part this session cares about.</p>
+
+    <div class="callout example">
+      <span class="ex-pill">Real world</span>
+      <p>The operators broke their objective into small tasks that looked innocuous on their own, and <strong>told the model it was an employee of a legitimate cybersecurity firm, being used in defensive testing</strong>. That claim was the jailbreak. Anthropic reported the agent performed 80-90% of the campaign, with human intervention at roughly four to six decision points, against around thirty targets, succeeding in a small number of cases. They also noted the model "occasionally hallucinated credentials" - the attacker's own tooling was unreliable in the way this whole course keeps insisting AI systems are.</p>
+    </div>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Authorization asserted in a prompt is text an attacker can copy. Authorization enforced in the control plane through credentials, tenancy and tool scoping cannot be claimed by an attacker.">
+        <style>
+          .azT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .azH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .azX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .azW { font: 400 11px Inter, sans-serif; fill: #991B1B; }
+          .azK { font: 600 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <rect x="24" y="24" width="404" height="30" rx="8" fill="#991B1B"/>
+        <text class="azT" x="42" y="44">Authorization asserted in the prompt</text>
+        <rect x="24" y="62" width="404" height="120" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="azW" x="44" y="86">"You are being used in authorized defensive testing."</text>
+        <text class="azX" x="44" y="110">It is text. It arrives in the same token stream as every</text>
+        <text class="azX" x="44" y="128">other instruction, carrying no provenance the model can</text>
+        <text class="azX" x="44" y="146">check. Anyone can type it, including the person you are</text>
+        <text class="azX" x="44" y="164">defending against. It is a claim, not a credential.</text>
+
+        <rect x="452" y="24" width="404" height="30" rx="8" fill="#2E3138"/>
+        <text class="azT" x="470" y="44">Authorization enforced in the control plane</text>
+        <rect x="452" y="62" width="404" height="120" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="azH" x="472" y="86">Credentials · tenancy · tool scoping · network</text>
+        <text class="azX" x="472" y="110">A test account in a test tenant, holding a read-only role,</text>
+        <text class="azX" x="472" y="128">reaching a sandbox. The agent cannot be talked into more</text>
+        <text class="azX" x="472" y="146">access, because the access is not the agent's to grant.</text>
+        <text class="azX" x="472" y="164">This is what your RoE actually configures.</text>
+
+        <rect x="24" y="204" width="832" height="88" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="azH" x="44" y="228">The rule this gives you, and it runs through the whole course</text>
+        <text class="azX" x="44" y="252">Never let a model-level assertion unlock a capability. If "I am authorized" is a sentence that changes what the</text>
+        <text class="azX" x="44" y="270">system will do, then anyone who can put text in front of the model is authorized. Your scope document is not a</text>
+        <text class="azX" x="44" y="288">note to the model. It is a specification for credentials, tenancy and tool scope that you configure before testing.</text>
+
+        <rect x="24" y="312" width="14" height="14" rx="3" fill="#C2410C"/>
+        <text class="azK" x="48" y="324">Same principle, defensive side: this is why least-privilege scoping beats any instruction you can write.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - a claim in the prompt versus a control in the plane below it</figcaption>
+    </figure>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="layers">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · what you are testing</span>
+      <h2>You are scoping a system, not a model <span class="tag concept">5 min live</span></h2>
+    </div>
+    <p class="lede">The most common scoping error is naming a model. Microsoft's published guidance, drawn from red teaming more than a hundred generative AI products, is to test at several distinct layers, and to say in the report which one you used.</p>
+
+    <table class="clean">
+      <tr><th>Layer</th><th>What it tells you</th><th>What it hides</th></tr>
+      <tr><td><strong>Base model via API</strong></td><td>The model plus its own safety system, without your application</td><td>Everything your application adds: retrieval, tools, memory, rendering</td></tr>
+      <tr><td><strong>Your application via its UI</strong></td><td>What a real user or attacker actually meets</td><td>Which layer caught a thing, when something is caught</td></tr>
+      <tr><td><strong>Pre-mitigation build</strong></td><td>The inherent behaviour, and how much your controls are carrying</td><td>Nothing, but it is only meaningful next to the post-mitigation run</td></tr>
+      <tr><td><strong>Post-mitigation build</strong></td><td>The number you can actually report</td><td>How fragile the improvement is, unless you also test adaptively</td></tr>
+    </table>
+
+    <p>Microsoft's instruction is blunt about which to favour: conduct testing on the production UI as much as possible, because that most closely resembles real-world usage. And when reporting, make clear which endpoints were used. A finding against a raw API endpoint and a finding against the shipped product are different claims, and conflating them is how a report becomes misleading without anybody lying.</p>
+
+    <div class="callout tip">
+      <strong>The four scope areas worth naming explicitly</strong>
+      OWASP's GenAI Red Teaming Guide splits scope into <strong>model evaluation</strong>, <strong>implementation testing</strong>, <strong>infrastructure assessment</strong> and <strong>runtime behaviour analysis</strong>. Most engagements that feel unsatisfying afterwards turn out to have covered the first and skipped the other three, which is where an application actually lives.
+    </div>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="trials">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · the trial rule</span>
+      <h2>A finding is a rate, never a boast <span class="tag concept">5 min live</span></h2>
+    </div>
+    <p class="lede">This is the single methodological difference that separates AI red teaming from classic penetration testing, and it belongs in the rules of engagement rather than being left to whoever writes the report.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Repeating the same attack twenty-five times instead of once raised measured attack success from 57 percent to 80 percent in NIST testing. Tailored attacks raised it from 11 percent to 81 percent.">
+        <style>
+          .trH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .trX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .trN { font: 800 26px Inter, sans-serif; fill: #FFFFFF; }
+          .trL { font: 600 11px Inter, sans-serif; fill: #FFFFFF; }
+          .trK { font: 600 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="trH" x="24" y="34">Same attack, same system. Only the number of attempts changed.</text>
+
+        <rect x="24" y="48" width="200" height="66" rx="10" fill="#5A6070"/>
+        <text class="trL" x="42" y="70">One trial per attack</text>
+        <text class="trN" x="42" y="100">57%</text>
+        <rect x="240" y="48" width="200" height="66" rx="10" fill="#C2410C"/>
+        <text class="trL" x="258" y="70">Twenty-five trials</text>
+        <text class="trN" x="258" y="100">80%</text>
+        <rect x="456" y="48" width="400" height="66" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="trX" x="476" y="72">NIST CAISI re-ran identical agent-hijacking attacks. Testing</text>
+        <text class="trX" x="476" y="90">once does not find a weaker result. It finds a wrong one.</text>
+
+        <text class="trH" x="24" y="152">Same system. Only the attacker's effort changed.</text>
+
+        <rect x="24" y="166" width="200" height="66" rx="10" fill="#5A6070"/>
+        <text class="trL" x="42" y="188">Best baseline attack</text>
+        <text class="trN" x="42" y="218">11%</text>
+        <rect x="240" y="166" width="200" height="66" rx="10" fill="#991B1B"/>
+        <text class="trL" x="258" y="188">Tailored to the target</text>
+        <text class="trN" x="258" y="218">81%</text>
+        <rect x="456" y="166" width="400" height="66" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="trX" x="476" y="190">Running the published baselines and stopping is not an</text>
+        <text class="trX" x="476" y="208">engagement. NIST: "Evaluations need to be adaptive."</text>
+
+        <rect x="24" y="254" width="832" height="44" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <rect x="42" y="268" width="14" height="14" rx="3" fill="#C2410C"/>
+        <text class="trK" x="66" y="280">Put it in the RoE: every attack runs N times, every finding reports k of N, and N appears in the report.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - why a single trial produces a wrong number rather than a cautious one</figcaption>
+    </figure>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Why this follows from how the systems work<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The same input does not produce the same output twice, so a single attempt samples a distribution rather than testing a property. That is not a nuisance to be engineered away; it is the thing being measured. Two consequences for your document:</p>
+        <ul>
+          <li><strong>Specify N before you start.</strong> If N is chosen after seeing results, it will be chosen to flatter whichever conclusion is convenient. Ten is a reasonable floor for a quick probe; twenty-five is what produced the figures above.</li>
+          <li><strong>Record k of N in the finding template</strong>, not "succeeded". A defect that fires two times in fifty and one that fires fifty times in fifty are different defects with different fixes, and a binary field cannot tell them apart.</li>
+        </ul>
+        <p>There is a harder corollary that the leader track spends a whole session on: because the search space of natural-language attacks is effectively unbounded, no amount of testing establishes that something cannot happen. In a competition run across more than 250,000 attempts by over 400 participants against thirteen frontier models, at least one successful attack was found against <em>every</em> model. Your engagement will not be the exception.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ DEMO 1 ============ -->
+  <section class="section" id="demo-1">
+    <div class="section-kicker">
+      <span class="klabel">Demo 1 of 2</span>
+      <h2>Write Beacon's rules of engagement <span class="tag demo">★ 16 min · everyone builds</span></h2>
+    </div>
+    <p class="lede">Beacon has authorized an internal engagement against its three bots before a board review. Fill this in for Beacon, then again for a system you actually own. There is no published standard RoE template for AI engagements, so this one is assembled from what vendors publish about how they bound the work - treat it as a good starting structure rather than a citable standard.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Authorization block.</strong> Named system owner, named approver, the written scope, the testing window, and a kill-switch contact who can stop the engagement inside five minutes. If you cannot fill every field, you do not have authorization yet, you have enthusiasm.</p></div>
+      <div class="step"><p><strong>Target surface.</strong> Which of the four layers from Part 2 are in scope, and the exact endpoints. Beacon's engagement covers the production UI of all three bots plus a pre-mitigation staging build of the Support Bot. Write down what is out of scope too, because that list is what protects you.</p></div>
+      <div class="step"><p><strong>Harm classes in scope, split into two tracks.</strong> Security findings (exfiltration, unauthorized action, privilege escalation) and content or safety findings go to different people on different timelines. Google's own vulnerability programme draws this line explicitly: indirect injection with production impact is a security matter, while jailbreaks and alignment failures absent a chain are handled elsewhere. Draw the same line before you start, not while triaging.</p></div>
+      <div class="step"><p><strong>Trial protocol.</strong> N per attack, how success is defined, and who adjudicates a disputed result. Write the adjudicator's name down; a grader dispute at report time with no named owner is how engagements end badly.</p></div>
+      <div class="step"><p><strong>Blast-radius limits - the section that keeps a test from becoming an incident.</strong> Which tools may the agent actually call while you test? Beacon's answer: reads yes, writes to a sandbox tenant only, sends never, payments never, deletes never. If an attack would succeed only by actually issuing a refund, you record it as a finding and you do not issue the refund.</p></div>
+      <div class="step"><p><strong>Data handling.</strong> Whether real customer data may be used at all (Beacon: no, seeded fixtures only), where transcripts live, who may read them, and how long harmful outputs are retained. You are about to generate a corpus of successful attacks against your own product; that corpus is now a sensitive asset.</p></div>
+      <div class="step"><p><strong>Psychological safety.</strong> Rotation between harm areas, content warnings, and an explicit opt-out from the hardest categories with no career consequence. OpenAI names psychological harm to red teamers as a real limitation of the method and prescribes mental-health resources, fair compensation and informed consent. This belongs in the operating procedure, not on an ethics slide at the end.</p></div>
+      <div class="step"><p><strong>Disclosure.</strong> Embargo terms, who may publish, and the coordination path. Note the information hazard: a not-yet-known technique written up carelessly accelerates misuse of systems other than yours.</p></div>
+    </div>
+
+    <div class="callout warn">
+      <strong>The field teams forget, every time</strong>
+      Blast-radius limits. Everyone writes down what they will test and nobody writes down what the agent is allowed to actually do while being tested. An engagement against a bot that can issue refunds, conducted without that section, is not a test - it is an unsupervised production change with a report attached.
+    </div>
+  </section>
+
+  <!-- ============ DEMO 2 ============ -->
+  <section class="section" id="demo-2">
+    <div class="section-kicker">
+      <span class="klabel">Demo 2 of 2</span>
+      <h2>Two mindsets, and a first pass at the harms list <span class="tag demo">★ 8 min · in pairs</span></h2>
+    </div>
+    <p class="lede">Microsoft's guidance on team composition contains an instruction that sounds soft and is not: recruit red teamers with <strong>both benign and adversarial mindsets</strong>, including ordinary users of the system who had no hand in building it. Their threat-modelling ontology deliberately does not assume adversarial intent, because a benign user hitting a failure is the same failure.</p>
+
+    <div class="steps">
+      <div class="step"><p>In pairs, spend four minutes on <strong>open-ended</strong> exploration of one Beacon bot - no target list, no taxonomy, just poke at it as a curious user and write down anything surprising. Microsoft runs this stage first precisely because it "uncover[s] blind spots in your understanding of the risk surface" before a checklist narrows your attention.</p></div>
+      <div class="step"><p>Now turn what you found into a <strong>harms list</strong>: one line per surprising behaviour, with the layer it lives in. This list, not the OWASP taxonomy, is what your guided testing in session b8 starts from. The taxonomy is a completeness check you apply afterwards.</p></div>
+      <div class="step"><p>Write the recording fields you will use for every finding, at minimum: <strong>date · a unique identifier for the input and output pair, for reproducibility · the input · a description or screenshot of the output</strong>. Add k of N from Part 3. Put it in a shared sheet so testers can see each other's examples, which sparks ideas and prevents duplicated effort.</p></div>
+    </div>
+
+    <div class="callout tip">
+      <strong>Keep this sentence in your report template from day one</strong>
+      Microsoft's own guidance: the role of red teaming is to expose and raise understanding of the risk surface, and it is <strong>not a replacement for systematic measurement and rigorous mitigation work</strong>. People must not interpret specific examples as a metric for how pervasive that harm is. One vivid example in a slide deck will otherwise become an organisation's entire mental model of the risk.
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Try it yourself - this week <span class="tag exercise">◐ 45-60 min total</span></h2>
+    </div>
+    <ul>
+      <li>Write the RoE for a system you actually own, and take it to whoever would have to approve it. The conversation you have about the blast-radius section is more valuable than the document.</li>
+      <li>List every tool your agent can call, and mark each one reversible or irreversible. Most teams have never written this list down, and it is the input to nearly every severity decision later in this course.</li>
+      <li>Find one place in your system where a capability is granted or withheld on the basis of something the model was told rather than something the control plane enforces. There is usually at least one, and it is usually in a system prompt.</li>
+      <li>Pick your N and write down why. If you cannot justify it, use twenty-five and note that you inherited it from the NIST result rather than from your own reasoning.</li>
+    </ul>
+  </section>
+
+  <!-- ============ SOURCES ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Source material</span>
+      <h2>Official sources covered</h2>
+    </div>
+    <p class="lede">Every framework, figure and quotation on this page traces to a primary source catalogued in this course's source map, verified 2026-08-14. This page covers:</p>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MITRE ATLAS AML.M0035 - AI red teaming as recurring, authorized, threat-informed exercises</span><span class="note">Part 0 · the course thesis in the framework's own words · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Anthropic's disclosed espionage campaign - authorization claimed in the prompt as the bypass</span><span class="note">Part 1 · [P] primary vendor disclosure</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Microsoft's layered testing guidance and recording fields</span><span class="note">Part 2 + Demo 2 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NIST CAISI trial-count findings: 57% to 80% at N=25; 11% to 81% when tailored</span><span class="note">Part 3 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP GenAI Red Teaming Guide - the four scope areas</span><span class="note">Part 2 · [P]</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The RoE template structure itself</span><span class="note">Assembled from vendor practice · <strong>no published standard AI RoE template exists</strong>; treat as a starting structure</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Attack-class taxonomy and framework IDs</span><span class="note">Named here only · b2 maps OWASP 2026, ATLAS and NIST properly</span></div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions before you go 🎯 <span class="tag exercise">◐ 90 seconds</span></h2>
+    </div>
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">1 · In the disclosed espionage campaign, operators told the model it was doing authorized defensive testing. What does that teach a defender?</p>
+      <button class="qopt" type="button">A · That red-team framing should be banned from prompts entirely</button>
+      <button class="qopt" type="button">B · That the model needed better training on recognising false authorization claims</button>
+      <button class="qopt" type="button">C · That authorization must never be a model-level assertion - if "I am authorized" changes what the system will do, then anyone who can put text in front of the model is authorized</button>
+      <p class="qwhy">The claim arrived in the same token stream as everything else, carrying no provenance the model could check. Option B is the trap: it proposes fixing this by making the model better at judging text, which is the losing move this whole course argues against. The control has to live where an attacker cannot reach it - in credentials, tenancy and tool scope - so that the sentence becomes irrelevant rather than merely harder to write convincingly.</p>
+    </div>
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">2 · You run each attack once and report which ones succeeded. What is wrong with the result?</p>
+      <button class="qopt" type="button">A · Nothing, provided you used a representative attack set</button>
+      <button class="qopt" type="button">B · A single trial samples a distribution rather than testing a property, so the number is wrong rather than merely conservative - NIST measured average success rising from 57% to 80% purely by repeating the same attacks 25 times</button>
+      <button class="qopt" type="button">C · It is fine for security findings but not for content findings</button>
+      <p class="qwhy">Note the direction. Single-trial testing does not give you a cautious underestimate you can safely round up; it gives you a figure that misrepresents the system, because the same input genuinely produces different outputs. That is why N belongs in the rules of engagement, decided before anyone has seen a result, and why the finding template records k of N rather than a boolean.</p>
+    </div>
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">3 · Which RoE section do teams most reliably omit, and why does it matter?</p>
+      <button class="qopt" type="button">A · Blast-radius limits - which tools the agent may actually call during testing. Without it, an engagement against a bot that can issue refunds is an unsupervised production change with a report attached</button>
+      <button class="qopt" type="button">B · The list of attack techniques to attempt</button>
+      <button class="qopt" type="button">C · The executive summary format</button>
+      <p class="qwhy">Everyone writes down what they intend to test. Almost nobody writes down what the system is permitted to actually do while being tested, because scoping attention goes to the attack side. If a finding can only be confirmed by really sending the email or really moving the money, the correct behaviour is to record the finding and stop - which is a decision you want made in a document beforehand, not by a tester at half past six on a Friday.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Builder session 1 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>AML.M0035</b><span>Recurring, authorized, threat-informed. All three adjectives are load-bearing.</span></div>
+      <div class="cheat-item"><b>Authorization lives in the control plane</b><span>Credentials, tenancy, tool scope. Never a sentence the model is told and could equally be told by anyone else.</span></div>
+      <div class="cheat-item"><b>Scope a system, not a model</b><span>Base API, application UI, pre- and post-mitigation. Say in the report which endpoint you used.</span></div>
+      <div class="cheat-item"><b>Four scope areas</b><span>Model evaluation, implementation, infrastructure, runtime behaviour. Most engagements do the first only.</span></div>
+      <div class="cheat-item"><b>N trials, k of N</b><span>57% to 80% just by repeating 25 times. A single trial gives a wrong number, not a cautious one.</span></div>
+      <div class="cheat-item"><b>Baselines are not an engagement</b><span>11% with the best published baseline, 81% when tailored to the target. Budget for adaptive work.</span></div>
+      <div class="cheat-item"><b>Blast-radius limits</b><span>Reads yes, sandbox writes only, sends and payments and deletes never. Record the finding, do not fire the action.</span></div>
+      <div class="cheat-item"><b>Open-ended before guided</b><span>Explore first to find blind spots, then build the harms list, then test against it. Taxonomy is the completeness check, not the starting point.</span></div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>Builder session 1 of 10 · learn-ai-red-team-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← Course home</a> &nbsp;·&nbsp; <a href="b2-the-attack-surface.html">Next: The attack surface →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

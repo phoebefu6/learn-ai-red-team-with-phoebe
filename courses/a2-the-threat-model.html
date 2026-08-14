@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leader session 2 · The threat model - learn ai red team with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-red-team-with-phoebe</a> / Leader session 2 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI Red Team with Phoebe · Leader track · Session 2 of 6</div>
+    <h1>The threat model: <span class="accent">what can this system be talked into doing</span></h1>
+    <p class="sub">Session one established that no engagement can tell you a system is safe. This one gives you the question that can be answered instead. It is architectural rather than behavioural, it can be settled on a whiteboard before anyone tests anything, and in most organisations it has never been asked out loud. You will learn one ontology, two heuristics that decide more than any prompt ever will, and why the threat-modelling framework your security team already owns has two missing cells.</p>
+    <div class="chip-row">
+      <span class="chip level">🟢 Leader track</span>
+      <span class="chip audience">Heads of security · eng leaders · risk and compliance</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-20 · The ontology and the two heuristics</span>
+      <span class="a3" style="flex:5">20-40 · Decisions: classify the three Beacon bots</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>The question that replaces "is it safe"</h2>
+    </div>
+    <div class="callout warn">
+      <strong>⚠ Authorization</strong>
+      This course is about testing AI systems <strong>you own, or are contracted in writing to test</strong>. Every exercise runs against Beacon, a fictional company, inside a scope document written in the builder track. The course names attack <em>classes</em> so your teams can build test cases, and pairs each class with the defence that addresses it. It contains no exploit payloads and teaches no attack craft. Testing a system you are not authorized to test is a crime in most jurisdictions, and no framing in a governance deck changes that.
+    </div>
+    <p class="lede">Here is the reframe the rest of the course rests on. You cannot make a model refuse to be fooled. NIST's own position is that current mitigations do not offer full protection, and that designers may reasonably build on the assumption that prompt injection is possible whenever a model is exposed to untrusted input. So stop asking whether it can be fooled. Ask what being fooled gets somebody: what the system can reach, what it can do, and where the output can travel. Those three things are decisions your organisation already made, usually without noticing, and all three can be changed.</p>
+    <div class="legend">
+      <span class="pill solid">Live - presented in session</span>
+      <span class="pill light">Self-study - read after class</span>
+      <span class="pill inkpill">Official sources covered</span>
+    </div>
+    <div class="callout win">
+      <strong>★ What you walk out with today</strong>
+      Five slots you can make any team fill in before you approve an AI deployment. Two architectural tests you can run yourself, on a napkin, in under a minute each. A defensible answer to the question of why the threat modelling your security function already does will not catch these failures on its own. And a classification of Beacon's three bots that you will reuse in every remaining session.
+    </div>
+    <div class="callout tip">
+      <strong>Carried forward from session 1</strong>
+      A report may claim what succeeded, at what rate, against what build; what weaknesses exist and with what blast radii; what mitigations changed those rates; and what was and was not explored. It may not claim the system is safe. Today is about the second of those, because <strong>blast radius is the term a leader can actually move</strong>.
+    </div>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="ontology">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · the ontology</span>
+      <h2>Five slots, and the word that is not "attacker" <span class="tag concept">6 min live</span></h2>
+    </div>
+    <p class="lede">Microsoft's AI Red Team, established in 2018, works from a threat-modelling ontology of five parts. It is worth memorising not because it is elaborate but because it is short enough to use in a meeting, and because one of the five is defined in a way that quietly settles an argument your organisation is probably having.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 370" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Microsoft's threat-modelling ontology has five slots: System, Actor, TTPs, Weakness and Impact. The ontology deliberately does not assume adversarial intent, because a benign user hitting a failure produces the same failure.">
+        <style>
+          .onH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .onL { font: 600 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .onX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .onK { font: 600 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="onH" x="24" y="30">Five slots. Fill all five, or you do not have a threat model.</text>
+
+        <rect x="24" y="44" width="140" height="32" rx="8" fill="#2E3138"/>
+        <text class="onL" x="40" y="65">System</text>
+        <text class="onX" x="180" y="65">What is being tested, end to end: model, application, retrieval, tools, renderer, data.</text>
+
+        <rect x="24" y="84" width="140" height="32" rx="8" fill="#2E3138"/>
+        <text class="onL" x="40" y="105">Actor</text>
+        <text class="onX" x="180" y="105">Who is at the other end. The ontology deliberately does not assume malice.</text>
+
+        <rect x="24" y="124" width="140" height="32" rx="8" fill="#2E3138"/>
+        <text class="onL" x="40" y="145">TTPs</text>
+        <text class="onX" x="180" y="145">Tactics, techniques and procedures, mapped to ATT&amp;CK and to MITRE ATLAS.</text>
+
+        <rect x="24" y="164" width="140" height="32" rx="8" fill="#2E3138"/>
+        <text class="onL" x="40" y="185">Weakness</text>
+        <text class="onX" x="180" y="185">The property of the system that let it happen. Not the cleverness of the input.</text>
+
+        <rect x="24" y="204" width="140" height="32" rx="8" fill="#C2410C"/>
+        <text class="onL" x="40" y="225">Impact</text>
+        <text class="onX" x="180" y="225">What it cost: data out, an action taken, a person harmed, a claim made.</text>
+
+        <rect x="24" y="252" width="832" height="100" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <rect x="44" y="270" width="14" height="14" rx="3" fill="#C2410C"/>
+        <text class="onK" x="68" y="282">Actor does not mean attacker, and that is the most useful thing on this page.</text>
+        <text class="onX" x="44" y="308">Microsoft emulates benign users who hit failures without meaning to. A support customer who pastes</text>
+        <text class="onX" x="44" y="326">in a forwarded email is not attacking you, and the failure is identical. This is why red teaming</text>
+        <text class="onX" x="44" y="344">belongs to reliability engineering rather than to attacker cosplay, and why it survives budget season.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - five slots, and the one that removes the argument about intent</figcaption>
+    </figure>
+
+    <p>The intent point is worth dwelling on because of what it does to your funding conversation. Framed as attacker cosplay, an AI red team is a security discretionary spend that competes with everything else in the security portfolio and loses whenever nobody has been attacked recently. Framed as reliability engineering, it is the function that finds out how a system behaves when the input is not what the designers assumed, which is the same reason you load-test and the same reason you fuzz. Microsoft did not choose that framing to be diplomatic. They chose it because the emulation genuinely does not require a hostile actor: an ordinary user forwarding an email, uploading a supplier's PDF or pasting a colleague's meeting notes puts text your system did not author into a place where your system will read it.</p>
+
+    <div class="callout tip">
+      <strong>The slot teams fill in worst</strong>
+      Weakness. Reports overwhelmingly describe the input that worked instead of the property that permitted it, because the input is concrete and the property is uncomfortable. "A cleverly worded request made the agent send the file" is a TTP with the Weakness slot left blank. The Weakness is that the agent held a send capability while reading content it did not author. Session 4 turns this into a severity rubric; for now, simply refuse to accept a threat model where the Weakness column paraphrases the TTP column.
+    </div>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="heuristics">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · the two heuristics</span>
+      <h2>Two tests you can run on a napkin <span class="tag concept">7 min live</span></h2>
+    </div>
+    <p class="lede">These two do more work for a leader than any other content in the course. Both are about architecture, both can be applied before a line of test code exists, and both give you an intervention that does not depend on the model getting better.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 430" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The lethal trifecta is private data plus untrusted content plus external communication; any one leg alone is safe and removing any leg removes the risk. Meta's Rule of Two treats any two of untrusted input, sensitive data and state change as high risk, and OWASP notes the rule is silent on autonomy depth.">
+        <style>
+          .htH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .htL { font: 600 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .htX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .htO { font: 400 11px Inter, sans-serif; fill: #3A1B08; }
+          .htK { font: 600 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="htH" x="24" y="30">Two heuristics that decide more than any prompt you could write.</text>
+
+        <rect x="24" y="44" width="404" height="30" rx="8" fill="#2E3138"/>
+        <text class="htL" x="42" y="64">The lethal trifecta (Simon Willison)</text>
+        <rect x="24" y="82" width="404" height="208" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+
+        <rect x="44" y="100" width="364" height="30" rx="8" fill="#FFFFFF" stroke="#BFC4CE" stroke-width="1"/>
+        <text class="htH" x="58" y="120">A · Access to private data</text>
+        <rect x="44" y="138" width="364" height="30" rx="8" fill="#FFFFFF" stroke="#BFC4CE" stroke-width="1"/>
+        <text class="htH" x="58" y="158">B · Exposure to untrusted content</text>
+        <rect x="44" y="176" width="364" height="30" rx="8" fill="#FFFFFF" stroke="#BFC4CE" stroke-width="1"/>
+        <text class="htH" x="58" y="196">C · Ability to communicate externally</text>
+
+        <text class="htX" x="44" y="228">Any one leg alone is safe. All three at once means</text>
+        <text class="htX" x="44" y="246">attacker text can move your data out.</text>
+        <text class="htK" x="44" y="270">Removing any leg removes the risk.</text>
+
+        <rect x="452" y="44" width="404" height="30" rx="8" fill="#C2410C"/>
+        <text class="htL" x="470" y="64">Meta's Rule of Two, cited by OWASP</text>
+        <rect x="452" y="82" width="404" height="208" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+
+        <text class="htH" x="472" y="106">Treat any two together as high risk:</text>
+        <text class="htX" x="472" y="130">(A) untrusted input   (B) sensitive data</text>
+        <text class="htX" x="472" y="148">(C) state change or external communication</text>
+        <text class="htH" x="472" y="178">[A,B,C] means per-action human approval.</text>
+
+        <text class="htO" x="472" y="206">OWASP's own criticism: the rule is silent on</text>
+        <text class="htO" x="472" y="224">autonomy depth. An agent taking one approved</text>
+        <text class="htO" x="472" y="242">action and one taking four hundred score the</text>
+        <text class="htO" x="472" y="260">same. That gap is yours to close.</text>
+
+        <rect x="24" y="310" width="832" height="104" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="htH" x="44" y="334">The generalisation from every real incident in this course</text>
+        <text class="htX" x="44" y="360">Every durable fix cut the egress leg or the untrusted-content leg. None of them fixed the model. When</text>
+        <text class="htX" x="44" y="378">GitHub closed the Copilot Chat image-exfiltration route in August 2025, the fix was to disable image</text>
+        <text class="htX" x="44" y="396">rendering in the product entirely. That is an architecture decision, and it is the shape they all take.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - three legs, two of three, and the one intervention that has ever held</figcaption>
+    </figure>
+
+    <p>Read the trifecta as a permission structure rather than a warning. Private data on its own is a database, and databases have been safe for decades. Untrusted content on its own is a web browser. External communication on its own is an email client. Put all three inside one process that takes instructions from natural language and you have built a machine that can be talked into carrying your data out of the building, and the machine will do it politely, in one turn, with no exploit code involved. The uncomfortable part is that the trifecta describes most of what the market currently calls an AI assistant.</p>
+
+    <div class="callout example">
+      <span class="ex-pill">Real world</span>
+      <p><strong>EchoLeak</strong>, in Microsoft 365 Copilot, carries <strong>CVE-2025-32711</strong>, scored <strong>CVSS 3.1 9.3 Critical</strong> with the vector <strong>AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:L/A:N</strong>, published 11 June 2025 and classified CWE-74. Instructions arrived hidden in an inbound email, which the assistant later retrieved through RAG while answering an unrelated question. Note the two fields that make it what it is: <strong>UI:N</strong>, no user interaction, and <strong>S:C</strong>, scope changed.</p>
+      <p>Now map it. Private data: the user's mail and documents. Untrusted content: an email anybody on the internet can send. External communication: a route out. Three legs, all present, no attacker skill in the traditional sense required. The trifecta is not a theory about this incident. It is a description of it, written before it happened.</p>
+    </div>
+
+    <div class="callout example">
+      <span class="ex-pill">Beacon, the running case</span>
+      <p>Beacon has three bots in production and a board review in six weeks. You will classify these in a moment, and you will meet them in every remaining session.</p>
+      <ul>
+        <li><strong>Support Bot.</strong> Customer-facing. Reads inbound customer messages and forwarded email threads, has read access to the customer account record, and holds a tier-3 capability to issue refund credits.</li>
+        <li><strong>Analyst Bot.</strong> Internal only. Takes a question from a named employee, writes a query against the warehouse, and renders the result in the internal tool. No outbound channel, no write access. The warehouse contains free-text fields customers typed.</li>
+        <li><strong>Insight Bot.</strong> Internal, but reads documents and dashboards it did not author, including material uploaded by suppliers, and renders the output it produces as live formatted content in a shared workspace.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="stride">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · why your existing framework misses this</span>
+      <h2>STRIDE has two missing cells <span class="tag concept">5 min live</span></h2>
+    </div>
+    <p class="lede">Your security function almost certainly threat-models with STRIDE, and will reasonably ask why it needs anything else. The honest answer is that STRIDE mostly works, right up to the two failures that define this class of system, at which point it has nowhere to put them.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Poisoning maps to Tampering, jailbreaking to Elevation of Privilege and model theft to Information Disclosure, but STRIDE has no natural cell for a model following instructions that arrived inside data, nor for a probabilistic content outcome.">
+        <style>
+          .stL { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .stR { font: 700 12.5px Inter, sans-serif; fill: #991B1B; }
+          .stH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .stX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .stW { font: 400 11px Inter, sans-serif; fill: #991B1B; }
+          .stK { font: 600 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="stH" x="24" y="30">STRIDE, honestly mapped. Three categories land. Two central failures have no cell.</text>
+
+        <rect x="24" y="44" width="832" height="30" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1"/>
+        <text class="stL" x="40" y="64">Tampering</text>
+        <text class="stX" x="230" y="64">Training-data and model poisoning land here, awkwardly but recognisably.</text>
+
+        <rect x="24" y="80" width="832" height="30" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1"/>
+        <text class="stL" x="40" y="100">Elevation of Privilege</text>
+        <text class="stX" x="230" y="100">Jailbreaking is filed here, though no privilege boundary is actually crossed.</text>
+
+        <rect x="24" y="116" width="832" height="30" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1"/>
+        <text class="stL" x="40" y="136">Information Disclosure</text>
+        <text class="stX" x="230" y="136">Model theft and extraction land here. The cleanest of the three fits.</text>
+
+        <rect x="24" y="152" width="832" height="30" rx="8" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="stR" x="40" y="172">No natural cell</text>
+        <text class="stW" x="230" y="172">The model follows instructions that arrived inside data. No STRIDE category.</text>
+
+        <rect x="24" y="188" width="832" height="30" rx="8" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="stR" x="40" y="208">No natural cell</text>
+        <text class="stW" x="230" y="208">A probabilistic content outcome. STRIDE assumes a property, not a rate.</text>
+
+        <rect x="24" y="238" width="832" height="86" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <rect x="44" y="256" width="14" height="14" rx="3" fill="#C2410C"/>
+        <text class="stK" x="68" y="268">The working split: STRIDE as a completeness checklist, ATLAS as the technique catalogue.</text>
+        <text class="stX" x="44" y="294">STRIDE is good at asking whether you forgot a whole class of thing. It is bad at describing what</text>
+        <text class="stX" x="44" y="312">actually goes wrong here. Use both, and never let the checklist stand in for the catalogue.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - three categories that land, and the two failures with nowhere to go</figcaption>
+    </figure>
+
+    <p>The first missing cell is the defining property of these systems: there is no architectural separation between instructions and data, so text that arrived as content can be read as a command. STRIDE was built for systems where that boundary exists and can be violated, which is why every attempt to file this under an existing letter feels like a stretch. The second missing cell is worse for governance: STRIDE, like most vulnerability practice, assumes a finding is a property that either holds or does not. Here the same input produces different outputs on different runs, so the honest unit is a rate, and there is no column in a STRIDE worksheet where a rate goes.</p>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>What to ask your security function to change, concretely<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Do not ask them to abandon STRIDE. Ask for four additions, each of which is small:</p>
+        <ul>
+          <li><strong>Add the two missing rows explicitly</strong>, named as instruction-data confusion and probabilistic outcome, so that the worksheet stops silently dropping them into whichever letter feels closest.</li>
+          <li><strong>Adopt MITRE ATLAS as the technique catalogue</strong> alongside ATT&amp;CK. ATLAS is the AI-specific counterpart and carries the technique identifiers your teams should be citing. Two of its tactics have no ATT&amp;CK equivalent at all: <strong>AML.TA0000 AI Model Access</strong> and <strong>AML.TA0001 AI Attack Staging</strong>.</li>
+          <li><strong>Make every finding carry a rate</strong>, expressed as k successes out of N trials with N fixed in advance. Leader session 3 is entirely about reading those.</li>
+          <li><strong>Split the two OWASP lists by role, not by preference.</strong> The LLM Top 10 owns risk while the model is a component inside your application; once the model becomes an actor, with tools, cross-session memory and downstream consequences, risk moves to the Agentic list released in December 2025. Neither list covers the ground alone.</li>
+        </ul>
+        <p>None of that requires a new function, a new tool or a new budget line. It requires a worksheet change and a naming convention, which is the cheapest governance intervention in this entire course.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ DECISION 1 ============ -->
+  <section class="section" id="decision-1">
+    <div class="section-kicker">
+      <span class="klabel">Decision 1 of 2</span>
+      <h2>Classify Beacon's three bots against the trifecta <span class="tag demo">★ 12 min · table discussion</span></h2>
+    </div>
+    <p class="lede">Take the three bots from Part 2. For each one, mark which legs are present, then say which single leg you would cut if you were only allowed to cut one. Do it before reading the notes column, and expect the table to disagree about Analyst Bot.</p>
+
+    <table class="clean">
+      <tr><th>Bot</th><th>Private data · untrusted content · external communication</th><th>The argument to have</th></tr>
+      <tr><td><strong>Support Bot</strong></td><td>All three. Customer records, inbound messages nobody at Beacon wrote, and a refund capability that changes the world outside the system.</td><td>Not whether it is high risk, but which leg is cuttable. The refund capability is the business case, so the realistic cut is on the third leg's shape: approval on the action rather than removal of it.</td></tr>
+      <tr><td><strong>Analyst Bot</strong></td><td>Private data yes. External communication no. Untrusted content is the disputed one, and the answer is yes: the warehouse holds free text that customers typed.</td><td>Whoever says "internal only, so no untrusted content" has made the most common mistake in this session. Untrusted means text your organisation did not author, not text that arrived from outside the firewall.</td></tr>
+      <tr><td><strong>Insight Bot</strong></td><td>Untrusted content yes, and rendering into a shared workspace is an external-communication leg whether or not anyone calls it one.</td><td>How much private data is genuinely in its context. If the answer is "not much", this is the one bot where a leg is cheap to remove rather than merely to approve.</td></tr>
+    </table>
+
+    <div class="steps">
+      <div class="step"><p><strong>Mark the legs before arguing about likelihood.</strong> The trifecta is deliberately not a probability judgement. Three legs present means attacker text can move your data out, and the conversation about how likely that is belongs after the structural fact, not instead of it.</p></div>
+      <div class="step"><p><strong>Apply the Rule of Two as the floor.</strong> Any two of untrusted input, sensitive data, and state change or external communication is high risk. An agent carrying all three needs per-action human approval. Note that this bar is met by two of Beacon's three bots today, and that neither currently has it.</p></div>
+      <div class="step"><p><strong>Say which leg you would cut, and what it costs the business.</strong> This is the real exercise. Cutting a leg always costs something a product manager wanted, which is why the decision belongs to this room and not to an engineer at half past six on a Friday.</p></div>
+      <div class="step"><p><strong>Then close the autonomy gap the Rule of Two leaves open.</strong> OWASP's criticism is that the rule says nothing about depth: an agent that takes one approved action and an agent that takes four hundred score identically. Write down, per bot, the maximum number of consequential actions permitted between human checkpoints. Nobody will have an answer, and that absence is a finding you can act on this week.</p></div>
+    </div>
+
+    <div class="callout warn">
+      <strong>The trap in the word "internal"</strong>
+      Untrusted content means content your system did not author, not content that came from outside your network. Uploaded supplier PDFs, forwarded email threads, free-text fields customers typed, calendar invitations, meeting transcripts, ticket bodies, scraped documentation and another team's dashboard are all untrusted content. Almost every internal-only assistant that a team confidently marks as having two legs turns out to have three.
+    </div>
+  </section>
+
+  <!-- ============ DECISION 2 ============ -->
+  <section class="section" id="decision-2">
+    <div class="section-kicker">
+      <span class="klabel">Decision 2 of 2</span>
+      <h2>Fill the five slots for one system you actually own <span class="tag demo">★ 8 min · in pairs</span></h2>
+    </div>
+    <p class="lede">Pick a real deployment in your organisation, ideally one already live. Fill the ontology out loud, in order, and stop at the first slot you cannot fill. Where you stop is the most useful output of this session.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>System.</strong> Name every component, not the model. Retrieval sources, tools, memory, the renderer, and the data each one can reach. Most people discover here that no single person in the organisation can list the tools the agent can call, which is a governance finding rather than a technical one.</p></div>
+      <div class="step"><p><strong>Actor.</strong> Describe a benign user who could produce a failure without meaning to. If your first instinct is a hooded attacker, you have taken the framing that loses budget arguments and misses the more common failure.</p></div>
+      <div class="step"><p><strong>TTPs.</strong> Name the classes, not the payloads: instructions arriving inside retrieved content, instructions arriving inside a tool's own description, the model being talked out of its refusal behaviour, output rendered in a way that carries data somewhere. Sessions b3 to b6 build the test cases; you only need the names.</p></div>
+      <div class="step"><p><strong>Weakness.</strong> For each TTP, state the system property that permits it. This is the slot that must not paraphrase the previous one. "The agent holds a send capability while reading content it did not author" is a Weakness. "Someone wrote a clever message" is not.</p></div>
+      <div class="step"><p><strong>Impact.</strong> Then convert it to the two blast-radius questions that carry all the weight later: what is the highest data classification reachable, and which irreversible tools are in scope. Session 4 shows that for agents, the action blast radius dominates severity, not the model's behaviour.</p></div>
+    </div>
+
+    <div class="callout example">
+      <span class="ex-pill">The disagreement worth having at the table</span>
+      <p>Someone will argue that this is over-engineering for a chatbot that only answers questions. Take the argument seriously, because they are sometimes right: a model with no private data, no tools and no egress is genuinely a low-stakes component, and treating it like a critical system wastes the credibility you will need later.</p>
+      <p>The counter is that these systems do not stay in that shape. The chatbot that only answered questions in March has a document upload in June and a ticket-creation tool in September, and no single one of those changes triggered a threat-modelling review, because each looked like a feature. The five slots are cheap enough to re-run per change, and the real ask on this page is not a one-off model. It is a trigger: any new tool, connector, data source, renderer or permission scope re-opens the worksheet.</p>
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Try it yourself - this week <span class="tag exercise">◐ 45-60 min total</span></h2>
+    </div>
+    <ul>
+      <li>Run the trifecta over every AI deployment on your inventory, one line each, three ticks or crosses. It takes about two minutes per system and it will produce your prioritised list for the next two quarters without any testing at all.</li>
+      <li>For every system carrying all three legs, ask which leg the business could survive losing. Bring the answers to your next architecture review rather than to your next security review, because these are product decisions wearing security clothing.</li>
+      <li>Ask whoever owns your largest agent for the maximum number of consequential actions it may take between human checkpoints. The Rule of Two does not cover this and neither, probably, do you.</li>
+      <li>Take one existing STRIDE worksheet for an AI system and find where instruction-data confusion was filed. Whichever letter it landed under, the fit will be visibly poor, and that is a much easier conversation to have with a document in hand.</li>
+      <li>Write down, for one system, the difference between "content from outside our network" and "content we did not author". The gap between those two definitions is where most internal-only assistants quietly acquire their third leg.</li>
+    </ul>
+  </section>
+
+  <!-- ============ SOURCES ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Source material</span>
+      <h2>Official sources covered</h2>
+    </div>
+    <p class="lede">Every framework, figure and quotation on this page traces to a primary source catalogued in this course's source map, verified 2026-08-14. This page covers:</p>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Microsoft's threat-modelling ontology - System, Actor, TTPs, Weakness, Impact - and its deliberate refusal to assume adversarial intent</span><span class="note">Part 1 · [P] · team established 2018</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Simon Willison's lethal trifecta - private data, untrusted content, external communication; removing any leg removes the risk</span><span class="note">Part 2 · [P] practitioner primary</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Meta's Rule of Two as an OWASP-cited floor, and OWASP's own criticism that it is silent on autonomy depth</span><span class="note">Part 2 + Decision 1 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">EchoLeak in M365 Copilot - CVE-2025-32711, CVSS 3.1 9.3 Critical, CWE-74, published 11 Jun 2025, UI:N and S:C</span><span class="note">Part 2 · [P] NVD record</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">GitHub disabling image rendering in Copilot Chat, 14 Aug 2025, as the durable fix</span><span class="note">Part 2 · [P] researcher primary plus confirmed vendor fix · a5 develops the pattern</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NIST AI 100-2e2025 §3.4.4 - designers may assume prompt injection is possible wherever untrusted input reaches a model</span><span class="note">Part 0 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MITRE ATLAS as the AI technique catalogue; AML.TA0000 AI Model Access and AML.TA0001 AI Attack Staging have no ATT&amp;CK equivalent</span><span class="note">Part 3 details card · [P] · counts deliberately not quoted, see below</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP's boundary rule - LLM Top 10 while the model is a component, Agentic list once it becomes an actor</span><span class="note">Part 3 details card · [P]</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The STRIDE fit analysis and the two missing cells</span><span class="note">Assembled for this course · no standards body publishes this mapping; the three landings are conventional, the two gaps are the argument</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Individual OWASP Agentic list item titles (ASI01 to ASI10)</span><span class="note">Not quoted here · the released titles could not be confirmed against the published PDF at verification time</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">MITRE ATLAS tactic, technique and mitigation counts</span><span class="note">Not quoted here · secondary sources disagree; b2 cites the machine-readable dataset version explicitly</span></div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions before you go 🎯 <span class="tag exercise">◐ 90 seconds</span></h2>
+    </div>
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">1 · Microsoft's threat-modelling ontology deliberately does not assume adversarial intent. What follows from that for a leader?</p>
+      <button class="qopt" type="button">A · That attacks are rare enough to deprioritise relative to other security work</button>
+      <button class="qopt" type="button">B · That the Actor slot can usually be left blank in an internal threat model</button>
+      <button class="qopt" type="button">C · That a benign user hitting a failure produces the same failure, so this is reliability engineering rather than attacker cosplay - which is both more accurate and much easier to fund</button>
+      <p class="qwhy">Microsoft emulate benign users who trip a failure unintentionally, because the Weakness and the Impact are identical whether or not anyone meant it. That framing is why the practice belongs next to load testing and fuzzing rather than in a discretionary security line that loses whenever nobody has been attacked recently. Option A inverts it: the point is that you do not need an adversary for the failure to occur, which makes it more common, not less.</p>
+    </div>
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">2 · An internal-only assistant reads the data warehouse and renders answers in your own tool. A team marks it as having no untrusted-content leg. Are they right?</p>
+      <button class="qopt" type="button">A · Yes, because everything it touches sits inside the corporate network</button>
+      <button class="qopt" type="button">B · No. Untrusted content means text your organisation did not author, and the warehouse holds free-text fields that customers typed - so the leg is present</button>
+      <button class="qopt" type="button">C · It does not matter, because with no external communication leg the trifecta is not applicable at all</button>
+      <p class="qwhy">This is the most common error in the session, and it comes from reading "untrusted" as a network-perimeter word. Uploaded supplier documents, forwarded email threads, customer free text, calendar invitations and another team's dashboard are all content your system did not author. Option C is nearly right and still wrong: the missing third leg is exactly what makes this system defensible today, which is a fact you should record deliberately, because the next feature request will be the one that adds it.</p>
+    </div>
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">3 · Why does STRIDE fit AI systems awkwardly, and what should you do about it?</p>
+      <button class="qopt" type="button">A · Poisoning, jailbreaking and model theft can be filed under Tampering, Elevation of Privilege and Information Disclosure, but there is no cell for a model following instructions that arrived inside data, nor for a probabilistic outcome - so use STRIDE as a completeness checklist and MITRE ATLAS as the technique catalogue</button>
+      <button class="qopt" type="button">B · STRIDE is obsolete for any system containing a model and should be retired</button>
+      <button class="qopt" type="button">C · STRIDE covers AI systems fully once you add a sixth category for prompt injection</button>
+      <p class="qwhy">Three categories genuinely land, which is why the framework feels serviceable right up to the point where it is not. The two gaps are the defining property of these systems: no architectural separation between instructions and data, and a finding that is a rate rather than a boolean. Option B throws away something that is still good at asking whether you forgot a whole class of thing; option C underestimates the second gap, which is not a missing category but a missing column.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Leader session 2 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>The replacement question</b><span>Not "can it be fooled" but "what does being fooled get somebody". Reach, capability, egress. All three are your decisions.</span></div>
+      <div class="cheat-item"><b>System · Actor · TTPs · Weakness · Impact</b><span>Five slots, short enough to use in a meeting. Fill all five or you do not have a threat model.</span></div>
+      <div class="cheat-item"><b>Actor is not attacker</b><span>The ontology does not assume malice. A benign user hitting the failure produces the same failure, which makes this reliability engineering.</span></div>
+      <div class="cheat-item"><b>Weakness must not paraphrase TTP</b><span>"Someone wrote a clever message" is not a weakness. "The agent held a send capability while reading content it did not author" is.</span></div>
+      <div class="cheat-item"><b>The lethal trifecta</b><span>Private data + untrusted content + external communication. Any one alone is safe. Removing any leg removes the risk.</span></div>
+      <div class="cheat-item"><b>Rule of Two</b><span>Any two of untrusted input, sensitive data, state change or egress is high risk. All three needs per-action human approval.</span></div>
+      <div class="cheat-item"><b>The gap the Rule leaves</b><span>OWASP: it is silent on autonomy depth. One approved action and four hundred score the same. Set the depth limit yourself.</span></div>
+      <div class="cheat-item"><b>STRIDE plus ATLAS</b><span>STRIDE as the completeness checklist, MITRE ATLAS as the technique catalogue. No STRIDE cell exists for instruction-data confusion or for a rate.</span></div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>Leader session 2 of 6 · learn-ai-red-team-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="a1-what-a-red-team-is-for.html">← Previous: What a red team is for</a> &nbsp;·&nbsp; <a href="a3-reading-a-red-team-report.html">Next: Reading a red-team report →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

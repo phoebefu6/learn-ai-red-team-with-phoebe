@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>learn ai red team with phoebe - testing the systems you own</title>
+<link rel="stylesheet" href="assets/style.css?v=1">
+<style>
+  .stats-row { display: flex; gap: 2.4rem; margin-top: 1.5rem; flex-wrap: wrap; }
+  .stat b { display: block; font-size: 2.1rem; font-weight: 800; line-height: 1.05; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: .72rem; opacity: .85; text-transform: uppercase; letter-spacing: .09em; font-weight: 600; }
+
+  .course-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+  .course-card {
+    border: 1px solid var(--hairline);
+    border-top: 4px solid var(--diff, var(--indigo));
+    border-radius: var(--radius);
+    padding: 1.2rem 1.3rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    text-decoration: none;
+    color: var(--ink);
+    background: #fff;
+    transition: box-shadow .15s ease, border-color .15s ease, transform .15s ease;
+    position: relative;
+  }
+  .course-card:hover { border-color: var(--indigo-soft); border-top-color: var(--diff, var(--indigo)); box-shadow: 0 8px 28px rgba(46,49,56,.16); transform: translateY(-3px); }
+  .course-card .cicon { font-size: 1.7rem; line-height: 1; }
+  .course-card .cnum { font-size: .72rem; font-weight: 700; color: var(--indigo); text-transform: uppercase; letter-spacing: .1em; }
+  .course-card h3 { font-size: 1.05rem; font-weight: 800; line-height: 1.3; }
+  .course-card p { font-size: .85rem; color: var(--muted); flex: 1; }
+  .course-card .meta { display: flex; gap: .4rem; flex-wrap: wrap; }
+
+  .diff-legend { display: flex; gap: 1rem; margin-top: 1.6rem; font-size: .74rem; color: var(--muted); font-weight: 600; flex-wrap: wrap; }
+  .diff-legend i { display: inline-block; width: .85rem; height: .35rem; border-radius: 999px; margin-right: .35rem; vertical-align: middle; }
+
+  .paths { margin-top: 2.6rem; }
+  .paths h2 { font-size: 1.3rem; font-weight: 800; margin-bottom: .3rem; }
+  .paths .plede { color: var(--muted); font-size: .92rem; margin-bottom: .8rem; }
+  .path { display: flex; gap: .55rem; align-items: center; padding: .75rem 0; border-bottom: .5px solid var(--hairline); flex-wrap: wrap; }
+  .path:last-child { border-bottom: none; }
+  .path b { min-width: 15.5rem; font-size: .9rem; }
+  .path .pstep { background: var(--indigo-50); color: var(--indigo); border-radius: 999px; padding: .16rem .68rem; font-weight: 700; font-size: .8rem; text-decoration: none; transition: all .12s ease; }
+  .path .pstep:hover { background: var(--indigo); color: #fff; }
+  .path .parr { color: var(--faint); font-weight: 700; }
+
+  .mm-section { margin-top: 1.6rem; }
+  .mm-section h2 { font-size: 1.3rem; font-weight: 800; margin-bottom: .2rem; }
+  .mm-section .mm-lede { color: var(--muted); font-size: .92rem; margin-bottom: .4rem; }
+  .mm-wrap { border: 1px solid var(--hairline); border-radius: var(--radius); background: linear-gradient(180deg,#fff,#F0F1F4); padding: .6rem; overflow-x: auto; }
+  .mm-svg { width: 100%; height: auto; display: block; max-width: 60rem; margin: 0 auto; min-width: 34rem; }
+  .mm-link { cursor: pointer; text-decoration: none; }
+  .mm-node rect { transition: opacity .15s ease, filter .15s ease; }
+  .mm-node text { pointer-events: none; }
+  .mm-edge { transition: opacity .15s ease; }
+</style>
+</head><body>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI Red Team with Phoebe</div>
+    <h1>Three thousand hours found nothing. That was not the same as nothing being there.</h1>
+    <p class="sub">A bug bounty ran 183 participants over three thousand hours against a new safety system and found no universal jailbreak. A later public exercise with 339 people and a few hundred more hours found one. Nothing about the first result was wrong; it simply did not mean what "we red-teamed it and found nothing" is usually taken to mean. This is a course about testing AI systems you own, honestly, and about what you may claim afterwards. It covers scoping and rules of engagement, the attack classes named by OWASP 2026, MITRE ATLAS and NIST, the defences that hold and the measured evidence that most of them do not, how to score a finding when the same input gives a different answer every time, and how findings become a standing suite. At its centre, a live attack-surface board where an untested class counts at full risk rather than zero, because a coverage meter that treats "we did not look" as "we are fine" is worse than no meter at all. Every exercise runs against a fictional company, inside a scope document you write in the first session.</p>
+    <div class="stats-row">
+      <div class="stat"><b data-count="2">2</b><span>tracks</span></div>
+      <div class="stat"><b data-count="16">16</b><span>sessions</span></div>
+      <div class="stat"><b data-count="8">8</b><span>attack classes</span></div>
+      <div class="stat"><b data-count="7">7</b><span>controls compared</span></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="section">
+    <div class="callout tip" style="margin-top:0">
+      <strong>Authorized testing only, and where this sits</strong>
+      Everything here is about systems <strong>you own or are contracted in writing to test</strong>. The course names attack classes so you can build test cases and pairs each with its defence; it contains no exploit payloads. <a href="https://phoebefu6.github.io/learn-agent-launch-with-phoebe/">Agent Launch</a> has a safety gate that requires an adversarial slice and does not teach you to build one - that is this course. <a href="https://phoebefu6.github.io/learn-ai-observability-with-phoebe/">AI Observability</a> owns the telemetry findings surface in. <a href="https://phoebefu6.github.io/learn-ai-agents-with-phoebe/">AI Agents</a> owns what an agent is.
+    </div>
+
+    <div class="paths" style="margin-top:2rem">
+      <h2>The leader track 🎯 <span style="font-size:.85rem;font-weight:600;color:var(--muted)">· for the people who commission and read the report · 6 x 45 min · no tools required</span></h2>
+      <p class="plede">Judgement mode: what a red team can and cannot establish, the threat model in two heuristics, how to read a report without being fooled by a number, how to score severity by what a finding chains to, which defences the measured evidence actually supports, and when the right answer is that this workflow should not ship as an agent at all.</p>
+    </div>
+    <div class="course-grid">
+      <a class="course-card" href="courses/a1-what-a-red-team-is-for.html" style="--diff:#34D399">
+        <span class="cicon">🧭</span>
+        <span class="cnum">Leader 1 · easy</span>
+        <h3>What a red team is for</h3>
+        <p>Three thousand hours found no universal jailbreak. A later exercise found one. What a report may claim, and the four sentences it may not.</p>
+        <span class="meta"><span class="pill amber">▶ Leaders start here</span></span>
+      </a>
+      <a class="course-card" href="courses/a2-the-threat-model.html" style="--diff:#34D399">
+        <span class="cicon">🕸️</span>
+        <span class="cnum">Leader 2 · easy</span>
+        <h3>The threat model</h3>
+        <p>Two heuristics do most of the work: the lethal trifecta, and the rule of two. Remove any one leg and the risk goes with it.</p>
+        <span class="meta"><span class="pill light">The map</span></span>
+      </a>
+      <a class="course-card" href="courses/a3-reading-a-red-team-report.html" style="--diff:#FBBF24">
+        <span class="cicon">🔬</span>
+        <span class="cnum">Leader 3 · medium</span>
+        <h3>Reading a red-team report</h3>
+        <p>A near-zero attack success rate is now the most dangerous number in the field. Twelve defences reported one; most were broken above ninety percent.</p>
+        <span class="meta"><span class="pill light">The grilling kit</span></span>
+      </a>
+      <a class="course-card" href="courses/a4-severity-and-triage.html" style="--diff:#FBBF24">
+        <span class="cicon">⚖️</span>
+        <span class="cnum">Leader 4 · medium</span>
+        <h3>Severity and triage</h3>
+        <p>The same jailbreak is informational in one system and critical in another. Severity is what it chains to, not how clever the prompt was.</p>
+        <span class="meta"><span class="pill light">What it chains to</span></span>
+      </a>
+      <a class="course-card" href="courses/a5-what-defences-actually-hold.html" style="--diff:#FB923C">
+        <span class="cicon">🛡️</span>
+        <span class="cnum">Leader 5 · deciding</span>
+        <h3>What defences actually hold</h3>
+        <p>Every individual defence was beaten by a third to sixty percent of teams that tried. Stacking cut it to sixteen percent, not to zero.</p>
+        <span class="meta"><span class="pill light">The evidence</span></span>
+      </a>
+      <a class="course-card" href="courses/a6-when-to-stop.html" style="--diff:#FB923C">
+        <span class="cicon">🛑</span>
+        <span class="cnum">Leader 6 · deciding</span>
+        <h3>When to stop</h3>
+        <p>The regulator says it plainly: if the residual risk is intolerable, it may not be a good use case for an LLM. That is a finding.</p>
+        <span class="meta"><span class="pill light">The hard call</span></span>
+      </a>
+    </div>
+
+    <div class="paths">
+      <h2>The builder track 🛠️ <span style="font-size:.85rem;font-weight:600;color:var(--muted)">· for security engineers, AI engineers &amp; platform leads · 10 x 45 min · hands-on</span></h2>
+      <p class="plede">Craft mode: write the rules of engagement, map the attack surface to the current framework IDs, work through injection, refusal, extraction and tool abuse as classes to test rather than tricks to perform, build the suite, run the engagement, harden and honestly measure the delta, and leave behind a standing suite that keeps holding after you go.</p>
+    </div>
+    <div class="course-grid">
+      <a class="course-card" href="courses/b1-scope-and-rules-of-engagement.html" style="--diff:#34D399">
+        <span class="cicon">📋</span>
+        <span class="cnum">Builder 1 · easy</span>
+        <h3>Scope and rules of engagement</h3>
+        <p>Authorization is not a sentence you type. A real campaign bypassed guardrails by claiming to be authorized testing.</p>
+        <span class="meta"><span class="pill amber">▶ Builders start here</span></span>
+      </a>
+      <a class="course-card" href="courses/b2-the-attack-surface.html" style="--diff:#34D399">
+        <span class="cicon">🗺️</span>
+        <span class="cnum">Builder 2 · easy</span>
+        <h3>The attack surface</h3>
+        <p>The eight classes and the frameworks that name them. Four OWASP IDs moved in the 2026 edition, and one was renamed entirely.</p>
+        <span class="meta"><span class="pill light">The taxonomy</span></span>
+      </a>
+      <a class="course-card" href="courses/b3-prompt-injection.html" style="--diff:#FBBF24">
+        <span class="cicon">💉</span>
+        <span class="cnum">Builder 3 · medium</span>
+        <h3>Prompt injection</h3>
+        <p>The class with no parameterised query. Three official bodies now say plainly that no reliable prevention mechanism exists.</p>
+        <span class="meta"><span class="pill light">The unsolved one</span></span>
+      </a>
+      <a class="course-card" href="courses/b4-jailbreaks-and-refusal.html" style="--diff:#FBBF24">
+        <span class="cicon">🔓</span>
+        <span class="cnum">Builder 4 · medium</span>
+        <h3>Jailbreaks and refusal</h3>
+        <p>Measured as a rate, never pass or fail. And the benign set that stops you scoring well by refusing everything.</p>
+        <span class="meta"><span class="pill light">Rate not verdict</span></span>
+      </a>
+      <a class="course-card" href="courses/b5-data-extraction.html" style="--diff:#FBBF24">
+        <span class="cicon">🗄️</span>
+        <span class="cnum">Builder 5 · medium</span>
+        <h3>Data extraction</h3>
+        <p>Assume the context is discoverable, then design so that discovering it buys an attacker nothing.</p>
+        <span class="meta"><span class="pill light">Assume discovered</span></span>
+      </a>
+      <a class="course-card" href="courses/b6-tool-abuse-and-agency.html" style="--diff:#FB923C">
+        <span class="cicon">🔧</span>
+        <span class="cnum">Builder 6 · hands-on</span>
+        <h3>Tool abuse and agency</h3>
+        <p>Severity is what the credential can do. Most documented MCP threats turn out to be OAuth, SSRF and supply chain problems.</p>
+        <span class="meta"><span class="pill light">Blast radius</span></span>
+      </a>
+      <a class="course-card" href="courses/b7-build-the-suite.html" style="--diff:#FB923C">
+        <span class="cicon">🎯</span>
+        <span class="cnum">Builder 7 · hands-on</span>
+        <h3>Build the suite</h3>
+        <p>The live board. Probe the whole surface and the total barely moves while the unknown goes to zero. That is the job.</p>
+        <span class="meta"><span class="pill amber">★ The live board</span></span>
+      </a>
+      <a class="course-card" href="courses/b8-run-the-engagement.html" style="--diff:#FB923C">
+        <span class="cicon">🏃</span>
+        <span class="cnum">Builder 8 · hands-on</span>
+        <h3>Run the engagement</h3>
+        <p>Open-ended first, then guided, then adaptive. Baselines got eleven percent; attacks tailored to the target got eighty-one.</p>
+        <span class="meta"><span class="pill light">The two stages</span></span>
+      </a>
+      <a class="course-card" href="courses/b9-harden-and-retest.html" style="--diff:#F87171">
+        <span class="cicon">🔨</span>
+        <span class="cnum">Builder 9 · hardest</span>
+        <h3>Harden and retest</h3>
+        <p>Prompt-level controls reduce rates; architecture removes capabilities. The gap between them is fifty-five points.</p>
+        <span class="meta"><span class="pill light">The delta</span></span>
+      </a>
+      <a class="course-card" href="courses/b10-the-standing-suite.html" style="--diff:#F87171">
+        <span class="cicon">♻️</span>
+        <span class="cnum">Builder 10 · hardest</span>
+        <h3>The standing suite</h3>
+        <p>Green is not safe and never was. Regression-test the architecture, not only the prompts, and re-test on triggers.</p>
+        <span class="meta"><span class="pill light">After you go</span></span>
+      </a>
+    </div>
+    <div class="diff-legend">
+      <span><i style="background:#34D399"></i>easy - everyone</span>
+      <span><i style="background:#FBBF24"></i>medium</span>
+      <span><i style="background:#FB923C"></i>hands-on / deciding</span>
+      <span><i style="background:#F87171"></i>hardest</span>
+    </div>
+
+    <div class="paths">
+      <h2>Choose your path 🗺️</h2>
+      <p class="plede">Four doors into the same conviction: you cannot make the model refuse to be fooled, so bound what being fooled gets an attacker.</p>
+      <div class="path"><b>🎯 I commission the testing</b>
+        <a class="pstep" href="courses/a1-what-a-red-team-is-for.html">a1</a><span class="parr">→</span>
+        <a class="pstep" href="courses/a2-the-threat-model.html">a2</a><span class="parr">→</span>
+        <a class="pstep" href="courses/a3-reading-a-red-team-report.html">a3</a><span class="parr">→</span>
+        <a class="pstep" href="courses/a4-severity-and-triage.html">a4</a><span class="parr">→</span>
+        <a class="pstep" href="courses/a5-what-defences-actually-hold.html">a5</a><span class="parr">→</span>
+        <a class="pstep" href="courses/a6-when-to-stop.html">a6</a>
+      </div>
+      <div class="path"><b>🛠️ I run the engagement</b>
+        <a class="pstep" href="courses/b1-scope-and-rules-of-engagement.html">b1</a><span class="parr">→</span>
+        <a class="pstep" href="courses/b2-the-attack-surface.html">b2</a><span class="parr">→</span>
+        <a class="pstep" href="courses/b3-prompt-injection.html">b3</a><span class="parr">→</span>
+        <a class="pstep" href="courses/b4-jailbreaks-and-refusal.html">b4</a><span class="parr">→</span>
+        <a class="pstep" href="courses/b5-data-extraction.html">b5</a><span class="parr">→</span>
+        <a class="pstep" href="courses/b6-tool-abuse-and-agency.html">b6</a><span class="parr">→</span>
+        <a class="pstep" href="courses/b7-build-the-suite.html">b7</a><span class="parr">→</span>
+        <a class="pstep" href="courses/b8-run-the-engagement.html">b8</a><span class="parr">→</span>
+        <a class="pstep" href="courses/b9-harden-and-retest.html">b9</a><span class="parr">→</span>
+        <a class="pstep" href="courses/b10-the-standing-suite.html">b10</a>
+      </div>
+      <div class="path"><b>⚡ We ship an agent next month</b>
+        <a class="pstep" href="courses/a2-the-threat-model.html">a2</a><span class="parr">→</span>
+        <a class="pstep" href="courses/b6-tool-abuse-and-agency.html">b6</a><span class="parr">→</span>
+        <a class="pstep" href="courses/b7-build-the-suite.html">b7</a>
+      </div>
+      <div class="path"><b>🚀 Full journey (test AND decide)</b>
+        <a class="pstep" href="courses/a1-what-a-red-team-is-for.html">a1-a6</a><span class="parr">→</span>
+        <a class="pstep" href="courses/b1-scope-and-rules-of-engagement.html">b1-b10</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section mm-section">
+    <h2>The knowledge map 🧠</h2>
+    <p class="mm-lede">Both tracks at a glance - hover a session to spotlight its concepts, click any node to jump in.</p>
+    <div class="mm-wrap"><div id="mindmap"></div></div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>learn-ai-red-team-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a> · For authorized testing of systems you own. Neighbours, deliberately not duplicated: Agent Launch owns the launch decision, AI Observability owns the trace, AI Agents owns agent architecture. This course owns the engagement.</span>
+  </footer>
+</main>
+
+<script>
+window.MINDMAP_DATA = {
+  title: "Learn AI\nRed Team",
+  centerColor: "#1A1C21",
+  sessions: [
+    { label: "What a red\nteam is for", href: "courses/a1-what-a-red-team-is-for.html", color: "#34D399",
+      concepts: [
+        { label: "Presence not absence", href: "courses/a1-what-a-red-team-is-for.html" },
+        { label: "3,000 hours found none", href: "courses/a1-what-a-red-team-is-for.html" } ] },
+    { label: "The threat\nmodel", href: "courses/a2-the-threat-model.html", color: "#34D399",
+      concepts: [
+        { label: "Lethal trifecta", href: "courses/a2-the-threat-model.html" },
+        { label: "Rule of two", href: "courses/a2-the-threat-model.html" } ] },
+    { label: "Reading a\nreport", href: "courses/a3-reading-a-red-team-report.html", color: "#FBBF24",
+      concepts: [
+        { label: "k of N", href: "courses/a3-reading-a-red-team-report.html" },
+        { label: "Near-zero is a warning", href: "courses/a3-reading-a-red-team-report.html" } ] },
+    { label: "Severity\nand triage", href: "courses/a4-severity-and-triage.html", color: "#FBBF24",
+      concepts: [
+        { label: "What it chains to", href: "courses/a4-severity-and-triage.html" },
+        { label: "Zero-click pivot", href: "courses/a4-severity-and-triage.html" } ] },
+    { label: "What defences\nhold", href: "courses/a5-what-defences-actually-hold.html", color: "#FB923C",
+      concepts: [
+        { label: "Stacking gets 0.166", href: "courses/a5-what-defences-actually-hold.html" },
+        { label: "Architecture wins", href: "courses/a5-what-defences-actually-hold.html" } ] },
+    { label: "When to\nstop", href: "courses/a6-when-to-stop.html", color: "#FB923C",
+      concepts: [
+        { label: "Not a good use case", href: "courses/a6-when-to-stop.html" },
+        { label: "Art. 55 documentation", href: "courses/a6-when-to-stop.html" } ] },
+    { label: "Scope\nand RoE", href: "courses/b1-scope-and-rules-of-engagement.html", color: "#34D399",
+      concepts: [
+        { label: "Authorization in the plane", href: "courses/b1-scope-and-rules-of-engagement.html" },
+        { label: "Blast-radius limits", href: "courses/b1-scope-and-rules-of-engagement.html" } ] },
+    { label: "The attack\nsurface", href: "courses/b2-the-attack-surface.html", color: "#34D399",
+      concepts: [
+        { label: "OWASP 2026 moved 4", href: "courses/b2-the-attack-surface.html" },
+        { label: "ATLAS maturity", href: "courses/b2-the-attack-surface.html" } ] },
+    { label: "Prompt\ninjection", href: "courses/b3-prompt-injection.html", color: "#FBBF24",
+      concepts: [
+        { label: "No parameterised query", href: "courses/b3-prompt-injection.html" },
+        { label: "Adaptive or nothing", href: "courses/b3-prompt-injection.html" } ] },
+    { label: "Jailbreaks\nand refusal", href: "courses/b4-jailbreaks-and-refusal.html", color: "#FBBF24",
+      concepts: [
+        { label: "A rate not a verdict", href: "courses/b4-jailbreaks-and-refusal.html" },
+        { label: "The benign set", href: "courses/b4-jailbreaks-and-refusal.html" } ] },
+    { label: "Data\nextraction", href: "courses/b5-data-extraction.html", color: "#FBBF24",
+      concepts: [
+        { label: "Assume discoverable", href: "courses/b5-data-extraction.html" },
+        { label: "No creds in context", href: "courses/b5-data-extraction.html" } ] },
+    { label: "Tool abuse\nand agency", href: "courses/b6-tool-abuse-and-agency.html", color: "#FB923C",
+      concepts: [
+        { label: "Blast radius rules", href: "courses/b6-tool-abuse-and-agency.html" },
+        { label: "MCP is OAuth", href: "courses/b6-tool-abuse-and-agency.html" } ] },
+    { label: "Build\nthe suite", href: "courses/b7-build-the-suite.html", color: "#FB923C",
+      concepts: [
+        { label: "Untested = unknown", href: "courses/b7-build-the-suite.html" },
+        { label: "100% then 96.4", href: "courses/b7-build-the-suite.html" },
+        { label: "The prompt-guard trap", href: "courses/b7-build-the-suite.html" } ] },
+    { label: "Run the\nengagement", href: "courses/b8-run-the-engagement.html", color: "#FB923C",
+      concepts: [
+        { label: "Open-ended first", href: "courses/b8-run-the-engagement.html" },
+        { label: "11% to 81%", href: "courses/b8-run-the-engagement.html" } ] },
+    { label: "Harden\nand retest", href: "courses/b9-harden-and-retest.html", color: "#F87171",
+      concepts: [
+        { label: "3.6 vs 55 points", href: "courses/b9-harden-and-retest.html" },
+        { label: "Claim the delta honestly", href: "courses/b9-harden-and-retest.html" } ] },
+    { label: "The standing\nsuite", href: "courses/b10-the-standing-suite.html", color: "#F87171",
+      concepts: [
+        { label: "Green is not safe", href: "courses/b10-the-standing-suite.html" },
+        { label: "Test the architecture", href: "courses/b10-the-standing-suite.html" } ] }
+  ]
+};
+</script>
+<script src="assets/mindmap.js?v=1"></script>
+<script src="assets/app.js?v=1"></script>
+</body>
+</html>

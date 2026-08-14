@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Builder session 8 · Run the engagement - learn ai red team with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-red-team-with-phoebe</a> / Builder session 8 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI Red Team with Phoebe · Builder track · Session 8 of 10</div>
+    <h1>Run the engagement: <span class="accent">open-ended first, then guided, then adaptive</span></h1>
+    <p class="sub">b7 built the suite. This session runs it, and the running order is not the order most teams use. You start with no target list at all, because a checklist narrows attention before you know the shape of the thing. Then you build the harms list from what surprised you, test against it, and spend the second half of your budget on attacks nobody has published, because that is where the measured success rate lives. It ends with the three ways an engagement is allowed to stop, and the sentence that goes in every report so nobody mistakes your examples for a measurement.</p>
+    <div class="chip-row">
+      <span class="chip level">🟠 Builder track</span>
+      <span class="chip audience">Security engineers · AI engineers · platform leads</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:3">3-16 · Two stages and the budget</span>
+      <span class="a3" style="flex:4">16-34 · Build-along: run a round</span>
+      <span class="a4" style="flex:3">34-45 · Stopping, people, Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>An engagement is a schedule, and the schedule is the method</h2>
+    </div>
+    <div class="callout warn">
+      <strong>⚠ Authorization</strong>
+      This session is about testing AI systems <strong>you own, or are contracted in writing to test</strong>. Everything here runs against Beacon, a fictional company, inside the rules-of-engagement document you wrote in b1 - named approver, named window, named blast-radius limits. The course names attack <em>classes</em> so you can build test cases and pairs each with the defence that addresses it. It contains no exploit payloads and teaches no attack craft. Testing a system you are not authorized to test is a crime in most jurisdictions, and nothing in a run book changes that.
+    </div>
+    <p class="lede">Nearly everything that separates a useful engagement from a busy one is decided before anyone types at the bot: in what order the stages run, how the hours divide between published attacks and new ones, what gets written down per attempt, and what counts as permission to stop. None of that is glamorous. All of it moves the result more than any individual tester's cleverness does.</p>
+    <div class="legend">
+      <span class="pill solid">Live - presented in session</span>
+      <span class="pill light">Self-study - read after class</span>
+      <span class="pill inkpill">Official sources covered</span>
+    </div>
+    <div class="callout win">
+      <strong>★ What you walk out with today</strong>
+      A two-stage run order with the taxonomy in its correct place at the end, a defensible split of hours between baseline and adaptive work, a shared recording sheet with the four minimum fields plus k of N, three named stopping conditions agreed in advance, a team-composition and welfare section that belongs in the run book, and the report sentence that stops one vivid example becoming an organisation's entire mental model of the risk.
+    </div>
+    <div class="callout tip">
+      <strong>Where this sits in the track</strong>
+      <a href="b1-scope-and-rules-of-engagement.html">b1</a> wrote the authorization, the trial rule and the blast-radius limits. <a href="b7-build-the-suite.html">b7</a> built the suite and the coverage accounting. This session runs them. <a href="b9-harden-and-retest.html">b9</a> takes what you find and measures the delta after hardening, honestly.
+    </div>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="stages">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · the run order</span>
+      <h2>Open-ended first, and the taxonomy arrives last <span class="tag concept">6 min live</span></h2>
+    </div>
+    <p class="lede">Microsoft's published operating guidance, drawn from red teaming more than a hundred generative AI products, specifies a two-stage execution, and the order carries the argument. Open-ended exploration comes first because it "enables them to creatively explore a wide range of issues, <strong>uncovering blind spots in your understanding of the risk surface</strong>". Note whose understanding is being corrected. Not the model's. Yours.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three stages in order: open-ended exploration with no target list, then building the harms list from what surprised you, then guided testing against that list with iteration. The published taxonomy is a completeness check applied after the harms list exists, not the starting point.">
+        <style>
+          .e8H { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .e8B { font: 700 13px Inter, sans-serif; fill: #3A1B08; }
+          .e8X { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .e8N { font: 800 12.5px Inter, sans-serif; fill: #FFFFFF; }
+        </style>
+
+        <text class="e8H" x="24" y="30">Two stages, in this order, and the taxonomy arrives last</text>
+
+        <rect x="24" y="44" width="832" height="88" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <rect x="44" y="62" width="24" height="24" rx="7" fill="#2E3138"/>
+        <text class="e8N" x="53" y="79">1</text>
+        <text class="e8H" x="82" y="78">Open-ended exploration, with no target list and no taxonomy</text>
+        <text class="e8X" x="82" y="100">It "enables them to creatively explore a wide range of issues, uncovering blind spots in your</text>
+        <text class="e8X" x="82" y="118">understanding of the risk surface". A checklist first narrows attention before you know the shape.</text>
+
+        <rect x="24" y="148" width="832" height="88" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <rect x="44" y="166" width="24" height="24" rx="7" fill="#2E3138"/>
+        <text class="e8N" x="53" y="183">2</text>
+        <text class="e8H" x="82" y="182">Build the harms list from what actually surprised you</text>
+        <text class="e8X" x="82" y="204">One line per surprising behaviour, with the layer it lives in and who saw it. This list, not a</text>
+        <text class="e8X" x="82" y="222">published taxonomy, is what the guided round tests against. It is the artefact of stage one.</text>
+
+        <rect x="24" y="252" width="832" height="88" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <rect x="44" y="270" width="24" height="24" rx="7" fill="#C2410C"/>
+        <text class="e8N" x="53" y="287">3</text>
+        <text class="e8H" x="82" y="286">Guided testing against that list, then iterate</text>
+        <text class="e8X" x="82" y="308">Run it properly: N trials per case, k of N recorded. Expect new harms to appear during the</text>
+        <text class="e8X" x="82" y="326">guided round; add them and go round again. The list is never final, only current.</text>
+
+        <rect x="24" y="360" width="832" height="94" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="e8B" x="44" y="384">Where the taxonomy belongs, and it is not at the front</text>
+        <text class="e8X" x="44" y="408">OWASP, ATLAS and NIST are the completeness check you apply AFTER the harms list exists: did we miss</text>
+        <text class="e8X" x="44" y="426">a class entirely? Start from the taxonomy and you get a tidy matrix plus the blind spots you had.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the run order, and the one place a published taxonomy earns its keep</figcaption>
+    </figure>
+
+    <p>The instinct to start from the taxonomy is strong and it comes from a good place: it feels rigorous, it maps to identifiers an auditor recognises, and it produces a satisfying grid on day one. It also guarantees that everything you find is something you already suspected. A tester holding an eight-row checklist stops noticing the ninth thing, because the checklist is what attention is for. Stage one exists to buy you the ninth thing, and it only works if nobody has been handed the grid yet.</p>
+
+    <p>Then the taxonomy comes back, and it is genuinely valuable in its proper place. Once the harms list exists, laying OWASP's 2026 list and the relevant ATLAS techniques over it answers exactly one question: <strong>did we miss a class entirely?</strong> That is a completeness check, it takes twenty minutes, and it is the right amount of framework for the job. What it is not is a research agenda.</p>
+
+    <div class="callout tip">
+      <strong>The composition detail that makes stage one work</strong>
+      Microsoft is explicit that red teamers who are <strong>ordinary users of your application and have not been involved in building it</strong> bring valuable perspectives. Stage one is where that pays. Someone who knows the architecture explores the architecture. Someone who does not explores the product, which is what an attacker meets and what a confused customer meets too.
+    </div>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="budget">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · the adaptive budget</span>
+      <h2>Running the baselines and stopping is not an engagement <span class="tag concept">6 min live</span></h2>
+    </div>
+    <p class="lede">This is the single most important scheduling decision you will make, and it is usually made by accident. The published attack suites are easy to run, easy to justify and easy to finish. Building new attacks against this system is slow, unpredictable and hard to put in a plan. So the adaptive half is the half that quietly disappears, and NIST has measured what that costs.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 346" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="NIST measured agent hijacking success at 11 percent with the best published baseline attack and 81 percent when attacks were tailored to the target. Their conclusion: evaluations need to be adaptive.">
+        <style>
+          .f8H { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .f8B { font: 700 13px Inter, sans-serif; fill: #3A1B08; }
+          .f8X { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .f8T { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .f8N { font: 800 26px Inter, sans-serif; fill: #1E2025; }
+          .f8Nw { font: 800 26px Inter, sans-serif; fill: #991B1B; }
+        </style>
+
+        <text class="f8H" x="24" y="30">The single most important scheduling decision on the engagement</text>
+        <text class="f8X" x="24" y="50">How the hours divide. The proportions drawn below are illustrative: no standards body publishes a ratio.</text>
+
+        <rect x="24" y="68" width="832" height="36" rx="8" fill="#C2410C"/>
+        <rect x="24" y="68" width="299" height="36" rx="8" fill="#5A6070"/>
+        <text class="f8T" x="42" y="91">Published baselines</text>
+        <text class="f8T" x="341" y="91">Adaptive work, tailored to this target and this build</text>
+
+        <rect x="24" y="124" width="404" height="92" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="f8X" x="44" y="148">Best published baseline attack, run as published</text>
+        <text class="f8N" x="44" y="186">11%</text>
+        <text class="f8X" x="112" y="186">agent hijacking success</text>
+
+        <rect x="452" y="124" width="404" height="92" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="f8X" x="472" y="148">Same system, attacks tailored to the target</text>
+        <text class="f8Nw" x="472" y="186">81%</text>
+        <text class="f8X" x="540" y="186">agent hijacking success</text>
+
+        <rect x="24" y="236" width="832" height="94" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="f8B" x="44" y="260">NIST's conclusion, and the scheduling rule it forces</text>
+        <text class="f8X" x="44" y="284">"Evaluations need to be adaptive." Running the published baselines and stopping is not an engagement,</text>
+        <text class="f8X" x="44" y="302">it is a smoke test. Budget the adaptive half explicitly, or it will be the half that gets cut.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the same system, measured twice, differing only in who wrote the attack</figcaption>
+    </figure>
+
+    <p>Sit with the size of that gap. <strong>11% with the best published baseline. 81% when the attacks were tailored to the target.</strong> Same system, same measurement harness, seven-fold difference in the reported result, and the only variable is whether the attacker did work specific to this system. A report built entirely on published suites is not a cautious report. It is a report about a different, easier attacker than the one you have, and it will read as reassuring precisely where it is least informative.</p>
+
+    <p>The ratio itself is yours to choose and I am not going to invent one for you, because nobody publishes one. What the evidence forbids is a bar with nothing on the right-hand side. Put the adaptive block in the plan with a name, an owner and its own hours, and protect it the way you would protect a deadline, because it is the first thing that gets eaten when the baseline runs overrun. In practice the honest planning question is not "how long will the adaptive work take" - it is unbounded - but "how many days are we willing to spend, and what will we have written down when they end".</p>
+
+    <div class="callout warn">
+      <strong>The failure mode has a shape you can spot in a plan</strong>
+      If the engagement schedule can be fully specified in advance, it contains no adaptive work. Baselines can be scheduled because you know what they are. Adaptive work can only be timeboxed. A plan with no timeboxes in it is a plan for a smoke test with a red-team invoice attached.
+    </div>
+  </section>
+
+  <!-- ============ DEMO 1 ============ -->
+  <section class="section" id="demo-1">
+    <div class="section-kicker">
+      <span class="klabel">Demo 1 of 2</span>
+      <h2>Run stage one and build Beacon's harms list <span class="tag demo">★ 10 min · in pairs</span></h2>
+    </div>
+    <p class="lede">Four minutes of genuinely open exploration, then six minutes turning it into an artefact. Resist the urge to be systematic during the first four minutes; being systematic is what stage three is for, and doing it early costs you the whole point of doing it in two stages.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Split the pair by mindset, deliberately.</strong> One of you explores as a curious ordinary user who has never seen the code: ask it things a customer would ask, then things a confused customer would ask. The other explores adversarially. Both are legitimate and Microsoft's threat-model ontology deliberately does not assume adversarial intent, because a benign user hitting a failure is the same failure with a friendlier email attached.</p></div>
+      <div class="step"><p><strong>Write down surprises, not successes.</strong> The stage-one output is anything that made you go "huh", including behaviour that is not a security issue at all: an odd refusal, a confidently wrong figure, a tool call you did not expect, a response that quoted something you did not paste. Most of these will not become findings. Two of them will become the best findings of the engagement.</p></div>
+      <div class="step"><p><strong>Now build the harms list.</strong> One line per surprising behaviour: what happened, which layer it lives in from b1's layer map, who saw it, and whether it is a security track or a content and safety track item. This list is what stage three tests against. It is short, it is specific to Beacon, and it did not come out of a framework.</p></div>
+      <div class="step"><p><strong>Apply the taxonomy last, as a twenty-minute completeness check.</strong> Lay the eight classes from b7 over the harms list. The question is only "did we miss a class entirely". Anything untouched goes into the manifest as <code>UNTESTED</code>, where b7's accounting will carry it at full inherent risk and keep it visible.</p></div>
+      <div class="step"><p><strong>Plan for the list to grow, and say so in the plan.</strong> The guided round will surface new harms. That is the expected behaviour, not scope creep, and an engagement plan that cannot absorb new list items in round two was written by somebody who expects to be finished.</p></div>
+    </div>
+  </section>
+
+  <!-- ============ DEMO 2 ============ -->
+  <section class="section" id="demo-2">
+    <div class="section-kicker">
+      <span class="klabel">Demo 2 of 2</span>
+      <h2>The shared sheet, the four fields, and k of N <span class="tag demo">★ 10 min · everyone builds</span></h2>
+    </div>
+    <p class="lede">Microsoft's minimum recording fields are unglamorous and each one earns its place. Set the sheet up before the first round rather than after it, because the fields you did not capture on day one are the fields you cannot reconstruct on day nine.</p>
+
+    <table class="clean">
+      <tr><th>Field</th><th>Why it is on the minimum list</th></tr>
+      <tr><td><strong>Date</strong></td><td>Findings are about a build at a moment. A finding with no date cannot be retested, and cannot be defended when the model version changes underneath it.</td></tr>
+      <tr><td><strong>A unique identifier for the input and output pair</strong></td><td>Explicitly <strong>for reproducibility</strong>. This is the field that makes a claim checkable by somebody who was not in the room, and it is the one teams skip.</td></tr>
+      <tr><td><strong>The input prompt</strong></td><td>Stored, referenced, and access-controlled. You are building a corpus of things that worked against your own product; treat it as the sensitive asset it now is.</td></tr>
+      <tr><td><strong>A description or screenshot of the output</strong></td><td>What actually came back, not your summary of what it meant. The interpretation belongs in the finding; the artefact belongs in the sheet.</td></tr>
+      <tr><td><strong>k of N</strong> <span class="tag concept">from b1</span></td><td>Not a minimum field in the published guidance, and non-negotiable here. Success is a rate, and a boolean cannot tell a two-in-fifty defect from a fifty-in-fifty one.</td></tr>
+    </table>
+
+    <div class="steps">
+      <div class="step"><p><strong>Put it in a shared sheet, visible to every tester.</strong> The published rationale is worth quoting to whoever wants private notebooks: seeing each other's examples <strong>sparks ideas and avoids duplicated effort</strong>. Two testers independently finding the same thing is not corroboration, it is half a day.</p></div>
+      <div class="step"><p><strong>Fix N before the first run and put it in the sheet header.</strong> b1's protocol: every attack runs N times, every finding reports k of N, and N appears in the report. NIST re-ran identical agent-hijacking attacks and average success rose from <strong>57% to 80% purely by repeating them 25 times</strong>. A single trial does not give you a cautious underestimate. It gives you a wrong number.</p></div>
+      <div class="step"><p><strong>Record the endpoint and the build on every row.</strong> A finding against a raw API endpoint and a finding against the shipped product are different claims. Microsoft's instruction is blunt: when reporting results, make clear which endpoints were used for testing.</p></div>
+      <div class="step"><p><strong>Store artefacts by reference, never inline.</strong> The sheet holds identifiers and descriptions. The prompts and transcripts live wherever your RoE said they live, with the retention window your RoE agreed. Do not let a successful-attack corpus end up in a repository whose access list nobody has reviewed.</p></div>
+      <div class="step"><p><strong>Adjudicate disputes with the named person from b1.</strong> Grader disagreement is normal on content findings and toxic when it is resolved at report time by whoever is loudest. The name was written down for this exact moment.</p></div>
+    </div>
+
+    <div class="prompt-box"><span class="label">Finding record · one row per confirmed finding</span>{
+  "finding_id":        "BCN-2026-0417-031",
+  "date":              "2026-04-17",
+  "io_pair_ref":       "vault://beacon-eng/031",   // unique id, for reproducibility
+  "input_ref":         "vault://beacon-eng/031/in", // stored by reference, access-controlled
+  "output_evidence":   "vault://beacon-eng/031/out + screenshot",
+  "target":            "support-bot",
+  "endpoint":          "production-ui",             // say which endpoint. always.
+  "build":             "2026-04-16-rc3",
+  "class":             "indirect",
+  "owasp":             "LLM01:2026",
+  "atlas":             "AML.T0051.001",
+  "trials_n":          25,                          // fixed before the first run
+  "successes_k":       7,                           // k of N, never a boolean
+  "judge":             "rubric-v4, human adjudication on disputes",
+  "adjudicator":       "named in RoE-2026-0412",
+  "track":             "security",                  // security vs content, split at b1
+  "reachability":      "zero-click, via inbound ticket content",
+  "blast_radius_data": "single tenant, Confidential",
+  "blast_radius_act":  "refund credit, irreversible",
+  "durability":        "not persistent across sessions",
+  "stage_found":       "open-ended"                 // stage 1, 2 or 3 - tells you what to fund
+}</div>
+
+    <div class="callout tip">
+      <strong>The field nobody asks for and everybody wants later</strong>
+      <code>stage_found</code>. At the end of the engagement, count how many findings came from stage one versus the guided round versus the adaptive block. That single tally is the most persuasive budget argument you will ever have, and you can only produce it if you recorded it while you were busy.
+    </div>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="nothing">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · reading a negative result</span>
+      <h2>What "we found nothing" actually means <span class="tag concept">5 min live</span></h2>
+    </div>
+    <p class="lede">Sooner or later a round comes back clean and somebody senior hears it as good news. The most useful thing published on this is a pair of exercises against the same defence, where the only material difference was how much effort was spent.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 308" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Anthropic's Constitutional Classifiers prototype bug bounty ran 183 participants over more than 3000 hours and found no universal jailbreak. The public demo ran 339 jailbreakers over roughly 3700 hours and found one.">
+        <style>
+          .g8H { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .g8B { font: 700 13px Inter, sans-serif; fill: #3A1B08; }
+          .g8X { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .g8S { font: 700 15px Inter, sans-serif; fill: #1E2025; }
+          .g8Sw { font: 700 15px Inter, sans-serif; fill: #991B1B; }
+        </style>
+
+        <text class="g8H" x="24" y="30">Two exercises on the same defence, and only one of them found something</text>
+
+        <rect x="24" y="48" width="404" height="140" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="g8H" x="44" y="76">Prototype bug bounty</text>
+        <text class="g8X" x="44" y="100">183 participants</text>
+        <text class="g8X" x="44" y="118">More than 3,000 hours over two months</text>
+        <text class="g8S" x="44" y="152">No universal jailbreak found</text>
+        <text class="g8X" x="44" y="174">Skilled effort, sustained, and nothing.</text>
+
+        <rect x="452" y="48" width="404" height="140" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="g8H" x="472" y="76">Public demo, same defence</text>
+        <text class="g8X" x="472" y="100">339 jailbreakers</text>
+        <text class="g8X" x="472" y="118">Roughly 3,700 hours</text>
+        <text class="g8Sw" x="472" y="152">One universal jailbreak found</text>
+        <text class="g8X" x="472" y="174">About 700 more hours, and it existed.</text>
+
+        <rect x="24" y="208" width="832" height="84" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="g8B" x="44" y="232">What the first result meant, and what it did not</text>
+        <text class="g8X" x="44" y="256">Nothing about it was wrong. It simply did not mean what "we red-teamed it and found nothing" is usually</text>
+        <text class="g8X" x="44" y="274">taken to mean. Report hours, participants and what was NOT found. Never "no vulnerabilities exist".</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the same defence, two efforts, and the difference a few hundred hours made</figcaption>
+    </figure>
+
+    <p>The first exercise was a serious piece of work. 183 participants, more than three thousand hours over two months, no universal jailbreak found. Everything about that sentence is true and none of it establishes that no universal jailbreak existed - which the second exercise then demonstrated, with 339 jailbreakers and roughly seven hundred additional hours. <strong>The first result was not wrong. It was correctly reported and widely misread.</strong></p>
+
+    <p>So write your negative results in a form that cannot be misread. "We ran 14 attack families against the support bot at N=25 over 40 tester-hours on build 2026-04-16-rc3 and confirmed no successful exfiltration in that set" is a defensible sentence. "The support bot passed the red team" is not a shorter version of it; it is a different claim about a different thing, and it is the version that will be repeated. Give people a sentence worth repeating, because they will repeat whichever one you gave them.</p>
+
+    <div class="callout warn">
+      <strong>Never present a near-zero success rate as evidence of safety</strong>
+      Twelve recent published defences, most of them originally reporting near-zero attack success rates, were later bypassed at above 90% by researchers who attacked them properly. A near-zero number tells you what the attacks you ran did against the build you ran them on. Treating it as a property of the system is the single most common way a technically accurate report becomes a misleading one.
+    </div>
+  </section>
+
+  <!-- ============ PART 4 ============ -->
+  <section class="section" id="stopping">
+    <div class="section-kicker">
+      <span class="klabel">Part 4 · permission to stop</span>
+      <h2>Three ways a run ends, and one that never arrives <span class="tag concept">5 min live</span></h2>
+    </div>
+    <p class="lede">"Keep going until it is clean" sounds like diligence and is actually an unbounded commitment, because the evidence says clean does not happen. The competition result that settles this is worth stating in full before anyone proposes it as a plan.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 338" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="In a large-scale competition of more than 250,000 attempts against 13 frontier models, at least one successful attack was found against every model. Engagements therefore stop on budget, on coverage, or on a finding severe enough to escalate.">
+        <style>
+          .h8H { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .h8Hw { font: 700 13px Inter, sans-serif; fill: #991B1B; }
+          .h8C { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .h8X { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .h8K { font: 600 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="h8H" x="24" y="30">"Keep going until it is clean" is not a terminating condition</text>
+
+        <rect x="24" y="44" width="832" height="76" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="h8Hw" x="44" y="68">The CAISI competition, and why clean never arrives</text>
+        <text class="h8X" x="44" y="92">More than 250,000 attempts by over 400 participants against 13 frontier models. At least one</text>
+        <text class="h8X" x="44" y="110">successful attack was found against every one of the thirteen. Yours will not be the exception.</text>
+
+        <rect x="24" y="140" width="268" height="124" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="h8C" x="40" y="166">Stop on budget</text>
+        <text class="h8X" x="40" y="190">The hours in the RoE are</text>
+        <text class="h8X" x="40" y="208">spent. Report what you</text>
+        <text class="h8X" x="40" y="226">covered and, just as</text>
+        <text class="h8X" x="40" y="244">loudly, what you did not.</text>
+
+        <rect x="306" y="140" width="268" height="124" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="h8C" x="322" y="166">Stop on coverage</text>
+        <text class="h8X" x="322" y="190">Every class has cases at</text>
+        <text class="h8X" x="322" y="208">the agreed N, and the</text>
+        <text class="h8X" x="322" y="226">harms list from stage one</text>
+        <text class="h8X" x="322" y="244">has been worked through.</text>
+
+        <rect x="588" y="140" width="268" height="124" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="h8C" x="604" y="166">Stop on a finding</text>
+        <text class="h8X" x="604" y="190">Severe enough to halt and</text>
+        <text class="h8X" x="604" y="208">report now, ahead of the</text>
+        <text class="h8X" x="604" y="226">rest of the plan. That is</text>
+        <text class="h8X" x="604" y="244">an escalation, not an end.</text>
+
+        <rect x="24" y="284" width="832" height="44" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <rect x="42" y="298" width="14" height="14" rx="3" fill="#C2410C"/>
+        <text class="h8K" x="66" y="310">Whichever comes first. Agree all three in the RoE, not at half past six on a Friday.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the three terminating conditions, and the one that is not a condition at all</figcaption>
+    </figure>
+
+    <p>Read the competition result carefully, because it is easy to hear as pessimism and it is not. It says that with more than 250,000 attempts spread across 400-plus participants, at least one successful attack was found against <em>every one of thirteen frontier models</em>. These are the most heavily defended systems in commercial existence, tested by a large motivated crowd. If "test until nothing succeeds" were achievable anywhere, it would be achievable there. It is not a bar your engagement can clear either, and the honest response is to stop pretending it is the bar.</p>
+
+    <p>What replaces it is three conditions, all agreed in advance. <strong>Budget</strong>: the hours in the RoE are spent, and the report says what was covered and what was not reached. <strong>Coverage</strong>: every class has cases at the agreed N and the harms list has been worked through - which is the b7 accounting saying it has nothing left carried as unknown. <strong>Severity</strong>: something is found that is bad enough to halt the run and report immediately, ahead of the rest of the plan. The third is an escalation rather than a completion, and the run resumes afterwards, but it stops the engagement in the moment and the RoE should say who makes that call.</p>
+
+    <div class="callout tip">
+      <strong>Write the stopping conditions into the RoE as thresholds, not adjectives</strong>
+      "Severe enough to halt" needs a definition somebody can apply at eleven at night without a meeting: which data classifications, which irreversible actions, which reachability. b1's severity axes give you the vocabulary. If the threshold is not written down, the person who finds the critical thing will be the person deciding alone whether it is critical.
+    </div>
+  </section>
+
+  <!-- ============ PART 5 ============ -->
+  <section class="section" id="people">
+    <div class="section-kicker">
+      <span class="klabel">Part 5 · the people running it</span>
+      <h2>Who is in the room, and what the engagement owes them <span class="tag concept">5 min live</span></h2>
+    </div>
+    <p class="lede">Two operating-procedure items that get filed as culture and are not. Team composition changes what gets found. Participant welfare is a named limitation of the method in OpenAI's own published account of red teaming, and it belongs in the run book beside the rota.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 304" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Team composition should be diverse across experience, demographics and expertise, recruiting both benign and adversarial mindsets including ordinary users, with assignments rotated between rounds. Participant welfare requires mental health resources, fair compensation and informed consent.">
+        <style>
+          .i8T { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .i8X { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .i8K { font: 600 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <rect x="24" y="24" width="404" height="28" rx="8" fill="#2E3138"/>
+        <text class="i8T" x="42" y="43">Composition, per Microsoft's guidance</text>
+        <rect x="24" y="52" width="404" height="148" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="i8X" x="44" y="76">Diverse across experience, demographics</text>
+        <text class="i8X" x="44" y="94">and expertise. Recruit both benign and</text>
+        <text class="i8X" x="44" y="112">adversarial mindsets, including ordinary</text>
+        <text class="i8X" x="44" y="130">users who had no hand in building it.</text>
+        <text class="i8X" x="44" y="154">Rotate assignments between rounds, so</text>
+        <text class="i8X" x="44" y="172">nobody owns one harm area all engagement.</text>
+
+        <rect x="452" y="24" width="404" height="28" rx="8" fill="#C2410C"/>
+        <text class="i8T" x="470" y="43">Welfare, an operating procedure item</text>
+        <rect x="452" y="52" width="404" height="148" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="i8X" x="472" y="76">OpenAI names psychological harm from</text>
+        <text class="i8X" x="472" y="94">sustained adversarial thinking as a real</text>
+        <text class="i8X" x="472" y="112">limitation of the method, and prescribes</text>
+        <text class="i8X" x="472" y="130">mental-health resources, fair pay for</text>
+        <text class="i8X" x="472" y="154">participants, and informed consent. Put it</text>
+        <text class="i8X" x="472" y="172">in the run book, not on a closing slide.</text>
+
+        <rect x="24" y="228" width="832" height="44" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <rect x="42" y="242" width="14" height="14" rx="3" fill="#C2410C"/>
+        <text class="i8K" x="66" y="254">The benign mindset is not softness: the published ontology does not assume adversarial intent.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the two people-shaped sections of a run book</figcaption>
+    </figure>
+
+    <p>On composition, the guidance is specific: diverse across <strong>experience, demographics and expertise</strong>, recruiting <strong>both benign and adversarial mindsets</strong>, explicitly including ordinary users of the application who were not involved in building it, and rotating assignments between rounds. The rotation is doing two jobs at once. It stops a tester's mental model of one harm area hardening into the only model anyone has, and it limits how long any individual sits in the same unpleasant material.</p>
+
+    <p>On welfare, treat OpenAI's account as the operating requirement it reads like. Sustained adversarial thinking against a system, in the harm categories a real engagement covers, is named as a genuine harm to participants, mitigated by <strong>mental-health resources, fair compensation and informed consent</strong>. Those are three line items with owners and costs, not values. Put them next to the rota, alongside b1's rotation between harm areas, the content warnings, and the opt-out from the hardest categories with no career consequence.</p>
+
+    <div class="callout tip">
+      <strong>The report line to copy verbatim into every template</strong>
+      "Be sure to clarify that the role of RAI red teaming is <strong>to expose and raise understanding of risk surface and is not a replacement for systematic measurement and rigorous mitigation work</strong>. It is important that people do not interpret specific examples as a metric for the pervasiveness of that harm." Put it on the first page, not the last. One vivid example in a slide deck will otherwise become an organisation's entire mental model of a risk, and it will be either far too alarming or far too reassuring, at random.
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Try it yourself - this week <span class="tag exercise">◐ 60-75 min total</span></h2>
+    </div>
+    <ul>
+      <li>Run a real forty-minute stage one against a system you are authorized to test, with somebody who did not build it. Record only surprises. Count how many of them a taxonomy-first approach would have prompted you to look for.</li>
+      <li>Build the shared sheet with the four minimum fields plus k of N, N, endpoint, build and <code>stage_found</code>. Circulate it before the next round rather than after, and resist every request for a private notebook.</li>
+      <li>Look at your last engagement plan and mark which blocks were baseline runs and which were adaptive. If there is no timeboxed adaptive block, you have found what the 11%-versus-81% result is about.</li>
+      <li>Write your three stopping conditions as thresholds a tester could apply alone at eleven at night, and get them signed by whoever owns the escalation.</li>
+      <li>Take one negative result you have already reported and rewrite it with hours, participants, N, build and what was not found. Then compare it with the sentence people actually repeated back to you.</li>
+    </ul>
+  </section>
+
+  <!-- ============ SOURCES ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Source material</span>
+      <h2>Official sources covered</h2>
+    </div>
+    <p class="lede">Every framework, figure and quotation on this page traces to a primary source catalogued in this course's source map, verified 2026-08-14. This page covers:</p>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Microsoft's two-stage execution: open-ended first, "uncovering blind spots in your understanding of the risk surface", then the harms list, then guided testing</span><span class="note">Part 1 + Demo 1 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Microsoft's minimum recording fields, and the shared sheet rationale (sparks ideas, avoids duplication)</span><span class="note">Demo 2 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Microsoft on team composition: diverse, both benign and adversarial mindsets, ordinary users, rotate between rounds</span><span class="note">Part 5 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Microsoft's report line: red teaming exposes and raises understanding of risk surface, and is not a replacement for systematic measurement and rigorous mitigation work</span><span class="note">Part 5 · copy verbatim · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NIST CAISI: 11% with the best published baseline versus 81% tailored to the target; "Evaluations need to be adaptive"</span><span class="note">Part 2 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NIST CAISI: 57% to 80% purely by repeating identical attacks 25 times</span><span class="note">Demo 2 · the trial protocol in practice · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">CAISI competition: 250,000+ attempts, 400+ participants, at least one successful attack against every one of 13 frontier models</span><span class="note">Part 4 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Anthropic Constitutional Classifiers: 183 participants over 3,000+ hours found nothing; 339 jailbreakers over ~3,700 hours found one</span><span class="note">Part 3 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Nasr et al., <em>The Attacker Moves Second</em>: 12 defences, most reporting near-zero ASR, bypassed above 90%</span><span class="note">Part 3 · never read near-zero as safety · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OpenAI's published limitations of red teaming: psychological harm to participants, mental-health resources, fair compensation, informed consent</span><span class="note">Part 5 · [P]</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The baseline-versus-adaptive hour split drawn in Part 2</span><span class="note"><strong>Illustrative proportions only - no standards body publishes a ratio.</strong> What the evidence supports is that the adaptive block must exist and be timeboxed</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The three stopping conditions as a named set</span><span class="note">Part 4 · assembled from published practice; the CAISI result is what rules out "until it is clean", the triple itself is a structure not a standard</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The finding-record schema</span><span class="note">Demo 2 · the four minimum fields are published; the rest, including k of N and <code>stage_found</code>, are this course's additions</span></div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions before you go 🎯 <span class="tag exercise">◐ 90 seconds</span></h2>
+    </div>
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">1 · Your team has the OWASP and ATLAS lists and eight testers. What is the correct order of work?</p>
+      <button class="qopt" type="button">A · Assign two classes per pair from the taxonomy, so the whole surface is covered evenly from hour one</button>
+      <button class="qopt" type="button">B · Run the published attack suites first, then explore whatever the suites did not touch</button>
+      <button class="qopt" type="button">C · Open-ended exploration with no target list, then build the harms list from what surprised you, then guided testing against that list with iteration - and apply the taxonomy afterwards as a completeness check</button>
+      <p class="qwhy">The published rationale for open-ended first is that it uncovers blind spots in <em>your</em> understanding of the risk surface, and a checklist handed out on day one is precisely what stops that happening: a tester holding an eight-row grid stops noticing the ninth thing. Option A produces a tidy matrix plus exactly the blind spots you started with. The taxonomy is still valuable, in twenty minutes, at the end, answering one question - did we miss a class entirely - and anything untouched goes into the manifest as untested so b7's accounting keeps carrying it.</p>
+    </div>
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">2 · The engagement plan is fully specified: fourteen named attack suites, run at N=25, six days, no unallocated time. What is wrong with it?</p>
+      <button class="qopt" type="button">A · Nothing, provided the suites cover every class in the taxonomy</button>
+      <button class="qopt" type="button">B · It contains no adaptive work, and NIST measured hijacking success at 11% with the best published baseline versus 81% when attacks were tailored to the target - so the plan measures an easier attacker than the real one</button>
+      <button class="qopt" type="button">C · N=25 is too low for a six-day engagement</button>
+      <p class="qwhy">A plan that can be fully specified in advance contains only baselines, because baselines are the part you already know. Adaptive work cannot be scheduled, only timeboxed, so a plan with no timebox in it is a smoke test with a red-team invoice attached. The seven-fold gap between 11% and 81% is on the same system with the same harness; the only variable is whether anybody did work specific to this target. NIST's conclusion was that evaluations need to be adaptive, and the practical consequence is to give the adaptive block a name, an owner and protected hours before the baseline runs overrun into it.</p>
+    </div>
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">3 · A stakeholder asks you to keep testing until the system is clean. What do you tell them?</p>
+      <button class="qopt" type="button">A · That "clean" is not a terminating condition - a competition of 250,000+ attempts found at least one successful attack against every one of 13 frontier models - so runs stop on budget, on coverage, or on a finding severe enough to halt and report, all three agreed in the RoE beforehand</button>
+      <button class="qopt" type="button">B · That it is achievable with enough budget, and quote a figure for the additional testers required</button>
+      <button class="qopt" type="button">C · That the current round already came back clean, so the condition is satisfied</button>
+      <p class="qwhy">Option C is the trap and it is the one that gets used, because a clean round genuinely feels like an answer. It is not: the same defence that survived 183 participants over 3,000-plus hours fell to 339 people over roughly 700 more, and nothing about the first result was wrong when it was reported. The competition result kills option B too, on the most heavily defended systems in commercial existence with a large motivated crowd. So you replace the unbounded commitment with three thresholds written into the RoE in advance, where the severity threshold is defined tightly enough that whoever finds the critical thing at eleven at night is not deciding alone whether it is critical.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Builder session 8 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>Open-ended first, always</b><span>It uncovers blind spots in your understanding of the risk surface. A checklist on day one buys you the blind spots you already had.</span></div>
+      <div class="cheat-item"><b>Taxonomy is the completeness check</b><span>Applied after the harms list exists, answering one question: did we miss a class entirely. Twenty minutes, at the end.</span></div>
+      <div class="cheat-item"><b>Four fields, minimum</b><span>Date · a unique id for the input/output pair for reproducibility · the input prompt · a description or screenshot of the output. Plus k of N.</span></div>
+      <div class="cheat-item"><b>One shared sheet</b><span>Testers seeing each other's examples sparks ideas and avoids duplication. Two people finding the same thing is half a day, not corroboration.</span></div>
+      <div class="cheat-item"><b>11% versus 81%</b><span>Best published baseline versus tailored to the target, same system. Running the baselines and stopping is a smoke test.</span></div>
+      <div class="cheat-item"><b>57% to 80% at N=25</b><span>Purely by repeating identical attacks. A single trial gives a wrong number, not a cautious one.</span></div>
+      <div class="cheat-item"><b>Stop on budget, coverage or severity</b><span>Never "until it is clean" - 250,000+ attempts found a successful attack against all 13 frontier models tested.</span></div>
+      <div class="cheat-item"><b>The report sentence, verbatim</b><span>Red teaming exposes and raises understanding of risk surface; it is not a replacement for systematic measurement and rigorous mitigation. Examples are not a metric for pervasiveness.</span></div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>Builder session 8 of 10 · learn-ai-red-team-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← Course home</a> &nbsp;·&nbsp; <a href="b9-harden-and-retest.html">Next: Harden and retest →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

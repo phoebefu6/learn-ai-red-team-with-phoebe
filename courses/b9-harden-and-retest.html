@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Builder session 9 · Harden and retest - learn ai red team with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-red-team-with-phoebe</a> / Builder session 9 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI Red Team with Phoebe · Builder track · Session 9 of 10</div>
+    <h1>Harden and retest: <span class="accent">break-fix, and the delta you can honestly claim</span></h1>
+    <p class="sub">Session 8 left you with findings. This session turns them into fixes and then, which is the harder half, into a number you are willing to defend. You will run controls onto a fully probed board one at a time and watch which ones actually move the total, read the published limits of every layer you are about to buy, and write a retest claim in the shape a real vendor disclosure uses: a named metric, a before, an after, and an explicit statement that the after is not zero.</p>
+    <div class="chip-row">
+      <span class="chip level">🟠 Builder track</span>
+      <span class="chip audience">Security engineers · AI engineers · platform leads</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-20 · Break-fix, control ordering, measured limits</span>
+      <span class="a3" style="flex:5">20-40 · Build-along: move the board, then write the delta</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>Fixing is easy. Claiming the fix is the engineering.</h2>
+    </div>
+    <div class="callout warn">
+      <strong>⚠ Authorization</strong>
+      Everything in this session runs against Beacon, a fictional company whose systems you are testing under the rules of engagement written in b1: <strong>a system you own, or are contracted in writing to test</strong>, inside a defined window, with blast-radius limits configured before anyone types anything. This page names attack <em>classes</em> so you can build test cases and pairs each with the control that addresses it. It contains no exploit payloads and teaches no attack craft. Hardening a system you were not authorized to test does not retroactively authorize the test.
+    </div>
+    <p class="lede">Microsoft did not red team Phi-3 once. They ran <strong>multiple break-fix rounds</strong>, iterating red teaming and mitigation, and their own description of the stopping condition is worth reading twice: they continued <strong>"until the system is robust to a wide range of attacks"</strong>. Not until it passed. Not until the suite went green. Until a judgement was made about a range, by people who knew how the range had been sampled.</p>
+    <div class="legend">
+      <span class="pill solid">Live - presented in session</span>
+      <span class="pill light">Self-study - read after class</span>
+      <span class="pill inkpill">Official sources covered</span>
+    </div>
+    <div class="callout win">
+      <strong>★ What you walk out with today</strong>
+      A break-fix loop you can actually run, an ordered control list with the architectural layers first because that is where the movement is, a one-page briefing on the published limits of every defence you are about to be sold, and a retest claim written in the shape Anthropic used for Claude in Chrome: named metric, before, after, and the sentence admitting the after is not zero.
+    </div>
+    <div class="callout tip">
+      <strong>Honesty note - read before you trust any number on the board below</strong>
+      The interactive board on this page runs on <code>surface-live.js</code>. Its <strong>inherent-risk figures and defence-effectiveness matrix are a teaching model</strong>. They encode the <em>direction and rough proportion</em> that the published literature reports - notably that prompt-level instructions are near-useless against injection that arrives inside content, while architectural controls do the work. They are <strong>not measurements</strong> of your system or anyone else's. What is real is the arithmetic: coverage, residual risk and the untested-class accounting are computed live in your browser from that matrix and your own settings. Read the board as a model of an argument, not as a reading off an instrument.
+    </div>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="breakfix">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · the loop</span>
+      <h2>Break-fix is a loop, not a phase <span class="tag concept">5 min live</span></h2>
+    </div>
+    <p class="lede">The default mental model is a waterfall: test, hand over a report, someone fixes things, done. Every published programme that has survived contact with a shipping product describes something else, and the difference is that the fix itself becomes the next thing you attack.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 290" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Break-fix runs as a loop: probe, fix, re-test the same cases at the same N on the changed build, then attack the fix in a new round. Microsoft iterated red teaming and mitigation against Phi-3 until the system was robust to a wide range of attacks.">
+        <style>
+          .bfH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .bfB { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .bfX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .bfK { font: 400 11px Inter, sans-serif; fill: #3A1B08; }
+          .bfL { font: 600 11px Inter, sans-serif; fill: #C2410C; }
+        </style>
+
+        <text class="bfH" x="24" y="30">Microsoft ran multiple break-fix rounds against Phi-3. One round is not the method.</text>
+
+        <rect x="24" y="52" width="196" height="84" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="bfB" x="44" y="78">1 · Probe</text>
+        <text class="bfX" x="44" y="100">Every class, N trials.</text>
+        <text class="bfX" x="44" y="118">Record k of N.</text>
+
+        <rect x="236" y="52" width="196" height="84" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="bfB" x="256" y="78">2 · Fix</text>
+        <text class="bfX" x="256" y="100">Change the system, not</text>
+        <text class="bfX" x="256" y="118">the wording.</text>
+
+        <rect x="448" y="52" width="196" height="84" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="bfB" x="468" y="78">3 · Re-test</text>
+        <text class="bfX" x="468" y="100">Same cases, same N, on</text>
+        <text class="bfX" x="468" y="118">the changed build.</text>
+
+        <rect x="660" y="52" width="196" height="84" rx="10" fill="#2E3138"/>
+        <text class="bfB" x="680" y="78" fill="#FFFFFF">4 · Attack the fix</text>
+        <text class="bfX" x="680" y="100" fill="#BFC4CE">A new round aimed at</text>
+        <text class="bfX" x="680" y="118" fill="#BFC4CE">what you just built.</text>
+
+        <path d="M220 94 L232 94" stroke="#5A6070" stroke-width="1.5"/>
+        <path d="M232 90 L238 94 L232 98 Z" fill="#5A6070"/>
+        <path d="M432 94 L444 94" stroke="#5A6070" stroke-width="1.5"/>
+        <path d="M444 90 L450 94 L444 98 Z" fill="#5A6070"/>
+        <path d="M644 94 L656 94" stroke="#5A6070" stroke-width="1.5"/>
+        <path d="M656 90 L662 94 L656 98 Z" fill="#5A6070"/>
+
+        <path d="M856 136 L856 160 L24 160 L24 140" fill="none" stroke="#C2410C" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <path d="M20 144 L24 136 L28 144 Z" fill="#C2410C"/>
+        <text class="bfL" x="44" y="180">and again, until the system is robust to a wide range of attacks - which is a judgement, not a threshold</text>
+
+        <rect x="24" y="198" width="832" height="74" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="bfH" x="44" y="222">The retest is the expensive half, and the half that gets cut</text>
+        <text class="bfK" x="44" y="244">A fix that was never re-tested under the original conditions is a hypothesis. Re-run the same cases, at the</text>
+        <text class="bfK" x="44" y="262">same N, against the changed build, and report both rates side by side. Anything else is a story about effort.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the fix you just shipped is the next round's target</figcaption>
+    </figure>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Why step 4 exists, and what happens to programmes that skip it<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Step 3 tells you whether the specific inputs you already knew about still work. That is a necessary check and a weak one, because the fix was designed with those inputs in front of the engineer. Step 4 is where someone who has seen the fix goes after the fix, and it is the step that separates a hardening round from a patch note.</p>
+        <p>The evidence for why this matters is uncomfortable and comes from the defenders' own side of the table. <em>The Attacker Moves Second</em> - a collaboration between OpenAI, Anthropic and Google DeepMind researchers - broke <strong>twelve recently published defences at greater than 90% attack success</strong>, using gradient descent, reinforcement learning, random search and human-guided exploration. Most of those defences had <strong>originally reported near-zero success rates</strong>. Nothing in the original papers was fabricated. The rates were real, measured against static sets the defence had already been tuned on. Session b10 turns that into a standing rule; here it is simply the reason step 4 exists.</p>
+        <p>Google's own red-team report says the same thing from the operator's side, and it is worth carrying into your planning conversation: <strong>"addressing red team findings can be challenging, and some attacks may not have simple fixes"</strong>. Budget for a round that ends in a design change rather than a patch.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="ordering">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · the spine of this session</span>
+      <h2>Prompt-level controls reduce rates. Architectural controls remove capabilities. <span class="tag concept">6 min live</span></h2>
+    </div>
+    <p class="lede">Every team that has just received a red-team report reaches for the same fix first, because it is the cheapest thing on the list and it can be deployed this afternoon: an instruction in the system prompt telling the model to ignore commands that arrive inside content. Here is what that buys, measured on the board you are about to run.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="On a fully probed Beacon support bot with no controls at risk index 100.0, adding only the system-prompt guard reaches 96.4, removing 3.6 points. Adding only least-privilege scoping plus human approval reaches 45.0, removing 55 points.">
+        <style>
+          .coH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .coB { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .coX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .coW { font: 400 11px Inter, sans-serif; fill: #FFFFFF; }
+          .coT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .coN { font: 800 22px Inter, sans-serif; fill: #1E2025; }
+          .coM { font: 800 24px Inter, sans-serif; fill: #FFFFFF; }
+          .coK { font: 400 11px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="coH" x="24" y="30">Same board, same fully probed surface. One control added at a time.</text>
+
+        <rect x="24" y="44" width="832" height="54" rx="10" fill="#2E3138"/>
+        <text class="coT" x="44" y="68">Fully probed surface, every class tested, no controls deployed</text>
+        <text class="coW" x="44" y="86">Residual risk index 100.0 - the honest starting point, because nothing has been mitigated yet.</text>
+        <text class="coM" x="746" y="80">100.0</text>
+
+        <rect x="24" y="112" width="832" height="84" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="coB" x="44" y="140">Add ONLY the system-prompt guard</text>
+        <text class="coX" x="44" y="160">PROMPT level. It asks the model to police</text>
+        <text class="coX" x="44" y="178">text that looks exactly like its own orders.</text>
+        <rect x="430" y="132" width="300" height="22" rx="6" fill="#FFFFFF" stroke="#BFC4CE" stroke-width="1"/>
+        <rect x="430" y="132" width="289" height="22" rx="6" fill="#991B1B"/>
+        <text class="coN" x="746" y="150">96.4</text>
+        <text class="coX" x="430" y="178">3.6 points removed from a bare system</text>
+
+        <rect x="24" y="210" width="832" height="84" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="coB" x="44" y="238">Add ONLY least privilege plus human approval</text>
+        <text class="coX" x="44" y="258">ARCHITECTURAL. It does not ask the model to</text>
+        <text class="coX" x="44" y="276">behave. It removes what misbehaving can reach.</text>
+        <rect x="430" y="230" width="300" height="22" rx="6" fill="#FFFFFF" stroke="#BFC4CE" stroke-width="1"/>
+        <rect x="430" y="230" width="135" height="22" rx="6" fill="#C2410C"/>
+        <text class="coN" x="746" y="248">45.0</text>
+        <text class="coX" x="430" y="276">55 points removed from a bare system</text>
+
+        <rect x="24" y="310" width="832" height="72" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="coH" x="44" y="334">The ordering this gives you, and it is the spine of this session</text>
+        <text class="coK" x="44" y="356">Prompt-level controls reduce rates. Architectural controls remove capabilities. Deploy the second kind</text>
+        <text class="coK" x="44" y="374">first, then measure what is left. The prompt guard is not useless. It is simply not where the risk goes.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - 3.6 points against 55, on the same probed surface</figcaption>
+    </figure>
+
+    <p>Fifteen times the movement, for a control that is harder to ship and that nobody demos. That ratio is the whole argument, and you should expect to have it more than once, because the prompt guard has two political advantages the architectural controls do not: it is free, and it is visible in a diff. The architectural fix shows up as a role change in an IAM console and a queue that a human now has to work.</p>
+
+    <div class="callout tip">
+      <strong>Say this out loud when the ordering is questioned</strong>
+      The prompt guard scores a flat <strong>zero</strong> in the effectiveness matrix against <strong>indirect prompt injection</strong>, <strong>context and memory poisoning</strong>, <strong>improper output handling</strong> and <strong>unbounded consumption</strong> - the four classes where the hostile text does not arrive from the person you are talking to. That is not a modelling shortcut to make a point. It is the position OWASP, NIST and the NCSC all publish independently: the model makes <em>no architectural distinction between instructions and data</em>, so an instruction telling it to make one is asking the system to do something it does not have the machinery to do.
+    </div>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="limits">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · what each layer really buys</span>
+      <h2>The measured limits, layer by layer <span class="tag concept">6 min live</span></h2>
+    </div>
+    <p class="lede">None of this is an argument against detection. Every layer below is worth having and several are worth a lot. The argument is against buying one and writing "mitigated" next to a finding. Here is what the published evidence says each layer actually delivers, including the parts the vendor slide leaves off.</p>
+
+    <table class="clean">
+      <tr><th>Layer</th><th>What it demonstrably buys</th><th>The measured limit</th></tr>
+      <tr>
+        <td><strong>Input classifiers and injection detectors</strong></td>
+        <td>A real reduction in cheap, undisguised attempts, at low latency cost. Genuinely useful.</td>
+        <td><strong>Six production guardrails</strong> - including Azure Prompt Shield and Meta Prompt Guard - were evaded by character injection using zero-width characters, Unicode tags, homoglyphs and emoji smuggling, <strong>"in some instances up to 100% evasion success"</strong>. Treat it as a filter that raises cost, never as a boundary.</td>
+      </tr>
+      <tr>
+        <td><strong>Deny-listing phrases</strong></td>
+        <td>Blocks the exact strings you have already seen. Cheap to add after an incident.</td>
+        <td>The NCSC is blunt: because LLMs are so complex, there are <strong>"infinite ways to rephrase an attack"</strong>. A deny list is a record of your past, not a control over your future.</td>
+      </tr>
+      <tr>
+        <td><strong>Spotlighting</strong> (marking untrusted content so the model can tell it apart)</td>
+        <td>Attack success from <strong>above 50% down to below 2%</strong> in the original non-adaptive evaluation. One of the strongest published single-technique results.</td>
+        <td>In the LLMail-Inject competition, spotlighting alone had a <strong>Team Success Rate of 0.529</strong> - over half the teams that attacked it got through. DeepMind separately found spotlighting and self-reflection <strong>"became much less effective against adaptive attacks"</strong>.</td>
+      </tr>
+      <tr>
+        <td><strong>Instruction hierarchy</strong> (training the model to rank instruction sources)</td>
+        <td>Up to <strong>+63% robustness</strong>, and it generalised to attack types held out of training, which is rare and genuinely valuable.</td>
+        <td><strong>Documented over-refusal regressions.</strong> This is the layer most likely to buy you security by making the product worse, which is why your retest needs a benign counter-metric next to the attack rate.</td>
+      </tr>
+      <tr>
+        <td><strong>Constitutional Classifiers</strong></td>
+        <td>Jailbreak success <strong>86% to 4.4%</strong>, with a refusal increase of only 0.38%. The strongest published before-and-after on a classifier layer.</td>
+        <td><strong>23.7% compute overhead</strong>, which is a real and recurring line item. And the same programme's two exercises are the course's own lesson in absence of evidence: no universal jailbreak in the first, one found in the second.</td>
+      </tr>
+      <tr>
+        <td><strong>CaMeL</strong> (a capability-based architecture around the model)</td>
+        <td><strong>Provable security properties</strong>, which nothing else on this table offers, on <strong>77% of AgentDojo tasks</strong>.</td>
+        <td>Against <strong>84% undefended</strong>. A <strong>seven point utility cost</strong> for a guarantee. Worth stating plainly to your product owner, because that trade is the actual decision and it is not a technical one.</td>
+      </tr>
+    </table>
+
+    <p>Now stack them, which is what everyone proposes as soon as the individual numbers land. LLMail-Inject, run by Microsoft's MSRC team alongside IEEE SaTML 2025, is the largest public adaptive-injection dataset there is: <strong>370,724 submissions in phase one and 90,916 in phase two</strong>. It measured exactly this.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="LLMail-Inject phase 1 level 4 team success rates: Prompt Shield 0.600, Spotlighting 0.529, TaskTracker 0.440, LLM Judge 0.318, all four combined 0.166. Stacking helps and does not reach zero.">
+        <style>
+          .liH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .liL { font: 600 11px Inter, sans-serif; fill: #1E2025; }
+          .liV { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .liX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .liK { font: 600 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="liH" x="24" y="30">LLMail-Inject, phase 1 level 4: the fraction of teams that beat each defence</text>
+
+        <text class="liL" x="24" y="67">Prompt Shield</text>
+        <rect x="210" y="52" width="560" height="20" rx="5" fill="#F0F1F4"/>
+        <rect x="210" y="52" width="560" height="20" rx="5" fill="#991B1B"/>
+        <text class="liV" x="786" y="67">0.600</text>
+
+        <text class="liL" x="24" y="105">Spotlighting</text>
+        <rect x="210" y="90" width="560" height="20" rx="5" fill="#F0F1F4"/>
+        <rect x="210" y="90" width="494" height="20" rx="5" fill="#991B1B"/>
+        <text class="liV" x="786" y="105">0.529</text>
+
+        <text class="liL" x="24" y="143">TaskTracker</text>
+        <rect x="210" y="128" width="560" height="20" rx="5" fill="#F0F1F4"/>
+        <rect x="210" y="128" width="411" height="20" rx="5" fill="#5A6070"/>
+        <text class="liV" x="786" y="143">0.440</text>
+
+        <text class="liL" x="24" y="181">LLM Judge</text>
+        <rect x="210" y="166" width="560" height="20" rx="5" fill="#F0F1F4"/>
+        <rect x="210" y="166" width="297" height="20" rx="5" fill="#5A6070"/>
+        <text class="liV" x="786" y="181">0.318</text>
+
+        <text class="liL" x="24" y="219">All four combined</text>
+        <rect x="210" y="204" width="560" height="20" rx="5" fill="#F0F1F4"/>
+        <rect x="210" y="204" width="155" height="20" rx="5" fill="#C2410C"/>
+        <text class="liV" x="786" y="219">0.166</text>
+
+        <text class="liX" x="24" y="252">Every individual defence was beaten by between a third and 60% of the teams that tried it. Stacking all four</text>
+        <text class="liX" x="24" y="270">cut that to 16.6%. Defence in depth is measurably real, and measurably insufficient. It never reaches zero.</text>
+
+        <rect x="24" y="286" width="832" height="44" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <rect x="44" y="300" width="14" height="14" rx="3" fill="#C2410C"/>
+        <text class="liK" x="68" y="312">End-to-end campaign success across 461,640 submissions was 0.8%, then 0.3%. Small, and not zero.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - four layers, each beaten, and the stack that is still beaten one time in six</figcaption>
+    </figure>
+
+    <p>Read the last bar as the good news it is. Going from one layer to four cut the beat-rate from 0.600 to 0.166, which is a real engineering result you would happily pay for. Now read it as the bad news it also is. One team in six still got through a four-layer stack, and the two teachable sentences sit right next to each other: <strong>defence in depth is measurably real, and measurably insufficient</strong>. Neither half is optional in your report.</p>
+  </section>
+
+  <!-- ============ DEMO 1 ============ -->
+  <section class="section" id="demo-1">
+    <div class="section-kicker">
+      <span class="klabel">Demo 1 of 2</span>
+      <h2>Move the board, one control at a time <span class="tag demo">★ 14 min · everyone builds</span></h2>
+    </div>
+    <p class="lede">This is the Beacon Support Bot from b7, mounted with <strong>every attack class already probed and no controls deployed</strong>. That is deliberate: you have finished the engagement, coverage is complete, and the risk-you-have-no-evidence-about meter reads zero. Everything from here is hardening, and every point it moves is a point you can attribute to a control rather than to having looked.</p>
+
+    <div class="slbox" data-bot="chatbot" data-tested="direct,indirect,jailbreak,disclosure,agency,output,poison,wallet"></div>
+
+    <div class="steps">
+      <div class="step"><p><strong>Start here and write the number down.</strong> Fully probed, nothing deployed: residual risk index <strong>100.0</strong>, coverage 100%, unknown risk 0%. This is the honest post-engagement baseline and the only legitimate "before" in the delta you will claim later. Note what the board does <em>not</em> say: it does not say the system is dangerous. It says nothing has been mitigated, which is a statement about your controls, not about your luck.</p></div>
+      <div class="step"><p><strong>Tick the system-prompt guard, alone.</strong> The total lands on <strong>96.4</strong>. Three point six points, and it is the control most teams ship as their response to the whole report. Leave it on for a moment and look at the per-class rows rather than the total: direct injection and refusal bypass moved a little, and the rest did not move at all.</p></div>
+      <div class="step"><p><strong>Untick it. Tick least-privilege tool scoping and human approval on irreversible actions, alone.</strong> The total lands on <strong>45.0</strong>. Fifty-five points, from two controls that never once ask the model to behave differently. The agency row collapses because the credential cannot do the thing any more; the indirect-injection row collapses because the consequence of a successful injection is now a proposal that a person has to accept.</p></div>
+      <div class="step"><p><strong>Now confirm the zeroes yourself.</strong> Open the effectiveness matrix (it is the same model this board runs on, mounted in full on b2) and read the prompt-guard row across. It scores a flat <strong>zero</strong> against <strong>indirect injection</strong>, <strong>context and memory poisoning</strong>, <strong>improper output handling</strong> and <strong>unbounded consumption</strong>. Four classes, four zeroes, and they are the four where the hostile text was never typed by the person in the conversation.</p></div>
+      <div class="step"><p><strong>Build back up in the order the evidence supports.</strong> Least privilege, then human approval, then sandboxed execution and output escaping, then per-principal rate and spend caps. Then, and only then, the detection layers. Watch the input and output filters do genuine work on refusal bypass and disclosure - the classes where inspecting text is a sensible control - and almost nothing on agency, because no classifier can distinguish a legitimate refund from an induced one.</p></div>
+      <div class="step"><p><strong>Finish with the anti-lever.</strong> With everything on, turn the system-prompt guard off. The total moves by well under a point. It was never carrying the load, and on day one of this engagement it was the only control Beacon had. Record that sentence for the report: it is the most useful thing this board will ever tell your management chain.</p></div>
+    </div>
+
+    <div class="callout warn">
+      <strong>The trap in this exercise, and it catches good teams</strong>
+      A falling total is not the finding. The finding is <em>which rows fell and why</em>. One unmitigated class is not averaged away by six well-controlled ones, and a board that shows 14.0 with the agency row still red is a worse position than a board showing 30.0 with every row mid. Read rows before totals, every time, and put the row table in the report rather than the index.
+    </div>
+  </section>
+
+  <!-- ============ DEMO 2 ============ -->
+  <section class="section" id="demo-2">
+    <div class="section-kicker">
+      <span class="klabel">Demo 2 of 2</span>
+      <h2>Write the delta the way a real disclosure writes it <span class="tag demo">★ 8 min · in pairs</span></h2>
+    </div>
+    <p class="lede">There is a published model for this, and it is unusually good. When Anthropic shipped Claude in Chrome, the disclosure gave a named metric, a before, an after, the size of the test set, and a plain statement that the after was not zero. Copy that shape. It is the whole standard.</p>
+
+    <div class="callout example">
+      <span class="ex-pill">Real world</span>
+      <p>Anthropic reported that in autonomous browsing mode, prompt-injection attack success ran at <strong>23.6%</strong> before mitigations and <strong>11.2%</strong> after, measured across <strong>123 test cases spanning 29 attack scenarios</strong>. On a set of browser-specific attack types - things like hidden form fields and URL-borne instructions - the figure moved from <strong>35.7% to 0%</strong>. And then the part that makes it a model disclosure rather than a marketing number: they stated explicitly that the remaining rate is <em>not</em> zero, that new classes of attack continue to be found, and that this is why the feature shipped to a limited group with restricted permissions rather than to everyone.</p>
+    </div>
+
+    <p>Notice what that disclosure does not do. It does not say "hardened". It does not compare itself to another vendor's rate, which would be invalid anyway because the attack set, the trial budget and the judge all differ. It does not present 0% on the browser-specific set as the headline while burying the 11.2%. Every one of those omissions is a temptation your own report will present to you, usually from someone senior and usually on a Thursday.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Name the metric before you compute it.</strong> Attack success rate on a stated attack set, at a stated N per case, judged by a stated grader. Three variables hide inside every ASR figure - the classifier, the token budget and N - and each one is a place your own number can quietly drift between the before and the after. Pin all three, in writing, and re-run the before if any of them changed.</p></div>
+      <div class="step"><p><strong>Report before and after from the same build family, same cases, same N.</strong> If you added cases during hardening, they belong in a separate line, not folded into the delta. A delta computed across a changed test set is not a delta, and it is the single most common way an honest team produces a misleading chart.</p></div>
+      <div class="step"><p><strong>Report the counter-metric next to it.</strong> Instruction-hierarchy training bought up to 63% robustness and shipped documented over-refusal regressions with it. So run a benign set alongside the attack set and report both. A hardening round that cut attack success and also cut task completion has a cost, and if you do not measure it, product will discover it in week three and stop trusting your numbers.</p></div>
+      <div class="step"><p><strong>State what did not move, and what you did not test.</strong> Rows, not the total. Then the classes still unprobed, at full inherent risk. Absence of evidence is not evidence of absence, and this section is what stops your report from being read as a clean bill of health.</p></div>
+      <div class="step"><p><strong>Write the sentence admitting the after is not zero.</strong> In your own words, with your own residual. If you cannot write that sentence without a stakeholder flinching, that flinch is the finding, and the leader track has a whole session on what to do about it.</p></div>
+      <div class="step"><p><strong>Pin the retest so it runs again.</strong> The manifest below is the handover artefact into b10: the same cases, the same N, the same grader, plus assertions about the architecture rather than only the prompts. It is short on purpose.</p></div>
+    </div>
+
+    <div class="prompt-box"><span class="label">retest manifest · handover into b10</span>engagement: beacon-support-bot
+build_before: 2026-08-02-a   # the pre-hardening build the deltas are measured against
+build_after:  2026-08-14-c
+trials_per_case: 25          # N is pinned; changing it invalidates the delta
+grader: rubric-v3            # changing the grader invalidates the delta
+attack_set: beacon-b8-findings   # frozen at the end of the engagement
+benign_set: beacon-overrefusal-v1  # the counter-metric, run every time
+
+architecture_assertions:     # regression-test the controls, not only the rates
+  - egress_allowlist_unchanged: true
+  - agent_role_is_read_only_outside_sandbox: true
+  - refund_tool_requires_human_approval: true
+  - renderer_cannot_fetch_remote_images: true
+  - per_principal_spend_cap_present: true
+
+report_requires:
+  - before_and_after_per_class     # rows, not the total
+  - benign_pass_rate_before_after  # over-refusal counter-metric
+  - classes_not_probed             # counted at full inherent risk
+  - residual_statement             # the after is not zero, in writing</div>
+
+    <p>Those <code>architecture_assertions</code> are the part teams leave out, and they are the part that lasts. A rate is a measurement of a build. An assertion that the egress allowlist still holds and that the refund tool still requires a human is a test of the thing that was actually fixed. Wire them into the same CI job:</p>
+
+    <div class="prompt-box"><span class="label">CI · runs on every build, blocks the merge</span># regression suite: the frozen findings, at the pinned N, with the pinned grader
+redteam-suite run --manifest retest.yaml --set beacon-b8-findings --n 25
+
+# the counter-metric, so "more secure" cannot quietly mean "refuses more"
+redteam-suite run --manifest retest.yaml --set beacon-overrefusal-v1 --n 25
+
+# the architectural assertions - these are pass/fail, unlike the rates above
+redteam-suite assert --manifest retest.yaml --fail-on-drift</div>
+
+    <div class="callout tip">
+      <strong>The generalisation to close on, and it is the finding of this whole course</strong>
+      Go back through every real incident with a durable fix. GitHub's answer to CamoLeak was to <strong>disable image rendering in Copilot Chat entirely</strong> - it cut the egress leg. Amazon's answer to the Q Developer incident was <strong>scoping the over-privileged build token</strong> - it cut the untrusted-content leg. Nx's remediation was <strong>trusted publishing with no long-lived tokens</strong> - the same leg. Google's mitigations for the Gemini promptware work moved researcher-assessed severity from High-Critical to Very Low-Medium by bounding what a poisoned invitation could reach. <strong>Every durable real-world fix cut the egress leg or the untrusted-content leg. None of them fixed the model.</strong> If your hardening round produced no change to either leg, you have tuned a rate, not removed a risk, and your delta should say so.
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Try it yourself - this week <span class="tag exercise">◐ 45-60 min total</span></h2>
+    </div>
+    <ul>
+      <li>Take the top finding from your own last engagement and write both fixes for it: the prompt-level one and the architectural one. Estimate the cost of each in engineer-days and in product friction. Then decide, in writing, which you are shipping and why. The write-up is the deliverable, not the fix.</li>
+      <li>Find every place in your system where a control is an instruction rather than a boundary. For each, answer one question: if the model ignored this instruction entirely, what would stop the bad outcome? If the answer is "nothing", you have found an architectural gap wearing a prompt costume.</li>
+      <li>Write your retest manifest, including the architecture assertions. Pin N, pin the grader, freeze the attack set. Then check whether your before-build is still deployable, because a delta you cannot re-measure is a delta you cannot defend six months from now.</li>
+      <li>Draft your residual sentence - the one saying the after is not zero - and read it to the person who will present the result to your board. Their reaction tells you more about your programme's health than the number does.</li>
+      <li>Add a benign counter-metric set if you do not have one. A hundred ordinary requests your system must still handle is enough to catch the over-refusal regression that hardening rounds reliably produce.</li>
+    </ul>
+  </section>
+
+  <!-- ============ SOURCES ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Source material</span>
+      <h2>Official sources covered</h2>
+    </div>
+    <p class="lede">Every framework, figure and quotation on this page traces to a primary source catalogued in this course's source map, verified 2026-08-14. This page covers:</p>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Microsoft's Phi-3 break-fix rounds - iterating red teaming and mitigation until robust to a wide range of attacks</span><span class="note">Part 1 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Nasr et al., <em>The Attacker Moves Second</em> - 12 defences bypassed at over 90% ASR, most originally near-zero</span><span class="note">Part 1 · [P] arXiv 2510.09023</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Character-injection evasion of six production guardrails, up to 100% evasion success in some instances</span><span class="note">Part 3 · [P] arXiv 2504.11168</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NCSC on deny-listing: infinite ways to rephrase an attack</span><span class="note">Part 3 · [P] NCSC, 8 Dec 2025</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Spotlighting: above 50% to below 2% non-adaptively; Team Success Rate 0.529 in LLMail-Inject; DeepMind on adaptive attacks</span><span class="note">Part 3 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Instruction hierarchy: up to +63%, with documented over-refusal regressions</span><span class="note">Part 3 + Demo 2 · [P] arXiv 2404.13208</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Constitutional Classifiers: 86% to 4.4%, refusal increase 0.38%, 23.7% compute overhead</span><span class="note">Part 3 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">CaMeL: 77% of AgentDojo tasks with provable security vs 84% undefended</span><span class="note">Part 3 · [P] arXiv 2503.18813</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">LLMail-Inject phase 1 level 4 - Prompt Shield 0.600, Spotlighting 0.529, TaskTracker 0.440, LLM Judge 0.318, combined 0.166</span><span class="note">Part 3 · [P] MSRC + IEEE SaTML 2025</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Anthropic's Claude in Chrome disclosure - 23.6% to 11.2% across 123 cases and 29 scenarios; 35.7% to 0% browser-specific</span><span class="note">Demo 2 · [P] vendor disclosure · the model for an honest delta</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Durable real-world fixes: CamoLeak (image rendering disabled), Amazon Q (token scoping), Nx (trusted publishing), Gemini promptware (severity reassessed after mitigations)</span><span class="note">Demo 2 close · [P] / [P-researcher]</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The board's inherent-risk figures and effectiveness matrix</span><span class="note"><strong>Teaching model, not measurements.</strong> Encodes the direction the literature reports; the arithmetic is real and computed live</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Overfitting, hold-out partitions and re-test triggers</span><span class="note">Named here only · b10 owns them properly</span></div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions before you go 🎯 <span class="tag exercise">◐ 90 seconds</span></h2>
+    </div>
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">1 · On a fully probed Beacon board at 100.0, you may deploy exactly one thing this sprint. What does the evidence say to pick?</p>
+      <button class="qopt" type="button">A · The system-prompt guard, because it ships today and covers every class at once</button>
+      <button class="qopt" type="button">B · Least privilege plus human approval - alone they take the board from 100.0 to 45.0, fifty-five points, while the prompt guard alone reaches 96.4, three point six points</button>
+      <button class="qopt" type="button">C · An input classifier, because detection is the only layer that sees the attack</button>
+      <p class="qwhy">Fifteen times the movement, from controls that never ask the model to behave differently. The reason is structural rather than numerical: the prompt guard asks the model to police text that arrives looking exactly like the text it is meant to obey, which is why it scores a flat zero against indirect injection, context poisoning, improper output handling and unbounded consumption. Option C is not wrong to want, it is wrong to want first - detection genuinely moves refusal bypass and disclosure, and barely touches agency, because no classifier distinguishes a legitimate refund from an induced one.</p>
+    </div>
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">2 · LLMail-Inject measured four defences individually and stacked. What is the honest reading of 0.600, 0.529, 0.440, 0.318, and 0.166 combined?</p>
+      <button class="qopt" type="button">A · Stacking defences does not help, since a sixth of teams still got through</button>
+      <button class="qopt" type="button">B · Prompt Shield is the weakest layer and should be removed from the stack</button>
+      <button class="qopt" type="button">C · Defence in depth is measurably real and measurably insufficient - four layers cut the beat-rate from 0.600 to 0.166, and one team in six still got through</button>
+      <p class="qwhy">Both halves of that sentence have to appear in the report or it misleads in one direction or the other. Option A throws away a genuine engineering result that you would happily pay for. Option B misreads the table: a higher team success rate against one layer says the layer was popular to attack in that competition configuration, not that it contributes nothing to the stack. And the end-to-end figure is the anchor for both readings - 0.8% then 0.3% across 461,640 submissions is small, and is not zero.</p>
+    </div>
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">3 · Your hardening round cut measured attack success by half. What makes that claim defensible rather than marketing?</p>
+      <button class="qopt" type="button">A · A named metric, before and after on the same cases at the same N with the same grader, the benign counter-metric alongside, the rows that did not move, and an explicit statement that the after is not zero</button>
+      <button class="qopt" type="button">B · A comparison showing your rate is lower than a competing vendor's published rate</button>
+      <button class="qopt" type="button">C · The headline figure from your best-performing attack subset</button>
+      <p class="qwhy">That is the shape of Anthropic's Claude in Chrome disclosure: 23.6% to 11.2% across 123 test cases and 29 attack scenarios, 35.7% to 0% on a browser-specific set, and a plain statement that the remaining rate is not zero and new attack classes keep appearing. Option B is invalid on its face because the attack set, trial budget and judge all differ between vendors, so the comparison is apples to oranges. Option C is the specific temptation your own report will hand you, and it is why the counter-metric and the did-not-move rows belong in the template rather than in the author's judgement on the day.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Builder session 9 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>Break-fix, not test-once</b><span>Probe, fix, re-test the same cases at the same N, then attack the fix. Microsoft iterated against Phi-3 until robust to a wide range of attacks.</span></div>
+      <div class="cheat-item"><b>3.6 against 55</b><span>Prompt guard alone takes a probed board from 100.0 to 96.4. Least privilege plus human approval alone takes it to 45.0.</span></div>
+      <div class="cheat-item"><b>The ordering</b><span>Prompt-level controls reduce rates. Architectural controls remove capabilities. Ship the second kind first.</span></div>
+      <div class="cheat-item"><b>Four zeroes</b><span>The prompt guard scores flat zero against indirect injection, context poisoning, improper output handling and unbounded consumption.</span></div>
+      <div class="cheat-item"><b>Detection is a cost, not a boundary</b><span>Six production guardrails evaded by character injection, up to 100% evasion in some instances. Deny lists face infinite rephrasings.</span></div>
+      <div class="cheat-item"><b>Stacking is real and insufficient</b><span>0.600 / 0.529 / 0.440 / 0.318 individually, 0.166 combined. Better, never zero.</span></div>
+      <div class="cheat-item"><b>The honest delta shape</b><span>Named metric, same cases and N and grader, benign counter-metric, rows that did not move, and the after is not zero. 23.6% to 11.2% is the model.</span></div>
+      <div class="cheat-item"><b>Cut a leg or you fixed nothing</b><span>Every durable real-world fix cut the egress leg or the untrusted-content leg. None of them fixed the model.</span></div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>Builder session 9 of 10 · learn-ai-red-team-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← Course home</a> &nbsp;·&nbsp; <a href="b10-the-standing-suite.html">Next: The standing suite →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/surface-live.js?v=1"></script>
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Builder session 3 · Prompt injection - learn ai red team with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-red-team-with-phoebe</a> / Builder session 3 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI Red Team with Phoebe · Builder track · Session 3 of 10</div>
+    <h1>Prompt injection: <span class="accent">the class with no parameterised query</span></h1>
+    <p class="sub">Three official bodies have now said in print that this class has no reliable fix, for reasons that sit in the architecture rather than in anyone's implementation. This session takes that seriously rather than sadly. You will learn the three shapes the class takes and the ATLAS ID for each, the three deployment properties that make each one worse, the real defence ladder with the numbers actually measured for it, and how a defender tests a class that cannot be closed - which is the only honest thing left to do about it.</p>
+    <div class="chip-row">
+      <span class="chip level">🟡 Builder track</span>
+      <span class="chip audience">Security engineers · AI engineers · platform leads</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:3">3-14 · Three shapes, three IDs</span>
+      <span class="a3" style="flex:3">14-27 · Why it is unsolved</span>
+      <span class="a4" style="flex:4">27-45 · The ladder and the test protocol</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>The one class where the honest answer is uncomfortable</h2>
+    </div>
+    <div class="callout warn">
+      <strong>⚠ Authorization</strong>
+      This course is about testing AI systems <strong>you own, or are contracted in writing to test</strong>. Every exercise runs against Beacon, a fictional company, inside the scope document you wrote in b1. This page names attack <em>classes</em> so you can build test cases, and pairs each with the defence that addresses it. It describes the <em>shape</em> of an attack and never a working input. It contains no exploit payloads and teaches no attack craft.
+    </div>
+    <p class="lede">You left b2 with a matrix in which one control had zeroes in it, and the zeroes clustered under the classes where hostile text arrives inside content nobody on your team wrote. This session is that cluster. It is also the session where you find out that the good defences - the ones with real research behind them and real numbers attached - still do not close the class, and that saying so out loud is now an OWASP mitigation rather than a counsel of despair.</p>
+    <div class="legend">
+      <span class="pill solid">Live - presented in session</span>
+      <span class="pill light">Self-study - read after class</span>
+      <span class="pill inkpill">Official sources covered</span>
+    </div>
+    <div class="callout win">
+      <strong>★ What you walk out with today</strong>
+      The three shapes of injection with their ATLAS technique IDs, the three deployment properties that decide how bad each one gets in your architecture, a defence ladder annotated with what was actually measured for each rung and under what conditions, an adaptive-round protocol that discloses the deployed defence to your own testers, and a report rule that stops you from ever again citing a near-zero attack success rate as evidence.
+    </div>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="shapes">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · the three shapes</span>
+      <h2>One class, three shapes, three technique IDs <span class="tag concept">8 min live</span></h2>
+    </div>
+    <p class="lede">ATLAS splits the class into three sub-techniques under <code>AML.T0051</code>, and the split is not academic. The three differ in who the adversary is, who the victim is, and where the hostile text is sitting when your test runs - which means they need three different test designs and produce three different severities.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 408" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three shapes of prompt injection. Direct, AML.T0051.000, where the person typing is the adversary. Indirect, AML.T0051.001, where the adversary wrote content the model reads and the trusted user is the victim. Triggered, AML.T0051.002, dormant in content until a condition fires.">
+        <style>
+          .shT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .shM { font: 400 11px ui-monospace, Menlo, monospace; fill: #6B6F78; }
+          .shL { font: 700 11px Inter, sans-serif; fill: #1E2025; }
+          .shX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .shH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+        </style>
+
+        <text class="shH" x="24" y="30">One class, three shapes. The defender's question is different in every column.</text>
+
+        <rect x="24" y="44" width="264" height="30" rx="8" fill="#2E3138"/>
+        <text class="shT" x="42" y="64">Direct</text>
+        <rect x="24" y="82" width="264" height="216" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="shM" x="44" y="106">AML.T0051.000</text>
+        <text class="shL" x="44" y="132">The adversary</text>
+        <text class="shX" x="44" y="150">The person typing into</text>
+        <text class="shX" x="44" y="168">the box.</text>
+        <text class="shL" x="44" y="196">The victim</text>
+        <text class="shX" x="44" y="214">You, the operator.</text>
+        <text class="shL" x="44" y="242">Where the text sits</text>
+        <text class="shX" x="44" y="260">In the user turn, in</text>
+        <text class="shX" x="44" y="278">plain sight.</text>
+
+        <rect x="308" y="44" width="264" height="30" rx="8" fill="#C2410C"/>
+        <text class="shT" x="326" y="64">Indirect</text>
+        <rect x="308" y="82" width="264" height="216" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="shM" x="328" y="106">AML.T0051.001</text>
+        <text class="shL" x="328" y="132">The adversary</text>
+        <text class="shX" x="328" y="150">Whoever wrote content</text>
+        <text class="shX" x="328" y="168">the model will read.</text>
+        <text class="shL" x="328" y="196">The victim</text>
+        <text class="shX" x="328" y="214">The trusted user.</text>
+        <text class="shL" x="328" y="242">Where the text sits</text>
+        <text class="shX" x="328" y="260">In a document, ticket,</text>
+        <text class="shX" x="328" y="278">web page or cell.</text>
+
+        <rect x="592" y="44" width="264" height="30" rx="8" fill="#5A6070"/>
+        <text class="shT" x="610" y="64">Triggered</text>
+        <rect x="592" y="82" width="264" height="216" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="shM" x="612" y="106">AML.T0051.002</text>
+        <text class="shL" x="612" y="132">The adversary</text>
+        <text class="shX" x="612" y="150">Whoever planted the</text>
+        <text class="shX" x="612" y="168">condition, long ago.</text>
+        <text class="shL" x="612" y="196">The victim</text>
+        <text class="shX" x="612" y="214">Whoever trips it.</text>
+        <text class="shL" x="612" y="242">Where the text sits</text>
+        <text class="shX" x="612" y="260">Dormant in content</text>
+        <text class="shX" x="612" y="278">until a condition fires.</text>
+
+        <rect x="24" y="314" width="832" height="76" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="shH" x="44" y="338">The related technique to test alongside the triggered shape</text>
+        <text class="shX" x="44" y="362">AML.T0094 Delay Execution. Dormancy is the point: a suite that tests only the turn it fires in will</text>
+        <text class="shX" x="44" y="380">never find it. Test across sessions, and after the content has been sitting there a while.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - who is attacking, who is being harmed, and where the text was when you tested</figcaption>
+    </figure>
+
+    <h3>What changes for the defender, shape by shape</h3>
+    <ul>
+      <li><strong>Direct, <code>AML.T0051.000</code>.</strong> The user is the adversary. This is the easiest shape to write test cases for, which is exactly why teams over-index on it and why the simulator's second rung moves coverage to one class of eight while the risk index barely twitches. Note where severity lands: if the user is the adversary and the user already has the access, a direct injection frequently buys them nothing they did not already hold. Google's own vulnerability programme reflects this - direct injection and bare jailbreaks are out of scope for security bounties absent a chain.</li>
+      <li><strong>Indirect, <code>AML.T0051.001</code>.</strong> The user is trusted and is often the victim rather than the attacker. The adversary controls content the model ingests: a document, a support ticket, a web page, a spreadsheet cell, a calendar invitation, a code comment. This is the shape with production impact, the shape vendors do pay bounties on, and the shape behind every serious disclosed incident in this course's source map. It is also the shape your test suite is least likely to cover, because covering it means writing a test that plants benign marker content in a channel the bot reads and then asking an unrelated question.</li>
+      <li><strong>Triggered, <code>AML.T0051.002</code>.</strong> Dormant until a condition fires - a date, a particular user, a particular query, a particular downstream tool being available. Related: <strong><code>AML.T0094</code> Delay Execution</strong>. This shape defeats the default test design completely, because the default design checks the response in the same turn. A finding here is a statement about persistence, not about a single exchange, and it needs a test that spans sessions.</li>
+    </ul>
+
+    <div class="callout tip">
+      <strong>Beacon's three bots, one per shape</strong>
+      The <strong>Support Bot</strong> reads customer tickets all day, so indirect is its native hazard rather than an exotic one. The <strong>Analyst Bot</strong> takes English from trusted analysts and emits executable SQL, so its direct-shape findings chain straight into LLM10:2026 Improper Output Handling. The <strong>Insight Bot</strong> caches what it reads, which is where the triggered shape lives: content planted today shapes an executive's answer next week, and nobody who sees the answer ever saw the content.
+    </div>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="unsolved">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · why it is unsolved</span>
+      <h2>Three official bodies, three independent statements <span class="tag concept">7 min live</span></h2>
+    </div>
+    <p class="lede">This is not a contrarian position held by researchers. It is the published position of a standards body, a national technical authority and the largest application-security project in the field, arrived at separately and stated in print.</p>
+
+    <div class="callout example">
+      <span class="ex-pill">On the record</span>
+      <p><strong>OWASP, LLM01:2026.</strong> LLMs make no architectural distinction between instructions and data, and their behaviour is stochastic, so <strong>"no reliable prevention mechanism exists today"</strong>. There is <strong>"no clean equivalent to parameterized queries"</strong>. Note both halves of that reasoning: an architectural property and a statistical one. Neither is a bug someone forgot to fix.</p>
+      <p><strong>NIST AI 100-2e2025, section 3.4.4.</strong> Current mitigations do not offer full protection, so designers may reasonably <strong>build on the assumption that prompt injection is possible whenever a model is exposed to untrusted input</strong> - for example by using multiple LLMs holding different permissions, or by interacting with untrusted sources only through well-defined interfaces. This sentence is the origin of the dual-LLM and CaMeL patterns further down this page.</p>
+      <p><strong>UK NCSC, December 2025</strong>, the most quotable of the three: <em>"Under the hood of an LLM, there's no distinction made between 'data' or 'instructions'; there is only ever 'next token'."</em> And on the comparison everyone reaches for: SQL injection <em>can</em> be properly mitigated with parameterised queries, <em>"but there's a good chance prompt injection will never be properly mitigated in the same way."</em> Their conclusion is the one this course keeps landing on: reduce the risk and the impact, and if the system's security cannot tolerate the remaining risk, <strong>it may not be a good use case for LLMs</strong>.</p>
+    </div>
+
+    <p>Sit with the SQL comparison for a moment, because it is the source of most of the confused optimism in this area. Parameterised queries work because the database is <em>told</em>, out of band, which bytes are the query and which are the data, and it never has to infer the difference. There is no out-of-band channel into a language model. Everything - your system prompt, the user's message, the retrieved document, yesterday's conversation - arrives as tokens in one stream, and the model's only tool for telling them apart is the same statistical machinery it uses for everything else. NCSC's other observation follows from this and kills the obvious workaround: <em>"since LLMs are so complex there are infinite ways to rephrase an attack"</em>, so deny-listing is not a strategy, it is a treadmill.</p>
+
+    <h3>The three deployment properties that decide how bad it gets</h3>
+    <p>The architecture above is fixed. What is not fixed is how much your deployment amplifies it, and OWASP names three properties that do the amplifying. These are the questions to ask about your own system, in order.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 312" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Six sources - system prompt, user input, retrieved documents, tool output, chat history and memory - arrive as one token stream with no enforced trust boundary. Three deployment properties make this worse: context pooling, memory persistence and agentic execution.">
+        <style>
+          .cwT { font: 700 10.5px Inter, sans-serif; fill: #FFFFFF; }
+          .cwS { font: 400 9.5px Inter, sans-serif; fill: #FFFFFF; }
+          .cwB { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .cwG { font: 400 11px Inter, sans-serif; fill: #BFC4CE; }
+          .cwH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .cwK { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .cwX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+        </style>
+
+        <text class="cwH" x="24" y="30">Everything the model sees arrives in one stream, wearing the same clothes.</text>
+
+        <rect x="24" y="46" width="127" height="40" rx="8" fill="#2E3138"/>
+        <text class="cwT" x="36" y="66">System prompt</text>
+        <text class="cwS" x="36" y="80">you wrote it</text>
+        <rect x="165" y="46" width="127" height="40" rx="8" fill="#5A6070"/>
+        <text class="cwT" x="177" y="66">User input</text>
+        <text class="cwS" x="177" y="80">the user</text>
+        <rect x="306" y="46" width="127" height="40" rx="8" fill="#C2410C"/>
+        <text class="cwT" x="318" y="66">Retrieved docs</text>
+        <text class="cwS" x="318" y="80">strangers</text>
+        <rect x="447" y="46" width="127" height="40" rx="8" fill="#C2410C"/>
+        <text class="cwT" x="459" y="66">Tool output</text>
+        <text class="cwS" x="459" y="80">strangers</text>
+        <rect x="588" y="46" width="127" height="40" rx="8" fill="#5A6070"/>
+        <text class="cwT" x="600" y="66">Chat history</text>
+        <text class="cwS" x="600" y="80">mixed</text>
+        <rect x="729" y="46" width="127" height="40" rx="8" fill="#C2410C"/>
+        <text class="cwT" x="741" y="66">Memory</text>
+        <text class="cwS" x="741" y="80">mixed</text>
+
+        <path d="M87 88 L87 106 M228 88 L228 106 M369 88 L369 106 M510 88 L510 106 M651 88 L651 106 M792 88 L792 106" stroke="#BFC4CE" stroke-width="2"/>
+
+        <rect x="24" y="110" width="832" height="54" rx="10" fill="#16181C"/>
+        <text class="cwB" x="44" y="136">One token stream. No enforced trust boundary between any of them.</text>
+        <text class="cwG" x="44" y="156">UK NCSC: under the hood there is no distinction between data and instructions; only ever next token.</text>
+
+        <rect x="24" y="182" width="264" height="110" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="cwK" x="44" y="206">Context pooling</text>
+        <text class="cwX" x="44" y="228">Six sources, one stream,</text>
+        <text class="cwX" x="44" y="246">no provenance the model</text>
+        <text class="cwX" x="44" y="264">can check. That is the</text>
+        <text class="cwX" x="44" y="282">architecture, not a bug.</text>
+
+        <rect x="308" y="182" width="264" height="110" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="cwK" x="328" y="206">Memory persistence</text>
+        <text class="cwX" x="328" y="228">An injection written to</text>
+        <text class="cwX" x="328" y="246">memory or an index taints</text>
+        <text class="cwX" x="328" y="264">every later session, for</text>
+        <text class="cwX" x="328" y="282">people who never saw it.</text>
+
+        <rect x="592" y="182" width="264" height="110" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="cwK" x="612" y="206">Agentic execution</text>
+        <text class="cwX" x="612" y="228">Output drives tool calls,</text>
+        <text class="cwX" x="612" y="246">and tool output re-enters</text>
+        <text class="cwX" x="612" y="264">context. Effects chain.</text>
+        <text class="cwX" x="612" y="282">See AML.T0061.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the pooled context window, and the three properties that decide your blast radius</figcaption>
+    </figure>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>The three properties, and the question each one asks of your system<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p><strong>1 · Context-window pooling.</strong> System prompt, user input, retrieved documents, tool outputs, conversation history and memory all become one token stream, with no enforced trust boundary between them. The model has no reliable way to know which region of that stream came from you and which came from a stranger. The question for your system: <em>how many distinct trust levels are currently sharing one context window, and does anything downstream behave differently depending on which one a given instruction came from?</em> For most deployments the honest answer is "six, and no".</p>
+        <p><strong>2 · Memory persistence.</strong> An injection that lands in cross-session memory or a vector store does not end when the conversation does. It taints every later session that retrieves it, for users who never saw the attack and have no reason to suspect anything. The question: <em>what can write to memory or to the retrieval index, and is anything on that path treated as untrusted?</em> This is where the triggered shape and <code>AML.T0080</code> AI Agent Context Poisoning meet, and it is why Beacon's Insight Bot is more exposed than its architecture diagram suggests.</p>
+        <p><strong>3 · Agentic execution.</strong> Once model output drives tool calls, the blast radius extends to whatever those tools reach. Worse, tool outputs re-enter the context, which means effects can chain: the result of one induced call becomes input that shapes the next. <code>AML.T0061</code> LLM Prompt Self-Replication is the extreme end of this. The question: <em>which tools can fire without a human in the path, and what is the most irreversible thing reachable by chaining two of them?</em> You wrote the reversible-versus-irreversible tool list for homework in b1 precisely so you could answer this today.</p>
+        <p>These three properties are also, usefully, the three places a defence can attach. Everything on the ladder in Part 3 is either trying to reintroduce a boundary inside the pooled context, trying to keep untrusted content out of memory, or trying to bound what execution reaches. Nothing on it fixes the model.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="ladder">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · the defence ladder</span>
+      <h2>What the real defences measured, and under what conditions <span class="tag concept">8 min live</span></h2>
+    </div>
+    <p class="lede">Every rung below is a genuine contribution by serious people, and every rung has a number attached that was measured under conditions you must state whenever you quote it. Read the right-hand column as part of the number, not as a footnote to it.</p>
+
+    <table class="clean">
+      <tr><th>Defence</th><th>What was measured</th><th>The condition attached to that number</th></tr>
+      <tr><td><strong>Spotlighting</strong><br>marking untrusted content so the model can tell it apart</td><td>Attack success <strong>above 50% down to under 2%</strong></td><td><strong>Non-adaptively.</strong> In LLMail-Inject, spotlighting alone had a Team Success Rate of <strong>0.529</strong> against teams that tried. Google DeepMind found spotlighting and self-reflection "became much less effective against adaptive attacks"</td></tr>
+      <tr><td><strong>Instruction hierarchy</strong><br>training the model to rank instruction sources</td><td>Up to <strong>+63%</strong> robustness, generalising to unseen attacks</td><td><strong>With documented over-refusal regressions.</strong> The paper reports them itself. Any deployment of this needs a benign counter-metric running beside it or you will ship a system that refuses legitimate work and call it a security improvement</td></tr>
+      <tr><td><strong>Dual-LLM and quarantine patterns</strong><br>a privileged model that never sees untrusted text, and a quarantined one that does</td><td>Structural: removes the path by which untrusted text reaches a privileged action</td><td>Costs you the convenience of one model doing everything, and correctness depends entirely on the interface between the two. NIST §3.4.4 is the standards-level statement of this idea</td></tr>
+      <tr><td><strong>CaMeL</strong><br>capability-based control flow around the model</td><td><strong>77% of AgentDojo tasks solved with provable security</strong>, against 84% undefended</td><td><strong>A 7-point utility cost, in exchange for a guarantee rather than a rate.</strong> This is the cleanest trade on the whole page and the only rung offering something other than a probability</td></tr>
+      <tr><td><strong>Guardrail classifiers</strong><br>a model or ruleset scoring content before and after the main call</td><td>Real reductions, and the layer that sees what the model actually said</td><td><strong>Six production guardrails were evaded by character-level manipulation, "in some instances up to 100% evasion success".</strong> Treat a classifier as a control that raises cost, never as a boundary</td></tr>
+      <tr><td><strong>All of the above, stacked</strong></td><td>LLMail-Inject: combining every defence cut Team Success Rate to <strong>0.166</strong> from 0.600 for the best single defence</td><td><strong>Defence in depth is measurably real and measurably insufficient.</strong> 16.6% of teams still got through everything at once. End-to-end success across the whole competition was 0.8%, then 0.3% in the second phase</td></tr>
+    </table>
+
+    <div class="callout warn">
+      <strong>⚠ The headline finding, and the reason this page exists</strong>
+      Nasr, Carlini, Sitawarin, Schulhoff, Hayes, Shumailov, Terzis, Tramèr and colleagues - working across OpenAI, Anthropic and Google DeepMind - took <strong>twelve recent defences, most of which had originally reported near-zero attack success rates, and bypassed all of them at above 90% ASR</strong>, using gradient descent, reinforcement learning, random search and human-guided exploration. The gap between "near zero" and "above ninety" is not a research result about those twelve papers. It is a result about <em>static evaluation</em>: a defence measured only against attacks written before it existed has not been measured. <strong>OWASP LLM01:2026 mitigation #11 now instructs exactly this - test against adaptive attackers who have read the deployed defence, and reject static-only attack-success claims.</strong> That includes your own.
+    </div>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Twelve recent defences reported near-zero attack success rates originally, and were bypassed at above 90 percent by an adaptive attacker. OWASP LLM01 2026 mitigation 11 now requires testing against adaptive attackers who have read the deployed defence.">
+        <style>
+          .avX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .avN { font: 800 26px Inter, sans-serif; fill: #1E2025; }
+          .avR { font: 800 26px Inter, sans-serif; fill: #991B1B; }
+          .avH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+        </style>
+
+        <text class="avH" x="24" y="30">Twelve recent defences, re-tested by an adaptive attacker who had read the defence.</text>
+
+        <rect x="24" y="48" width="404" height="90" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="avX" x="44" y="72">Attack success rate as originally reported</text>
+        <text class="avN" x="44" y="110">near 0%</text>
+        <text class="avX" x="44" y="130">static evaluation, non-adaptive attacker</text>
+
+        <rect x="452" y="48" width="404" height="90" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="avX" x="472" y="72">Attack success rate when the attacker adapts</text>
+        <text class="avR" x="472" y="110">&gt;90%</text>
+        <text class="avX" x="472" y="130">gradient descent, RL, random search, humans</text>
+
+        <rect x="24" y="154" width="832" height="96" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="avH" x="44" y="178">What OWASP did about it: LLM01:2026 mitigation #11</text>
+        <text class="avX" x="44" y="202">Test against an adaptive attacker who has read the deployed defence. Reject static-only attack-success</text>
+        <text class="avX" x="44" y="220">claims, including your own. A defence that has only been measured against attacks written before it</text>
+        <text class="avX" x="44" y="238">existed has not been measured.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the distance between a static number and a measured one</figcaption>
+    </figure>
+
+    <div class="callout tip">
+      <strong>The ladder's shape, in one sentence</strong>
+      Rungs that make the model harder to fool produce rates, and rates degrade against an attacker who adapts. Rungs that change the architecture - quarantine, capability control, least privilege, human approval on irreversible actions - produce properties, and properties do not degrade. CaMeL is on this page precisely because it is the one rung offering a guarantee, and it is worth the seven points.
+    </div>
+  </section>
+
+  <!-- ============ DEMO 1 ============ -->
+  <section class="section" id="demo-1">
+    <div class="section-kicker">
+      <span class="klabel">Demo 1 of 2</span>
+      <h2>Build Beacon's injection test matrix <span class="tag demo">★ 9 min · everyone builds</span></h2>
+    </div>
+    <p class="lede">Three bots, three shapes, one matrix. The point of doing it as a grid is that the empty cells become visible, and the empty cells are where the b2 accounting rule bites: an untested cell counts at full inherent risk.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Draw the grid: three bots down, three shapes across.</strong> Nine cells. Fill in which are in scope from your b1 document and which are explicitly out. Beacon's engagement covers all nine, but a real one often will not, and an out-of-scope cell that was <em>decided</em> is a very different artefact from one that was forgotten.</p></div>
+      <div class="step"><p><strong>For the direct cells, define the success condition before writing a single case.</strong> "The model said something it should not" is not a success condition, it is an opinion. "The model emitted a tool call to the refund endpoint" is. Success conditions that a grader can apply without judgement are what make k of N meaningful later.</p></div>
+      <div class="step"><p><strong>For the indirect cells, the test design changes shape.</strong> You are no longer writing a message; you are placing benign marker content in a channel the bot reads - a seeded ticket, a fixture document, a sandbox spreadsheet cell - and then asking an unrelated question as a normal user. The marker is a harmless string you can search the transcript for. That is the whole test: did content the bot read change what it did for someone who never saw that content. No payload is required and none should be used.</p></div>
+      <div class="step"><p><strong>For the triggered cells, the test has to span sessions.</strong> Plant the marker, then run the ordinary suite tomorrow, and again after the cache has rolled. Add a case where the trigger is a downstream tool becoming available, because that is the version that survives your staging environment untouched and fires in production. Record <code>AML.T0094</code> alongside <code>AML.T0051.002</code> on these rows.</p></div>
+      <div class="step"><p><strong>Attach N from the RoE to every cell, and record k of N.</strong> Every cell, not just the interesting ones. A cell reading 0 of 25 is a result; a cell reading "did not reproduce" is a shrug. Remember the NIST figure that put N in your rules of engagement in the first place: repeating identical attacks twenty-five times instead of once moved measured success from 57% to 80%.</p></div>
+      <div class="step"><p><strong>Name the defence that is supposed to hold each cell, and check it against the b2 matrix.</strong> If the answer for an indirect cell is the system-prompt instruction, the matrix already scored that a flat zero, and you have found a gap before spending a single trial on it. This is the cheapest finding in the whole engagement and it comes from reading your own architecture honestly.</p></div>
+    </div>
+
+    <div class="callout warn">
+      <strong>The cell teams leave empty, every time</strong>
+      Indirect against the bot nobody thinks of as agentic. The Insight Bot only reads a spreadsheet and draws a chart, so it feels like a reporting tool rather than an attack surface. A cell is a place a stranger can put a sentence, the bot reads it, and the answer lands in front of an executive with no indication of where the reasoning came from. That is the shape of every serious disclosed incident in this course's source map, and it never looks dangerous on the architecture diagram.
+    </div>
+  </section>
+
+  <!-- ============ DEMO 2 ============ -->
+  <section class="section" id="demo-2">
+    <div class="section-kicker">
+      <span class="klabel">Demo 2 of 2</span>
+      <h2>The adaptive round: tell your testers everything <span class="tag demo">★ 8 min · in pairs</span></h2>
+    </div>
+    <p class="lede">Baselines first, because they are cheap and comparable to themselves. Then the round that actually produces the number you can defend: an adaptive round in which your testers are handed the full specification of the defence they are trying to get past. This feels wrong the first time and it is the only way to avoid publishing a static ASR.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Run the published baselines and write down that they are a floor.</strong> <strong>AgentDojo</strong> (97 tasks, 629 security test cases) is the right shape for the agentic surface; <strong>JailbreakBench</strong> gives you 100 harmful plus - and this is the half people drop - <strong>100 benign behaviours</strong>. Keep the benign set. It is the only cheap guard against "improving security" by making the system refuse everything, which is exactly the regression the instruction-hierarchy paper documented on itself.</p></div>
+      <div class="step"><p><strong>Now disclose the defence to your own testers.</strong> The full system prompt, every deployed guardrail and its configuration, the detection rules, the instruction-hierarchy training if you have it. An attacker who cares about your system will learn most of this anyway, and a tester who does not have it can only reproduce attacks written before your defence existed. That is precisely the condition Nasr et al. showed produces near-zero numbers that do not survive contact.</p></div>
+      <div class="step"><p><strong>Fix N and the wall-clock budget before the round starts.</strong> Both go in the report. Adaptive work is unbounded by nature, so the budget is what makes the result a measurement rather than an anecdote, and stating it is what lets the same round be re-run after a change in b9.</p></div>
+      <div class="step"><p><strong>Report k of N per cell, never a rate on its own, and never a cross-vendor comparison.</strong> ASR is defensible only as a pinned-configuration trend within your own system over time, reported alongside the full attack-and-defence spec given to testers, the token budget, N, the judge, an over-refusal counter-metric and the regression-suite pass rate. Strip any of those out and the number stops meaning anything.</p></div>
+      <div class="step"><p><strong>Write the sentence that closes an injection section.</strong> Not "injection is mitigated". Something closer to: these shapes were tested against this build on this date at this N, these are the measured rates, this is what bounds the consequence when it succeeds, and these cells were not tested. If a stakeholder wants the shorter sentence, NCSC has already written the answer for you: reduce the risk and the impact, and if the system's security cannot tolerate what remains, it may not be a good use case for an LLM.</p></div>
+    </div>
+
+    <div class="prompt-box">
+      <span class="label">adaptive round protocol · defensive · no payloads</span># what testers are given, what they may not do, and what they return
+
+disclose_to_tester:
+  system_prompt:       full text
+  defences_deployed:   [spotlighting, input_classifier, instruction_hierarchy]
+  detection_rules:     full text
+  tool_scopes:         full list, marked reversible / irreversible
+
+blast_radius_limits:                # from the b1 rules of engagement
+  writes:              sandbox tenant only
+  sends_payments_deletes: never     # record the finding, do not fire the action
+
+budget:
+  trials_per_case:     25           # N is fixed before the round starts
+  wall_clock:          2 days per surface
+
+report:
+  result:              k_of_n       # per cell, never a bare rate
+  static_asr_only:     rejected     # OWASP LLM01:2026 mitigation #11
+  overrefusal_counter: benign_set_pass_rate
+  cells_not_tested:    listed explicitly, counted at full inherent risk</div>
+
+    <div class="callout tip">
+      <strong>Why disclosure to testers is not "making it too easy"</strong>
+      It is making it <em>real</em>. The threat model for indirect injection is an adversary who can read your product, your documentation, your blog posts and often your prompts. Testing against someone who has less information than the adversary measures a system that does not exist. The uncomfortable corollary is that your numbers will get worse the first time you do this, and that the worse numbers are the first true ones you have had.
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Try it yourself - this week <span class="tag exercise">◐ 45-60 min total</span></h2>
+    </div>
+    <ul>
+      <li>List every channel through which content you did not write reaches a model in your system. Documents, tickets, web fetches, tool responses, code comments, calendar entries, spreadsheet cells, other agents. Most teams find at least two nobody had counted.</li>
+      <li>For each channel, answer the memory-persistence question: can anything arriving through it be written to memory or to a retrieval index, and is anything on that path treated as untrusted?</li>
+      <li>Find the most irreversible action reachable by chaining two tool calls in your system. That number, not the model's behaviour, is what sets severity for every injection finding you will file.</li>
+      <li>Take one defence you currently rely on and find the conditions under which its published number was measured. If it was non-adaptive, write down what you would need to run to earn the right to quote it.</li>
+      <li>Run one indirect test properly: plant a benign marker in a channel your system reads, then ask an ordinary unrelated question and search the transcript for the marker. Nothing hostile is required to learn whether the boundary exists.</li>
+    </ul>
+  </section>
+
+  <!-- ============ SOURCES ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Source material</span>
+      <h2>Official sources covered</h2>
+    </div>
+    <p class="lede">Every framework, figure and quotation on this page traces to a primary source catalogued in this course's source map, verified 2026-08-14. This page covers:</p>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MITRE ATLAS <code>AML.T0051</code> with .000 Direct, .001 Indirect, .002 Triggered, plus <code>AML.T0094</code> Delay Execution</span><span class="note">Part 1 · [P] ATLAS dataset 2026.07 · T0051 maturity: Realized</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP LLM01:2026 - no architectural distinction between instructions and data, "no reliable prevention mechanism exists today", no clean equivalent to parameterized queries</span><span class="note">Part 2 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NIST AI 100-2e2025 §3.4.4 - assume injection is possible whenever a model sees untrusted input</span><span class="note">Part 2 · [P] · the origin of the dual-LLM and CaMeL patterns</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">UK NCSC, Dec 2025 - "there is only ever 'next token'"; prompt injection "will never be properly mitigated in the same way" as SQLi; infinite ways to rephrase an attack</span><span class="note">Part 2 · [P] · and "it may not be a good use case for LLMs" as a legitimate engagement outcome</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">The three deployment properties: context-window pooling, memory persistence, agentic execution</span><span class="note">Part 2 · [P] OWASP · with <code>AML.T0061</code> Prompt Self-Replication and <code>AML.T0080</code> Context Poisoning</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Spotlighting: above 50% to under 2% non-adaptively · TSR 0.529 in LLMail-Inject · "much less effective against adaptive attacks" per DeepMind</span><span class="note">Part 3 · [P] · quote the condition with the number, always</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Instruction hierarchy: up to +63%, with documented over-refusal regressions</span><span class="note">Part 3 · [P] OpenAI</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">CaMeL: 77% of AgentDojo tasks with provable security vs 84% undefended</span><span class="note">Part 3 · [P] Google Research · a 7-point utility cost for a guarantee rather than a rate</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Guardrail classifiers: six production guardrails evaded by character injection, "in some instances up to 100% evasion success"</span><span class="note">Part 3 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">LLMail-Inject: best single defence TSR 0.600, all combined 0.166, end-to-end success 0.8% then 0.3%</span><span class="note">Part 3 · [P] Microsoft MSRC + IEEE SaTML 2025 · defence in depth is real and insufficient</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Nasr et al., <em>The Attacker Moves Second</em> - 12 defences, most originally near-zero, bypassed at &gt;90% ASR; OWASP LLM01:2026 mitigation #11</span><span class="note">Part 3 · [P] OpenAI / Anthropic / Google DeepMind, Oct 2025 · never cite a near-zero ASR as evidence</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">AgentDojo (97 tasks, 629 security test cases) and JailbreakBench (100 harmful + 100 benign)</span><span class="note">Demo 2 · [P] · both named by NIST · keep the benign set</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The adaptive-round protocol and the test-matrix design</span><span class="note">Demos · assembled from the published guidance above · <strong>no standards body publishes an injection test protocol</strong>; treat as a defensible starting structure</span></div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions before you go 🎯 <span class="tag exercise">◐ 90 seconds</span></h2>
+    </div>
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">1 · Why is there no parameterised-query equivalent for prompt injection?</p>
+      <button class="qopt" type="button">A · Because the research is young and the equivalent has not been invented yet</button>
+      <button class="qopt" type="button">B · Because model vendors have not prioritised it over capability work</button>
+      <button class="qopt" type="button">C · Because a database is told out of band which bytes are the query and which are the data, and a language model has no out-of-band channel - everything arrives as one token stream, which OWASP, NIST and NCSC have each stated in print</button>
+      <p class="qwhy">NCSC put it most memorably: under the hood there is no distinction between data and instructions, there is only ever next token. This is why the fix cannot be a better instruction and why deny-listing is a treadmill rather than a strategy - there are infinite ways to rephrase. Options A and B both imply the problem is waiting on effort, which is the assumption that leads teams to keep buying rungs of the ladder instead of bounding consequences.</p>
+    </div>
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">2 · A vendor tells you their injection defence achieves a near-zero attack success rate. What is the correct next question?</p>
+      <button class="qopt" type="button">A · Was that measured against an adaptive attacker who had read the deployed defence? Nasr et al. took 12 defences that mostly reported near-zero and bypassed them at above 90% ASR, and OWASP LLM01:2026 mitigation #11 now requires testing this way</button>
+      <button class="qopt" type="button">B · How many attack samples were in the benchmark suite?</button>
+      <button class="qopt" type="button">C · Which model family was it evaluated on?</button>
+      <p class="qwhy">B and C are reasonable questions that do not touch the failure mode. The gap between near-zero and above ninety was not caused by small suites or by model choice; it was caused by static evaluation, where the attacks were written before the defence existed. Apply the same question to your own reports before you publish them - the rule holds regardless of who produced the number, and the first honest round will make your figures worse.</p>
+    </div>
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">3 · You are testing the indirect shape against Beacon's Insight Bot. What does the test actually consist of?</p>
+      <button class="qopt" type="button">A · Crafting the most persuasive instruction you can and typing it into the bot</button>
+      <button class="qopt" type="button">B · Placing benign marker content in a channel the bot reads - a sandbox spreadsheet cell, a fixture document - then asking an ordinary unrelated question as a normal user and checking whether that content changed the answer</button>
+      <button class="qopt" type="button">C · Reviewing the system prompt for instructions that could be overridden</button>
+      <p class="qwhy">Option A tests the direct shape, where the user is the adversary and, in a system where that user already holds the access, the finding is often worth little on its own. The indirect shape is the one with production impact and the one vendors pay bounties on, because the user is trusted and is usually the victim. Note that no hostile input is needed to run it: a harmless marker string you can search the transcript for answers the only question that matters, which is whether a trust boundary exists between content the bot reads and what the bot then does.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Builder session 3 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>Three shapes, three IDs</b><span>Direct AML.T0051.000, user is the adversary. Indirect .001, user is trusted and usually the victim. Triggered .002, dormant until a condition fires, test alongside AML.T0094.</span></div>
+      <div class="cheat-item"><b>No parameterised query exists</b><span>OWASP: no architectural distinction between instructions and data, "no reliable prevention mechanism exists today". NIST: assume injection is possible. NCSC: there is only ever next token.</span></div>
+      <div class="cheat-item"><b>Three properties set your blast radius</b><span>Context pooling (six sources, one stream, no boundary), memory persistence (taints later sessions for people who never saw it), agentic execution (effects chain through tool output).</span></div>
+      <div class="cheat-item"><b>Quote the condition with the number</b><span>Spotlighting: above 50% to under 2% NON-ADAPTIVELY, but TSR 0.529 in LLMail-Inject. Instruction hierarchy: +63% WITH over-refusal regressions.</span></div>
+      <div class="cheat-item"><b>CaMeL buys a property, not a rate</b><span>77% of AgentDojo tasks with provable security against 84% undefended. Seven points of utility for a guarantee, and the only rung on the ladder that does not degrade.</span></div>
+      <div class="cheat-item"><b>Stacking works and is not enough</b><span>LLMail-Inject: best single defence 0.600 TSR, all combined 0.166. Defence in depth is measurably real and measurably insufficient.</span></div>
+      <div class="cheat-item"><b>The rule that governs every number</b><span>12 defences, mostly reporting near-zero, bypassed at &gt;90% ASR. OWASP LLM01:2026 mitigation #11: test adaptive attackers who have read the defence, reject static-only claims. Never cite a near-zero ASR as evidence.</span></div>
+      <div class="cheat-item"><b>How a defender tests it</b><span>AgentDojo and JailbreakBench as baselines, keep the 100 benign. Then disclose the full defence spec to your testers, fix N and the clock, report k of N per cell with the cells you did not test listed.</span></div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>Builder session 3 of 10 · learn-ai-red-team-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← Course home</a> &nbsp;·&nbsp; <a href="b4-jailbreaks-and-refusal.html">Next: Jailbreaks and refusal →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

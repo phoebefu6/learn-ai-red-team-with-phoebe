@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leader session 3 · Reading a red-team report - learn ai red team with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-red-team-with-phoebe</a> / Leader session 3 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI Red Team with Phoebe · Leader track · Session 3 of 6</div>
+    <h1>Reading a red-team report: <span class="accent">the number is not the finding</span></h1>
+    <p class="sub">A red-team report lands on your desk with a percentage in the executive summary. This session is about everything that percentage does not tell you, and the questions that recover it. You will learn why a finding is a rate and never a verdict, why the most dangerous number in this field is a near-zero attack success rate, what actually hides inside the formal definition of that rate, and why comparing two vendors' numbers is usually an invalid operation. You leave with a grilling kit you can run in a forty-minute review.</p>
+    <div class="chip-row">
+      <span class="chip level">🟡 Leader track</span>
+      <span class="chip audience">Heads of security · eng leaders · risk and compliance</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:5">3-25 · Rates, near-zero, and what hides in an ASR</span>
+      <span class="a3" style="flex:4">25-42 · The grilling kit, run live</span>
+      <span class="a4" style="flex:1">42-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>The number arrived without its conditions</h2>
+    </div>
+    <div class="callout warn">
+      <strong>⚠ Authorization</strong>
+      This course is about testing AI systems <strong>you own, or are contracted in writing to test</strong>. Every exercise runs against Beacon, a fictional company, inside a scope document written in the builder track. The course names attack <em>classes</em> so you can read and commission test work, and pairs each with the defence that addresses it. It contains no exploit payloads and teaches no attack craft. Testing a system you are not authorized to test is a crime in most jurisdictions, and no framing in a report changes that.
+    </div>
+    <p class="lede">Almost every bad decision made off the back of a red-team report comes from the same move: a measurement made under specific conditions gets promoted to a property of the system. "Attack success rate: 4%" becomes "the system is 96% safe". Nobody lies at any point in that chain. The conditions simply fall off somewhere between the appendix and the slide, and by the time it reaches a board it is a claim the underlying work never supported.</p>
+    <p>Your job as the reader is not to grade the testers. It is to reattach the conditions. That means asking a small, fixed set of questions of every report, every time, and treating a report that cannot answer them as an incomplete deliverable rather than a reassuring one.</p>
+    <div class="legend">
+      <span class="pill solid">Live - presented in session</span>
+      <span class="pill light">Self-study - read after class</span>
+      <span class="pill inkpill">Official sources covered</span>
+    </div>
+    <div class="callout win">
+      <strong>★ What you walk out with today</strong>
+      A reading protocol for red-team reports: the k of N rule and why a binary field destroys information, the reason a near-zero attack success rate should now raise your eyebrows rather than lower them, the three variables that hide inside every published rate, the defensible position on comparing numbers across systems, and a grilling kit of questions you can put to any testing team in the room.
+    </div>
+    <div class="callout tip">
+      <strong>Where this sits in the leader track</strong>
+      Session a1 established what a red team is for and what a report may claim. Session a2 gave you the threat model the testing should have been aimed at. This session is about reading what comes back. Session a4 turns findings into severity, and a5 asks which defences actually survive contact.
+    </div>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="rates">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · k of N</span>
+      <h2>A finding is a rate, never a verdict <span class="tag concept">7 min live</span></h2>
+    </div>
+    <p class="lede">The same input does not produce the same output twice. That single fact breaks the reporting convention most security leaders have twenty years of habit around: the pass, the fail, the reproduced-and-confirmed. A single attempt against an AI system does not test a property, it samples a distribution, and a sample of one is not a cautious result. It is a wrong one.</p>
+
+    <p>NIST's Center for AI Standards and Innovation put a number on how wrong. Re-running <strong>identical</strong> agent-hijacking attacks twenty-five times instead of once raised average measured attack success from <strong>57% to 80%</strong>. Nothing about the system changed. Nothing about the attacks changed. Only the trial count changed, and the picture of the system's robustness changed with it by twenty-three points.</p>
+
+    <p>Then a second result, which matters even more for how you read a report. When attacks were <strong>tailored to the target</strong> rather than taken from published baselines, measured hijacking success went from <strong>11% to 81%</strong> on the same system. NIST's own conclusion: evaluations need to be adaptive. Which is the sentence to hold onto when a report tells you it ran the standard benchmark suite and found little. Running the published baselines and stopping is not an engagement, it is a smoke test, and the gap between those two numbers is the size of the thing it missed.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The same attack class written up four ways: a binary pass or fail, a baseline-only rate of 11 percent, a single-trial rate of 57 percent, and a k-of-N rate of 20 of 25 with the judge and budget stated.">
+        <style>
+          .rpH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .rpX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .rpT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .rpK { font: 600 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="rpH" x="24" y="30">The same attack class, the same system, the same fortnight of work. Only the write-up changed.</text>
+
+        <rect x="24" y="46" width="832" height="56" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <rect x="40" y="58" width="138" height="26" rx="6" fill="#991B1B"/>
+        <text class="rpT" x="54" y="76">Binary</text>
+        <text class="rpH" x="196" y="72">"Jailbreak: FAIL. Prompt injection: PASS."</text>
+        <text class="rpX" x="196" y="90">No rate, no N, no endpoint. Two very different systems get the identical line.</text>
+
+        <rect x="24" y="112" width="832" height="56" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <rect x="40" y="124" width="138" height="26" rx="6" fill="#5A6070"/>
+        <text class="rpT" x="54" y="142">Baseline only</text>
+        <text class="rpH" x="196" y="138">"Attack success 11% across the published baseline set."</text>
+        <text class="rpX" x="196" y="156">NIST: tailoring those attacks to the target moved the same system to 81%.</text>
+
+        <rect x="24" y="178" width="832" height="56" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <rect x="40" y="190" width="138" height="26" rx="6" fill="#5A6070"/>
+        <text class="rpT" x="54" y="208">N = 1</text>
+        <text class="rpH" x="196" y="204">"Attack success 57%, one trial per attack."</text>
+        <text class="rpX" x="196" y="222">A single trial samples a distribution. The figure is wrong, not conservative.</text>
+
+        <rect x="24" y="244" width="832" height="56" rx="10" fill="#F0FDF4" stroke="#166534" stroke-width="1.5"/>
+        <rect x="40" y="256" width="138" height="26" rx="6" fill="#166534"/>
+        <text class="rpT" x="54" y="274">k of N</text>
+        <text class="rpH" x="196" y="270">"80% average success: 20 of 25 trials, adaptive budget, judge named."</text>
+        <text class="rpX" x="196" y="288">Same system, same attacks. This is the only one of the four you can act on.</text>
+
+        <rect x="24" y="314" width="832" height="48" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <rect x="42" y="330" width="14" height="14" rx="3" fill="#C2410C"/>
+        <text class="rpK" x="66" y="342">If a report gives you a boolean, you have been handed an opinion with a percentage sign missing.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - four write-ups of one engagement, and only one of them is a finding</figcaption>
+    </figure>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Why a binary field cannot be repaired later<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>A defect that fires two times in fifty and one that fires fifty times in fifty are different defects. They have different exploitability, different detection profiles, different fixes and different costs. A boolean field cannot tell them apart, and no amount of analysis after the fact recovers the distinction, because the trials were never run.</p>
+        <ul>
+          <li><strong>N must be fixed before results are seen.</strong> If N is chosen afterwards it will be chosen, quite unconsciously, to flatter whichever conclusion is convenient. Ask when N was set, not just what it is.</li>
+          <li><strong>The rate is the unit of comparison over time.</strong> You cannot tell whether last quarter's mitigation helped if last quarter's finding was a tick box. This is the single most common reason a security programme cannot demonstrate progress on AI risk.</li>
+          <li><strong>Rates make the residual risk speakable.</strong> "Fires in four of twenty-five attempts, under a fixed attacker budget, against this build" is a sentence a risk committee can price. "Vulnerable" is not.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="near-zero">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · the number that should worry you</span>
+      <h2>The most dangerous figure in the field is a near-zero ASR <span class="tag concept">8 min live</span></h2>
+    </div>
+    <p class="lede">Everything in your training tells you a low number is good news. In this field, a near-zero attack success rate is now the number that should make you ask the most questions, and the reason is a piece of published evidence rather than a hunch.</p>
+
+    <div class="callout example">
+      <span class="ex-pill">The measurement</span>
+      <p>In <em>The Attacker Moves Second</em> (Nasr et al., a joint team from OpenAI, Anthropic and Google DeepMind, October 2025) the authors took <strong>twelve recent defences, most of which had originally reported near-zero attack success rates</strong>, and attacked them adaptively using gradient descent, reinforcement learning, random search and human-guided exploration. They <strong>bypassed most of them at over 90% attack success</strong>. Separately, Zhan et al. evaluated the indirect-injection defences published for agents and bypassed <strong>all eight</strong> of them, at consistently more than 50% attack success.</p>
+    </div>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 428" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Twelve recent defences originally reported near-zero attack success rates. Under adaptive attack by Nasr and colleagues most were bypassed above 90 percent. Separately all eight agent indirect-injection defences evaluated by Zhan and colleagues were bypassed above 50 percent.">
+        <style>
+          .nzH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .nzX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .nzW { font: 400 11px Inter, sans-serif; fill: #991B1B; }
+          .nzT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .nzN { font: 800 30px Inter, sans-serif; fill: #2E3138; }
+          .nzR { font: 800 30px Inter, sans-serif; fill: #991B1B; }
+          .nzK { font: 600 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="nzH" x="24" y="30">Twelve recent defences. Most of them originally reported near-zero attack success.</text>
+
+        <rect x="24" y="44" width="404" height="30" rx="8" fill="#5A6070"/>
+        <text class="nzT" x="44" y="64">As reported in the original papers</text>
+        <rect x="24" y="74" width="404" height="150" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="nzN" x="44" y="120">~0%</text>
+        <text class="nzX" x="44" y="150">The headline number in the paper: near-zero</text>
+        <text class="nzX" x="44" y="168">attack success, measured against the attack</text>
+        <text class="nzX" x="44" y="186">set the authors themselves selected, at the</text>
+        <text class="nzX" x="44" y="204">effort level they themselves chose to spend.</text>
+
+        <rect x="452" y="44" width="404" height="30" rx="8" fill="#991B1B"/>
+        <text class="nzT" x="472" y="64">Under adaptive attack, Nasr et al. 2025</text>
+        <rect x="452" y="74" width="404" height="150" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="nzR" x="472" y="120">&gt;90%</text>
+        <text class="nzW" x="472" y="150">Most of the twelve were broken above 90%</text>
+        <text class="nzW" x="472" y="168">attack success, using gradient descent,</text>
+        <text class="nzW" x="472" y="186">reinforcement learning, random search and</text>
+        <text class="nzW" x="472" y="204">human-guided exploration.</text>
+
+        <rect x="24" y="238" width="832" height="70" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="nzH" x="44" y="264">And separately, for agents: all eight of the evaluated indirect-injection defences</text>
+        <text class="nzX" x="44" y="288">Zhan et al. bypassed every one of the eight, at consistently more than 50% attack success.</text>
+
+        <rect x="24" y="324" width="832" height="86" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="nzK" x="44" y="348">What this does to your reading of any report</text>
+        <text class="nzX" x="44" y="372">A near-zero static attack success rate is now weak evidence of anything at all. The right question is not</text>
+        <text class="nzX" x="44" y="390">how low the number is, but how hard anyone tried to move it. Unattacked, near-zero measures effort.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - what happened to twelve near-zero numbers when somebody moved second</figcaption>
+    </figure>
+
+    <p>Read that result carefully, because the failure mode it exposes is structural rather than a matter of sloppy work. A defence author picks an attack set, spends a budget attacking their own defence, and reports what they find. They are not being dishonest. They are the first mover, and the attacker moves second, with knowledge of the defence and no obligation to reuse the attacks the author had in mind. The defence's reported number is a measurement of the author's imagination and budget, not of the defence.</p>
+
+    <p>Your own internal reports have exactly the same structure. A team that built a guard and then tested the guard will report a number shaped by how hard they tried. This is why the single most useful line in a red-team report is not the headline rate at all. It is the description of what was attempted and what was <em>not</em>.</p>
+
+    <div class="callout tip">
+      <strong>The reframe to take into your next review</strong>
+      Stop reading the attack success rate as a property of the system. Read it as a joint measurement of the system <em>and</em> the effort spent against it. A 2% rate produced by an afternoon of baseline prompts and a 2% rate produced by three weeks of adaptive, target-tailored work are not the same finding, and only one of them is worth anything. If the report does not let you tell which you are holding, that is the finding.
+    </div>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="inside-asr">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · inside the number</span>
+      <h2>Three variables hide in every ASR, and none of them travel <span class="tag concept">7 min live</span></h2>
+    </div>
+    <p class="lede">Attack success rate has a formal definition, from HarmBench. You do not need to compute it. You need to know that it takes three arguments you were probably never shown, because each one is a place to interrogate a claim, and each one is a reason two numbers from two organisations cannot be put side by side.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 365" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The HarmBench attack success rate definition, and the three variables inside it: the classifier c, the token budget T, and the number of trials N. Each is a place to interrogate a claim.">
+        <style>
+          .asH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .asX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .asT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .asM { font: 400 13px ui-monospace, Menlo, monospace; fill: #FFFFFF; }
+          .asC { font: 400 11px Inter, sans-serif; fill: #BFC4CE; }
+          .asK { font: 600 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="asH" x="24" y="30">Every attack-success-rate number has three variables hiding inside it.</text>
+
+        <rect x="24" y="44" width="832" height="52" rx="10" fill="#16181C"/>
+        <text class="asM" x="44" y="76">ASR(y, g, f) = (1/N) Σ c( f_T(x_i), y )</text>
+        <text class="asC" x="470" y="76">HarmBench's formal definition of the rate</text>
+
+        <rect x="24" y="112" width="268" height="28" rx="8" fill="#2E3138"/>
+        <text class="asT" x="42" y="131">c · the classifier</text>
+        <rect x="24" y="140" width="268" height="112" rx="0" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="asX" x="42" y="164">Who or what graded success?</text>
+        <text class="asX" x="42" y="182">A model judge, a human, a</text>
+        <text class="asX" x="42" y="200">keyword rule? Was it</text>
+        <text class="asX" x="42" y="218">calibrated against human</text>
+        <text class="asX" x="42" y="236">labels, and at what rate?</text>
+
+        <rect x="306" y="112" width="268" height="28" rx="8" fill="#2E3138"/>
+        <text class="asT" x="324" y="131">T · the token budget</text>
+        <rect x="306" y="140" width="268" height="112" rx="0" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="asX" x="324" y="164">How much attacker effort</text>
+        <text class="asX" x="324" y="182">was allowed? HarmBench</text>
+        <text class="asX" x="324" y="200">found budget drastically</text>
+        <text class="asX" x="324" y="218">impacts ASR, and it is not</text>
+        <text class="asX" x="324" y="236">standardised across papers.</text>
+
+        <rect x="588" y="112" width="268" height="28" rx="8" fill="#2E3138"/>
+        <text class="asT" x="606" y="131">N · the number of trials</text>
+        <rect x="588" y="140" width="268" height="112" rx="0" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="asX" x="606" y="164">How many attempts per</text>
+        <text class="asX" x="606" y="182">attack, and was N fixed</text>
+        <text class="asX" x="606" y="200">before results were seen?</text>
+        <text class="asX" x="606" y="218">Report k of N, with N on</text>
+        <text class="asX" x="606" y="236">the page. Never a binary.</text>
+
+        <rect x="24" y="266" width="832" height="84" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="asK" x="44" y="290">Change any one of the three and the number changes. That is why cross-vendor comparison fails.</text>
+        <text class="asX" x="44" y="314">Chouldechova et al. (NeurIPS 2025): conclusions about relative system safety are often not supported by the</text>
+        <text class="asX" x="44" y="332">evidence ASR comparisons provide, resting on apples-to-oranges comparisons or low-validity measurement.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the classifier, the budget and the trial count, and where each one lets a claim slip</figcaption>
+    </figure>
+
+    <p>The classifier deserves the most suspicion, because it is the one that never appears on a slide. Somebody decided what counted as a successful attack. If that somebody was a language model acting as a judge, the report is stacking one stochastic system's opinion on top of another's, and the honest version tells you how that judge was calibrated against human labels. If it was a keyword rule, it will have missed everything phrased differently and flagged plenty that was harmless. Neither is disqualifying. Both need saying.</p>
+
+    <p>The budget is the one that moves numbers the most and gets stated the least. HarmBench found that token budget <strong>drastically impacts</strong> attack success rate and is not standardised across papers, which means two rates computed at different budgets are not on the same scale at all. Promptfoo's own documentation says the same thing plainly: attack success rate depends heavily on attempt budget, prompt set composition and judge choice.</p>
+
+    <h3 style="margin-top:1.4rem">Why comparing across vendors is usually an invalid operation</h3>
+    <p>This is the part leaders most want to do and most need to stop doing. Chouldechova, Cooper, Barocas, Palia, Vann and Wallach, at NeurIPS 2025, examined the practice directly and found that conclusions drawn about the relative safety of systems <strong>are often not supported by the evidence that ASR comparisons provide</strong>. The comparisons rest either on apples-to-oranges setups or on measurements with low validity for the thing being claimed. Anthropic has made a compatible point from the vendor side: inconsistent methods across the industry make objective cross-system safety comparison difficult.</p>
+
+    <p>NIST goes further and says it about benchmarks generally. In section 4.1.3 of the adversarial machine learning taxonomy, benchmarks are described as unreliable, with results <strong>routinely incomparable</strong>. New mitigations "appear very powerful, but are quickly shown to lack robustness to unforeseen types of attacks", which is why a mitigation has to be tested against <strong>unforeseen</strong> attacks rather than the ones it was designed against. And NIST's instruction on how to present the outcome is one to steal outright: attributes must be evaluated <strong>simultaneously on a Pareto plot</strong>, because a mitigation that improves one axis while degrading another is not an improvement, it is a trade you have not priced.</p>
+
+    <table class="clean">
+      <tr><th>Comparison</th><th>Is it defensible?</th><th>Why</th></tr>
+      <tr><td>Our system this quarter versus our system last quarter</td><td><strong>Yes, with conditions</strong></td><td>Only if the configuration is pinned: same attack spec, same budget, same N, same judge. Otherwise you are measuring the change in your testing.</td></tr>
+      <tr><td>Our system before a mitigation versus after</td><td><strong>Yes</strong></td><td>This is the strongest use of a rate. Report the delta and the overrefusal counter-metric together, on a Pareto plot rather than as a single headline.</td></tr>
+      <tr><td>Vendor A's published ASR versus vendor B's</td><td><strong>No</strong></td><td>Different classifiers, budgets, trial counts and attack sets. NeurIPS 2025 finding: the safety conclusions are often not supported by the comparison.</td></tr>
+      <tr><td>Our system versus a published benchmark leaderboard</td><td><strong>No</strong></td><td>NIST: benchmark results are routinely incomparable, and a mitigation must be tested against attacks it was not designed to stop.</td></tr>
+    </table>
+
+    <div class="callout tip">
+      <strong>The defensible position to write into your reporting standard</strong>
+      Report attack success rate only as a <strong>pinned-configuration trend within your own system over time</strong>, and publish it alongside four things: the full attack-and-defence specification given to the testers, the budget and trial count and judge, an <strong>overrefusal counter-metric</strong> from a benign set, and a regression-suite pass rate. Never as a cross-vendor comparison. If somebody wants the cross-vendor number, the honest answer is that the field cannot currently produce it.
+    </div>
+  </section>
+
+  <!-- ============ EXERCISE 1 ============ -->
+  <section class="section" id="grilling">
+    <div class="section-kicker">
+      <span class="klabel">Discussion 1 of 2</span>
+      <h2>The grilling kit, run on a real report <span class="tag demo">★ 12 min · in groups of three</span></h2>
+    </div>
+    <p class="lede">Bring a red-team or AI safety report you have actually received, or use the Beacon engagement summary. Work through the eight questions in order and mark each one answered, partially answered or absent. The count of absent answers is your read on the report's usefulness, and it is usually the first time anyone in the room has scored a report rather than reacted to it.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>1 · What was N, and when was it fixed?</strong> If there is no N, every number on the page is a sample of one dressed as a measurement. If N was set after results were seen, ask why that number. NIST's 57% to 80% result is the reason this question comes first.</p></div>
+      <div class="step"><p><strong>2 · What endpoint was tested?</strong> The base model through an API, your application through its production interface, a pre-mitigation build, a post-mitigation build? Microsoft's guidance is explicit that reports must make clear which endpoints were used. A finding against a raw model endpoint and a finding against the shipped product are different claims.</p></div>
+      <div class="step"><p><strong>3 · Was this adaptive, or baselines only?</strong> Ask how much of the budget went to attacks tailored to this system versus published sets run unmodified. The 11% to 81% gap is what this question is measuring. A report that only ran baselines should say so in the summary, not the appendix.</p></div>
+      <div class="step"><p><strong>4 · Who graded success, and were they calibrated?</strong> Named human adjudicator, model judge, keyword rule? If it was a judge model, what is its agreement rate with human labels on this task, and who resolved disputes? An ungraded grader is a silent multiplier on every number in the document.</p></div>
+      <div class="step"><p><strong>5 · What was the attacker budget?</strong> Tokens, turns, wall-clock time, or attempts per objective. HarmBench found budget drastically impacts the rate. Two rates at different budgets are not on the same scale, including two of your own from different quarters.</p></div>
+      <div class="step"><p><strong>6 · Was there a benign set, and what happened to it?</strong> Without an overrefusal counter-metric, a team can improve every security number by making the system refuse more, and the report will read as progress. This is not hypothetical: the instruction-hierarchy work that produced up to a 63% robustness gain also documented over-refusal regressions.</p></div>
+      <div class="step"><p><strong>7 · What was explored, and what was not?</strong> This is the question most reports answer worst and the one your risk register needs most. An untested class is not a low-risk class. It goes on the board as <strong>unknown</strong>, at full inherent risk, never as safe.</p></div>
+      <div class="step"><p><strong>8 · What build, on what date?</strong> Every finding is scoped to a build. A model version change, a system-prompt change, a new tool or connector, a new renderer or a permission-scope change all invalidate it. Ask which of those have happened since the testing window closed.</p></div>
+    </div>
+
+    <div class="callout warn">
+      <strong>The answer that should end the meeting</strong>
+      "We ran the standard benchmarks and everything passed." That sentence contains no N, no endpoint, no budget, no judge, no benign set and no adaptive work. It is not a weak report, it is a report that has not yet started. Send it back with the eight questions attached rather than debating the conclusion.
+    </div>
+  </section>
+
+  <!-- ============ EXERCISE 2 ============ -->
+  <section class="section" id="rewrite">
+    <div class="section-kicker">
+      <span class="klabel">Discussion 2 of 2</span>
+      <h2>Rewrite the executive summary you would sign <span class="tag demo">★ 6 min · in pairs</span></h2>
+    </div>
+    <p class="lede">You are the accountable executive for Beacon's Support Bot. Your testing team hands you this line: <em>"Prompt injection: mitigated. Attack success rate 3%."</em> In pairs, rewrite it into a sentence you would be willing to put your name to in front of a regulator, using only what a report could actually establish.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Strip the verdict.</strong> "Mitigated" is a property claim. Nothing in this field supports property claims. What the work can support is: these specific attacks succeeded at these measured rates under these conditions against this build at this date.</p></div>
+      <div class="step"><p><strong>Attach the conditions.</strong> The endpoint, N, the budget, the judge, whether the work was adaptive. If any of those are missing from the underlying report, your rewritten sentence must say they are missing. That absence is information the reader is entitled to.</p></div>
+      <div class="step"><p><strong>Add the unexplored column.</strong> Name at least one class that was not tested, and state it at full inherent risk. A summary that only lists what was found reads as a completeness claim whether or not it means to.</p></div>
+      <div class="step"><p><strong>Read your version out loud and ask the room the honest question:</strong> does it sound worse than the original? It will. That is the correct outcome, and it is the whole reason this session exists. The original was not better news, it was less information.</p></div>
+    </div>
+
+    <div class="callout tip">
+      <strong>The sentence to demand in every report, verbatim</strong>
+      Microsoft's own guidance: clarify that the role of red teaming is to expose and raise understanding of the risk surface, and that it is <strong>not a replacement for systematic measurement and rigorous mitigation work</strong>. And: it is important that people <strong>do not interpret specific examples as a metric for the pervasiveness of that harm</strong>. Put those two sentences in your report template permanently. Without them, one vivid demo becomes the organisation's entire mental model of the risk, and one clean run becomes its entire mental model of the safety.
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Try it yourself - this week <span class="tag exercise">◐ 45-60 min total</span></h2>
+    </div>
+    <ul>
+      <li>Take the last AI safety or red-team report your organisation received, internal or from a vendor, and score it against the eight questions. Count the absent answers. Send the count, not the critique, to whoever commissioned it.</li>
+      <li>Find every place in your current reporting where an AI finding is recorded as a boolean, and change the field to k of N with a stated N. This is usually a one-line change to a template and the highest-leverage thing on this page.</li>
+      <li>Ask your team for the overrefusal counter-metric. If there is not one, you currently have no way to distinguish a system that got safer from a system that got more useless, and both look identical in the security numbers.</li>
+      <li>Write down, in one line, the last cross-vendor safety comparison your organisation made a decision on. Then write down which of the three variables you knew for each side. Usually the answer is none of them.</li>
+      <li>Add "what was not explored" as a required section in your report template, and make it the first section after the summary rather than the last one before the appendix.</li>
+    </ul>
+  </section>
+
+  <!-- ============ SOURCES ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Source material</span>
+      <h2>Official sources covered</h2>
+    </div>
+    <p class="lede">Every framework, figure and quotation on this page traces to a primary source catalogued in this course's source map, verified 2026-08-14. This page covers:</p>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NIST CAISI: 57% to 80% by repeating identical attacks 25 times; 11% to 81% when tailored to the target</span><span class="note">Part 1 · [P] · "Evaluations need to be adaptive"</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Nasr et al., <em>The Attacker Moves Second</em> (OpenAI, Anthropic, Google DeepMind, Oct 2025) - 12 defences, most reporting near-zero ASR, most bypassed above 90%</span><span class="note">Part 2 · [P] · arXiv 2510.09023</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Zhan et al. - all 8 evaluated agent indirect-injection defences bypassed, consistently above 50% ASR</span><span class="note">Part 2 · [P] · NAACL 2025 Findings</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">HarmBench's formal ASR definition and the three variables: classifier <em>c</em>, token budget <em>T</em>, trial count <em>N</em>; budget "drastically impacts" ASR and is not standardised</span><span class="note">Part 3 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Chouldechova, Cooper, Barocas, Palia, Vann, Wallach (NeurIPS 2025) - safety conclusions "often not supported by evidence provided by ASR comparisons"</span><span class="note">Part 3 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NIST AI 100-2e2025 §4.1.3 - benchmarks unreliable and "routinely incomparable"; test against unforeseen attacks; compare attributes simultaneously on a Pareto plot</span><span class="note">Part 3 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Microsoft's reporting guidance - name the endpoints; red teaming "is not a replacement for systematic measurement"; do not read an example as a metric for pervasiveness</span><span class="note">Exercise 1 + 2 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Instruction hierarchy: up to +63% robustness with documented over-refusal regressions</span><span class="note">Exercise 1, question 6 · [P] · the case for a benign set</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Anthropic's note that inconsistent methods make objective cross-system safety comparison difficult</span><span class="note">Part 3 · vendor statement, used as corroboration rather than as the load-bearing claim</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The eight-question grilling kit itself</span><span class="note">Assembled from the sources above · <strong>no published standard exists for reviewing an AI red-team report</strong>; treat as a working checklist</span></div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions before you go 🎯 <span class="tag exercise">◐ 90 seconds</span></h2>
+    </div>
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">1 · A vendor's report shows a near-zero attack success rate against their new defence. What is the correct reading?</p>
+      <button class="qopt" type="button">A · Strong evidence the defence works, since the rate is the standard industry measure</button>
+      <button class="qopt" type="button">B · Weak evidence of anything until you know what adaptive effort was spent against it - Nasr et al. took 12 defences that mostly reported near-zero rates and bypassed most of them above 90%</button>
+      <button class="qopt" type="button">C · Evidence the defence works against the attacks the field currently knows about</button>
+      <p class="qwhy">Option C is the seductive one, and it is still wrong, because the twelve defences in the study were broken with techniques the field already had: gradient descent, reinforcement learning, random search and human-guided exploration. Nothing exotic was required, only somebody moving second with the defence in front of them. The reported rate measures the author's attack set and budget, not the defence. Zhan et al. found the same shape for agents, bypassing all eight evaluated indirect-injection defences at consistently above 50%.</p>
+    </div>
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">2 · Your team wants to compare your system's attack success rate against a competitor's published figure. What do you tell them?</p>
+      <button class="qopt" type="button">A · Fine, as long as both numbers come from the same benchmark</button>
+      <button class="qopt" type="button">B · Fine, as long as you note the model versions differ</button>
+      <button class="qopt" type="button">C · The comparison is not defensible - the classifier, the token budget and the trial count all differ and none of them travel; NeurIPS 2025 work found such safety conclusions often unsupported, and NIST calls benchmark results routinely incomparable</button>
+      <p class="qwhy">Option A fails because the same benchmark name does not fix the three variables: the judge, the attacker budget and N can all differ inside a shared benchmark, and HarmBench found budget alone drastically moves the rate. The defensible use of an attack success rate is as a pinned-configuration trend inside your own system over time, published with the attack spec, the budget, N, the judge, an overrefusal counter-metric and a regression pass rate. If a stakeholder wants the cross-vendor number, the honest answer is that the field cannot currently produce it.</p>
+    </div>
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">3 · A report tests fourteen attack classes and finds nothing in six of them. How should those six appear on your risk register?</p>
+      <button class="qopt" type="button">A · It depends entirely on whether they were actually explored - a class that was tested and held is a measured result, while a class that was never reached is unknown, and unknown sits at full inherent risk</button>
+      <button class="qopt" type="button">B · As low risk, since testing found nothing in them</button>
+      <button class="qopt" type="button">C · As accepted risk, since the engagement is complete</button>
+      <p class="qwhy">"Found nothing" and "was not looked at" collapse into the same visual on almost every dashboard, and that collapse is where risk registers go wrong. This is exactly why "what was explored and what was not" belongs immediately after the executive summary rather than in an appendix. The board reports unknown, never safe, and an untested class carries its full inherent risk until somebody spends effort on it.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Leader session 3 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>k of N, never a binary</b><span>57% to 80% purely by repeating identical attacks 25 times. A single trial gives a wrong number, not a cautious one.</span></div>
+      <div class="cheat-item"><b>Baselines are not an engagement</b><span>11% with published baselines, 81% when tailored to the target. Ask how much budget went to adaptive work.</span></div>
+      <div class="cheat-item"><b>Near-zero is the number to distrust</b><span>12 defences, most reporting near-zero, most bypassed above 90%. All 8 agent injection defences bypassed above 50%.</span></div>
+      <div class="cheat-item"><b>A rate is a joint measurement</b><span>Of the system and of the effort spent against it. Unattacked, near-zero measures effort rather than robustness.</span></div>
+      <div class="cheat-item"><b>The three hidden variables</b><span>The classifier c, the token budget T, the trial count N. Budget "drastically impacts" ASR and is not standardised.</span></div>
+      <div class="cheat-item"><b>No cross-vendor comparison</b><span>NeurIPS 2025: conclusions often unsupported. NIST: benchmarks unreliable and routinely incomparable. Pinned trend only.</span></div>
+      <div class="cheat-item"><b>Always ask for the benign set</b><span>Without an overrefusal counter-metric, refusing everything looks like a security improvement on every chart.</span></div>
+      <div class="cheat-item"><b>Untested is unknown, not safe</b><span>An unexplored class sits at full inherent risk. Put "what was not explored" right after the summary.</span></div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>Leader session 3 of 6 · learn-ai-red-team-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← Course home</a> &nbsp;·&nbsp; <a href="a4-severity-and-triage.html">Next: Severity and triage →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

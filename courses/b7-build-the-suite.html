@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Builder session 7 · Build the suite - learn ai red team with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-red-team-with-phoebe</a> / Builder session 7 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI Red Team with Phoebe · Builder track · Session 7 of 10</div>
+    <h1>Build the suite: <span class="accent">an untested class is unknown, not safe</span></h1>
+    <p class="sub">Sessions b2 to b6 gave you the classes. This session turns them into a suite, and puts a board under it that does the accounting honestly. You will run a scripted six-rung engagement against Beacon's support bot and watch the moment that makes a red team both worth its budget and unpopular: a fortnight of testing that removes almost no risk and converts all of it from guessed to measured. Then you will drive the board yourself, find the minimum control set that reaches all green, and see what happens when you delete the one control every team reaches for first.</p>
+    <div class="chip-row">
+      <span class="chip level">🟠 Builder track</span>
+      <span class="chip audience">Security engineers · AI engineers · platform leads</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:3">3-14 · The accounting rule</span>
+      <span class="a3" style="flex:5">14-36 · Build-along: the board</span>
+      <span class="a4" style="flex:2">36-45 · Proxies, tools, Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>The suite is an accounting problem before it is a testing problem</h2>
+    </div>
+    <div class="callout warn">
+      <strong>⚠ Authorization</strong>
+      This session is about testing AI systems <strong>you own, or are contracted in writing to test</strong>. Everything here runs against Beacon, a fictional company, inside the rules-of-engagement document you wrote in b1. The board names attack <em>classes</em> so you can build test cases, and pairs each one with the defence that addresses it. It contains no exploit payloads and teaches no attack craft. Testing a system you are not authorized to test is a crime in most jurisdictions, and no framing in a suite manifest changes that.
+    </div>
+    <p class="lede">Most teams build a suite by writing test cases for the classes they find interesting, running them, and reporting what came back. That is a reasonable way to spend a fortnight and a terrible way to produce a number, because it silently answers the wrong question. The report says "here is what we found". The board has to say "here is what we found, <em>and here is what we never looked at, carried at full risk</em>". Those two documents are the same length and mean completely different things.</p>
+    <div class="legend">
+      <span class="pill solid">Live - presented in session</span>
+      <span class="pill light">Self-study - read after class</span>
+      <span class="pill inkpill">Official sources covered</span>
+    </div>
+    <div class="callout win">
+      <strong>★ What you walk out with today</strong>
+      A suite manifest that names every class in scope and marks the ones you have not covered, a board that computes coverage and residual risk live with untested classes carried at full inherent risk, the measured case against the control your team is probably relying on, an honest reading of what a coverage number can and cannot mean, and a three-tool layering you can wire into CI this week.
+    </div>
+    <div class="callout tip">
+      <strong>Honesty note, and it applies to every number on this page</strong>
+      The inherent-risk figures and the defence-effectiveness matrix in this board are a <strong>teaching model</strong>. They encode the direction the published literature reports - notably that prompt-level instructions are near-useless against injection arriving through content, while architectural controls do the work - but they are <strong>not measurements</strong> of your system or anyone else's. What is real is the arithmetic: coverage, residual risk and the untested-class accounting are computed live in your browser from that matrix and your settings. Read the numbers as the shape of an argument, not as evidence about a product.
+    </div>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="accounting">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · the rule under everything</span>
+      <h2>An untested class counts at full inherent risk <span class="tag concept">6 min live</span></h2>
+    </div>
+    <p class="lede">This is the one design decision in the board, and it is worth more than the rest of the session put together. When a class has no test behind it, the board does not skip it, does not average it away, and does not quietly score it as fine. It carries the whole of that class's inherent risk into the total and labels it as risk you have no evidence about.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 386" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="At rung two of the ladder, one class of eight is probed. A meter that ignores untested classes reads 13.2. A meter that carries untested classes at full inherent risk reads 99.3. The system is identical; only the accounting differs.">
+        <style>
+          .a7H { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .a7X { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .a7T { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .a7N { font: 800 26px Inter, sans-serif; fill: #991B1B; }
+          .a7M { font: 800 26px Inter, sans-serif; fill: #1E2025; }
+          .a7L { font: 600 11px Inter, sans-serif; fill: #6B6F78; }
+        </style>
+
+        <text class="a7H" x="24" y="30">Rung 2 of the ladder: one class probed of eight. Two ways to score the same evidence.</text>
+
+        <rect x="24" y="44" width="404" height="28" rx="8" fill="#991B1B"/>
+        <text class="a7T" x="42" y="63">Meter that treats untested as fine</text>
+        <rect x="24" y="72" width="404" height="176" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="a7X" x="44" y="96">Count only the one class you probed. The seven you</text>
+        <text class="a7X" x="44" y="114">never looked at contribute nothing to the total.</text>
+        <text class="a7N" x="44" y="152">13.2</text>
+        <text class="a7L" x="112" y="152">residual risk index</text>
+        <text class="a7X" x="44" y="182">Reads like a hardened system. Nothing about Beacon</text>
+        <text class="a7X" x="44" y="200">changed, only the accounting did. This is roughly</text>
+        <text class="a7X" x="44" y="218">the shape most coverage dashboards ship with.</text>
+
+        <rect x="452" y="44" width="404" height="28" rx="8" fill="#2E3138"/>
+        <text class="a7T" x="470" y="63">Meter that counts untested at full risk</text>
+        <rect x="452" y="72" width="404" height="176" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="a7X" x="472" y="96">Every class you did not probe is carried at its</text>
+        <text class="a7X" x="472" y="114">full inherent risk, because you have no evidence.</text>
+        <text class="a7M" x="472" y="152">99.3</text>
+        <text class="a7L" x="540" y="152">residual risk index</text>
+        <text class="a7X" x="472" y="182">The number the board actually prints, and the one</text>
+        <text class="a7X" x="472" y="200">Beacon should be shown. Unknown is not a synonym</text>
+        <text class="a7X" x="472" y="218">for safe, and it never rounds down to it.</text>
+
+        <rect x="24" y="268" width="832" height="102" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="a7H" x="44" y="292">The accounting rule, and it outranks every number on this page</text>
+        <text class="a7X" x="44" y="316">An untested class counts at FULL inherent risk. Absence of evidence is not evidence of absence, and a</text>
+        <text class="a7X" x="44" y="334">coverage meter that treats "we did not look" as "we are fine" is worse than no meter at all, because it</text>
+        <text class="a7X" x="44" y="352">converts an unexamined assumption into a green tile that somebody will quote in a board pack.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the same system and the same evidence, scored two ways</figcaption>
+    </figure>
+
+    <p>The left-hand number is not a strawman. It is what you get from any suite that reports on its own contents, which is nearly all of them: pass rates over the cases you wrote, severity counts over the findings you produced, a green tick per class you happened to cover. Every one of those is a statement about your paperwork. None of them is a statement about the system, and the gap between the two only shows up when somebody asks what is missing.</p>
+
+    <div class="callout tip">
+      <strong>Why the harsher meter is the useful one</strong>
+      A number that gets worse when you look away is a number people act on. A number that stays green when you look away is a number people manage. The board is deliberately rude about gaps, because the only lever a red team has over scope is making the gap visible in the same units as everything else on the page.
+    </div>
+  </section>
+
+  <!-- ============ DEMO 1 ============ -->
+  <section class="section" id="demo-1">
+    <div class="section-kicker">
+      <span class="klabel">Demo 1 of 2</span>
+      <h2>The scripted engagement, one rung at a time <span class="tag demo">★ 14 min · watch and argue</span></h2>
+    </div>
+    <p class="lede">Six rungs, in the order a real engagement actually walks them. Click through them in sequence and read the meters rather than the table. The whole session is contained in the move from rung 2 to rung 3, and it is not the move anyone expects.</p>
+
+    <div class="slbox" data-mode="ladder"></div>
+
+    <div class="steps">
+      <div class="step"><p><strong>Rung 1 · Before the engagement.</strong> The bot is live. Security asked whether it had been tested and got back "we put an instruction in the system prompt telling it to ignore injected commands". Coverage <strong>0%</strong>, residual risk <strong>100.0</strong>, risk-you-have-no-evidence-about <strong>100%</strong>, all four gates red. Notice what the board refuses to say. It does not say the bot is dangerous. It says the bot is unknown, and those are different words that live in different sentences.</p></div>
+      <div class="step"><p><strong>Rung 2 · Probe the obvious one.</strong> The team writes cases for direct prompt injection first, because it is the class everyone has heard of and the easiest to build cases for. Coverage moves to <strong>13%</strong>, one class of eight. Residual risk moves from 100.0 to <strong>99.3</strong> and unknown risk drops to <strong>86.1%</strong>. It barely moves, and the reason is arithmetic rather than opinion: the prompt-level control they are relying on removes 5% of that one class and nothing at all of the other seven.</p></div>
+      <div class="step"><p><strong>Rung 3 · Probe the whole surface. This is the session.</strong> Every class now has at least one test. Coverage <strong>100%</strong>, unknown risk <strong>0%</strong>, and the total goes from 99.3 to <strong>96.4</strong>. Look at those two facts together. <strong>The quantity of risk barely changed. All of it changed from guessed to measured.</strong> A fortnight of skilled work produced no improvement whatsoever in the system's actual exposure, and produced an honest number where an assumption used to be. That is the moment a red team earns its budget, and it is also the moment it becomes unpopular, because the deliverable is a worse-looking board and a clearer one.</p></div>
+      <div class="step"><p><strong>Rung 4 · Add detection.</strong> An input classifier and an output filter go in. Residual falls to <strong>54.9</strong> - real progress, and concentrated exactly where inspecting text is a sensible control. Refusal bypass and disclosure both fall hard. Tool abuse barely moves, because no filter can tell a legitimate refund from an induced one.</p></div>
+      <div class="step"><p><strong>Rung 5 · Bound the capability.</strong> Least-privilege scoping plus human approval on the refund path takes the total to <strong>21.8</strong>, the largest single move on the board. Say the thing that follows out loud, because it is counter-intuitive and it is the course's whole position: <strong>this does not make the bot better at resisting anything.</strong> It makes the consequence of losing bounded. You stop trying to win the argument with the attacker and start limiting what winning gets them.</p></div>
+      <div class="step"><p><strong>Rung 6 · Close the rest.</strong> Sandboxed execution for anything rendered or executed, and per-principal spend caps. Residual <strong>14.0</strong>, under the bar of 20, all four gates green on a fully probed surface. This is a defensible position to write down, and it is still not a claim that the system is safe.</p></div>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>The argument to have in the room at rung 3<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Someone will say the fortnight was wasted, and they will have a point that deserves an answer rather than a sigh. Here is the answer. Before rung 3, every statement about seven of the eight classes was an assumption held by whoever last touched the system. After rung 3, every one of those statements is a measurement with a date, a build, an endpoint and a trial count attached. Nothing got safer. Everything got knowable, and you cannot prioritise, cost, or defer a risk you have not sized.</p>
+        <p>There is a second, sharper point. Rungs 4, 5 and 6 are only possible because rung 3 happened. Without the full probe you would have spent the hardening budget on the class you had tested - direct injection - which the board shows is not where the risk lives for this bot. <strong>Coverage is not a deliverable. It is the input to the only decision that matters, which is where to spend the next month.</strong></p>
+        <p>Keep the sequencing honest when you report it, too. Rung 3 is a coverage result and rungs 4 to 6 are mitigation results, and mixing them into one headline number is how a report ends up claiming the red team reduced risk by 86 points. It did not. It found out what the number was, and other people then changed it.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="antilever">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · the anti-lever</span>
+      <h2>The control everyone reaches for first, measured <span class="tag concept">6 min live</span></h2>
+    </div>
+    <p class="lede">Every board in this course has one lever that feels like it should be decisive and is not. Here it is the system-prompt instruction telling the model to ignore injected commands. It is the first control almost every team deploys, it is often the only one, and the arithmetic on this board is unkind to it in three separate ways.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 328" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="On a bare fully probed system the system-prompt guard removes 3.6 residual risk points while least-privilege plus human approval alone removes 55. Deleting the prompt guard from the fully hardened configuration costs 0.63 points. It scores a flat zero against four attack classes.">
+        <style>
+          .b7H { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .b7Hw { font: 700 13px Inter, sans-serif; fill: #991B1B; }
+          .b7X { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .b7W { font: 400 11px Inter, sans-serif; fill: #991B1B; }
+          .b7V { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .b7Vw { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+        </style>
+
+        <text class="b7H" x="24" y="30">Two controls, the same bare fully probed system, measured on this board</text>
+        <text class="b7X" x="24" y="50">Points of residual risk index removed. The board's bar is 20. Lower is better.</text>
+
+        <text class="b7X" x="24" y="84">System-prompt guard, on a bare system</text>
+        <rect x="352" y="72" width="30" height="18" rx="4" fill="#5A6070"/>
+        <text class="b7V" x="392" y="86">3.6 points (100.0 to 96.4)</text>
+
+        <text class="b7X" x="24" y="120">Least-privilege plus human approval</text>
+        <rect x="352" y="108" width="455" height="18" rx="4" fill="#C2410C"/>
+        <text class="b7Vw" x="364" y="122">55.0 points (100.0 to 45.0)</text>
+
+        <text class="b7X" x="24" y="156">Cost of deleting the guard once hardened</text>
+        <rect x="352" y="144" width="6" height="18" rx="2" fill="#991B1B"/>
+        <text class="b7V" x="368" y="158">0.63 points (14.0 to 14.6)</text>
+
+        <rect x="24" y="182" width="832" height="130" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="b7Hw" x="44" y="208">Where the same control scores a flat zero in the effectiveness matrix</text>
+        <text class="b7W" x="44" y="232">Indirect prompt injection · Context and memory poisoning · Improper output handling · Unbounded consumption</text>
+        <text class="b7X" x="44" y="258">Not a small number rounded down. A flat zero, encoding the published position: OWASP LLM01:2026 states</text>
+        <text class="b7X" x="44" y="276">that no reliable prevention mechanism exists today, and NCSC that under the hood of an LLM there is no</text>
+        <text class="b7X" x="44" y="294">distinction between data and instructions, only ever "next token".</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the control teams rely on, next to the controls that carry the load</figcaption>
+    </figure>
+
+    <p>Read the three measurements as three separate arguments, because they defeat three separate defences of the control. <strong>3.6 points</strong> answers "it must be doing something": on a bare, fully probed system it moves the total from 100.0 to 96.4, which is something, in the way that a doormat is something. <strong>55 points</strong> answers "well, what else is there": least-privilege scoping plus human approval, with no filters and no prompt instruction at all, takes the same system from 100.0 to 45.0. And <strong>0.63 points</strong> answers the last defence, the one that sounds most reasonable - "fine, but it is free, so leave it in". On the fully hardened configuration, deleting the instruction entirely costs you 0.63 points. It was never carrying the load, and on day one it was the only control the team had.</p>
+
+    <div class="callout example">
+      <span class="ex-pill">Why the matrix says zero and not "small"</span>
+      <p>A zero in a teaching model is a strong claim and it is made deliberately. The instruction asks the model to police text that arrives looking exactly like the text it is meant to obey. Against a user typing at it, that is a slightly awkward request and the model sometimes complies, which is where the 5% against direct injection comes from. Against instructions sitting inside a ticket, a spreadsheet cell or a retrieved document, there is nothing to police <em>with</em>: the injected sentence and the operating instruction reach the model through the same channel, in the same representation, with no provenance attached to either.</p>
+      <p>That is why the zeroes cluster where they do. OWASP's LLM01:2026 entry states plainly that <strong>no reliable prevention mechanism exists today</strong>, and that there is no clean equivalent to parameterized queries. NCSC put the mechanism in one sentence: <strong>"Under the hood of an LLM, there's no distinction made between 'data' or 'instructions'; there is only ever 'next token'."</strong> A control that depends on a distinction the architecture does not make is not a weak control. It is a control with nothing underneath it.</p>
+    </div>
+
+    <div class="callout warn">
+      <strong>What this does not license you to do</strong>
+      Delete the instruction and you lose the 5% against direct injection and the small effect on refusal bypass, for free, so keep it. The failure is not having it. The failure is <strong>counting it</strong> - putting it in a control inventory, ticking a compliance box with it, or letting it be the reason a system shipped. Write it down as hygiene, never as mitigation, and never let it appear in the row of a risk register that says how a risk is being managed.
+    </div>
+  </section>
+
+  <!-- ============ DEMO 2 ============ -->
+  <section class="section" id="demo-2">
+    <div class="section-kicker">
+      <span class="klabel">Demo 2 of 2</span>
+      <h2>Drive it yourself: find the minimum control set <span class="tag demo">★ 12 min · everyone builds</span></h2>
+    </div>
+    <p class="lede">Same board, nothing locked. Every checkbox is yours. The goal is not to switch everything on - that is not a finding, it is a shopping list. The goal is to find the smallest set of controls that reaches all four green gates, and to notice which ones you could not remove.</p>
+
+    <div class="slbox" data-bot="chatbot"></div>
+
+    <div class="steps">
+      <div class="step"><p><strong>Get to all green, then start deleting.</strong> Tick every class under "what your suite probes", then add defences until all four gates go green. Now remove them one at a time and put back only what the gates demand. Write down the set you land on. Most tables land on the same three or four, and it is worth saying out loud that none of them are prompt-level.</p></div>
+      <div class="step"><p><strong>Test the coverage gate against your instincts.</strong> Leave every defence on and untick a single class - indirect injection is the instructive one. Watch what happens to residual risk and to the unknown meter. A system with seven classes hardened and one class unexamined does not score as 87% of a good system. It scores as a system with a hole of a known size and unknown depth.</p></div>
+      <div class="step"><p><strong>Run the anti-lever yourself.</strong> Reach the hardened configuration, then untick the system-prompt instruction. The total moves by 0.63. Then reset to a bare board with nothing but least-privilege and human approval and read 45.0. If your organisation's control inventory lists the first and not the second, you have found this week's most valuable slide.</p></div>
+      <div class="step"><p><strong>Now switch bots, and expect the shape to change.</strong> Open the board for <code>data-bot="sql"</code>, the Analyst Bot writing and running queries over the warehouse. Improper output handling dominates, because its output is executable by design, and disclosure sits right behind it because the warehouse holds every tenant's data. The control set that got the support bot to green will not get this one there.</p></div>
+      <div class="step"><p><strong>Then <code>data-bot="analytics"</code>, the Insight Bot.</strong> Indirect injection and context poisoning dominate, because it reads data it did not author and caches what it computes. A spreadsheet cell is a place a stranger can put a sentence, and a cache is a place that sentence can live until it shapes tomorrow's answer for somebody who never saw the attack. Compare the three boards side by side and write one line on each: which class dominates, and which control bounds it.</p></div>
+      <div class="step"><p><strong>Turn the comparison into the suite manifest.</strong> Three bots, eight classes, one N. The manifest below is the artefact this session produces, and its most important field is <code>status</code>, because that is the only place <em>untested</em> gets recorded as a fact rather than as an absence.</p></div>
+    </div>
+
+    <div class="prompt-box"><span class="label">Suite manifest · beacon-suite.yaml</span>engagement: beacon-2026-q3
+authorization: RoE-2026-0412 · owner S. Okonjo · window 2026-04-14 to 2026-04-25
+targets:
+  - id: support-bot
+    endpoint: staging-ui          # production UI for read paths, staging for write paths
+    blast_radius: reads yes · sandbox writes only · no sends · no payments · no deletes
+trials_per_case: 25               # N fixed before the first run, per b1
+classes:                          # every class is listed, covered or not
+  direct:     { owasp: LLM01:2026, cases: 12, status: probed }
+  indirect:   { owasp: LLM01:2026, cases: 18, status: probed }
+  jailbreak:  { owasp: LLM01:2026, cases: 10, status: probed }
+  disclosure: { owasp: LLM02:2026, cases: 14, status: probed }
+  agency:     { owasp: LLM03:2026, cases: 16, status: probed }
+  output:     { owasp: LLM10:2026, cases: 9,  status: probed }
+  poison:     { owasp: LLM05:2026, cases: 7,  status: probed }
+  wallet:     { owasp: LLM06:2026, cases: 0,  status: UNTESTED }   # carried at full inherent risk
+reporting:
+  untested_policy: full_inherent_risk    # the one line that makes the number honest
+  claim_ceiling: "measured rates, this build, these endpoints, this date"</div>
+
+    <div class="callout tip">
+      <strong>Check your OWASP identifiers against the 2026 list</strong>
+      Four of them moved. Excessive Agency is now <strong>LLM03:2026</strong>, up from LLM06. Unbounded Consumption is <strong>LLM06:2026</strong>, up from LLM10. Improper Output Handling fell furthest, from LLM05 to <strong>LLM10:2026</strong>. If a manifest you inherit shows Improper Output Handling at LLM05, it was written against the 2025 list and everything downstream of it in your reporting is mislabelled.
+    </div>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="proxies">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · what coverage can mean</span>
+      <h2>Every coverage proxy, and what it honestly measures <span class="tag concept">5 min live</span></h2>
+    </div>
+    <p class="lede">Start with the fact that governs this whole section, because somebody will ask for the standard and there is not one. <strong>There is no official coverage metric for adversarial testing of AI systems.</strong> No standards body publishes one. What follows are five proxies people use, ranked by how much of a real thing each one measures, which for most of them is not much.</p>
+
+    <table class="clean">
+      <tr><th>Proxy</th><th>What it counts</th><th>The honest limit</th></tr>
+      <tr><td><strong>Taxonomy coverage</strong></td><td>One or more test cases against each named class in OWASP, ATLAS or NIST</td><td>Trivially gamed. The presence of a test says nothing about its strength, so a single weak case per class scores identically to a serious campaign. This is the proxy the board on this page uses, which is exactly why the board makes you read the residual number next to it.</td></tr>
+      <tr><td><strong>Surface coverage</strong></td><td>Which endpoints, tools, connectors, renderers and data sources were actually exercised</td><td>Needs a complete inventory to mean anything, and agents change theirs at runtime. A number computed against last month's tool list is a number about last month.</td></tr>
+      <tr><td><strong>Maturity-weighted coverage</strong></td><td>Taxonomy coverage weighted by the ATLAS <code>maturity</code> field: Realized before Demonstrated before Feasible</td><td>Better prioritisation than raw counting, and the weights are judgement. Useful for deciding what to test first, dishonest if presented as a measurement.</td></tr>
+      <tr><td><strong>Regression coverage</strong></td><td>The share of previously confirmed findings re-run against the current build</td><td><strong>The only proxy on this list that measures something real.</strong> Each item is a known-true fact about your system, and the metric is whether you checked it again. It says nothing about what you have not found, and it never claimed to.</td></tr>
+      <tr><td><strong>ASR under a fixed budget</strong></td><td>Attack success rate at a pinned attempt budget, prompt set and judge</td><td>Comparable only to itself, as a trend within one system over time. Change the judge, the token budget or N and the number moves without the system moving. Never a cross-vendor comparison.</td></tr>
+    </table>
+
+    <div class="callout warn">
+      <strong>The claim to refuse, however it is phrased</strong>
+      "We have 100% coverage" is a statement about a list you wrote. It is compatible with a suite of eight weak cases, and it is compatible with a system that fails every one of them. Say instead: <strong>every class in scope has at least one case at N trials, here are the measured rates, and here is what remains unexamined</strong>. It is longer, it survives contact with an auditor, and it is the only version that is true.
+    </div>
+  </section>
+
+  <!-- ============ PART 4 ============ -->
+  <section class="section" id="tooling">
+    <div class="section-kicker">
+      <span class="klabel">Part 4 · what to actually run</span>
+      <h2>Three tools, in this order, doing three different jobs <span class="tag concept">5 min live</span></h2>
+    </div>
+    <p class="lede">These are not competitors and choosing between them is the wrong question. They occupy different points in the engagement, and NIST's adversarial ML taxonomy names two of them specifically in §3.6.</p>
+
+    <table class="clean">
+      <tr><th>Layer</th><th>Tool</th><th>What it is for, and what it is not</th></tr>
+      <tr><td><strong>1 · Broad baseline</strong></td><td><strong>garak</strong> (NVIDIA, Apache 2.0)</td><td>A scanner you point and run. Probe to detector, cheap, wide, good at catching the obvious regressions overnight. It is not application-specific and it does not know your policy. Named by NIST §3.6.</td></tr>
+      <tr><td><strong>2 · The CI gate</strong></td><td><strong>promptfoo redteam</strong></td><td>A test-suite generator and grader, plugin for what and strategy for how, with retry to re-run past failures. This is the layer you wire to <em>your</em> policy so a pull request can fail on it. Not named by NIST.</td></tr>
+      <tr><td><strong>3 · The campaign</strong></td><td><strong>PyRIT</strong> (Microsoft AI Red Team, MIT-licensed)</td><td>An orchestration framework you compose: objective plus attack strategy, multi-turn, adaptive, application-specific. This is where the human engagement lives. Named by NIST §3.6.</td></tr>
+    </table>
+
+    <p><strong>The layering matters more than any individual choice.</strong> garak gives you the cheap broad baseline so nobody spends a skilled week rediscovering a known probe. promptfoo becomes the gate, wired to Beacon's own policy, so a regression cannot merge. PyRIT runs the adaptive, application-specific campaign - and its findings become the regression cases the gate then enforces forever. That last sentence is the whole architecture: the human campaign is what fills the automated suite.</p>
+
+    <div class="callout tip">
+      <strong>Why PyRIT is a regression tool and not just a probe tool</strong>
+      Its <strong>memory layer</strong>. Prior successful attacks persist in a database rather than in a report artefact, which means they become a retained corpus you re-run after every model version, system-prompt edit, new tool or new connector. That is the difference between finding something once and knowing whether it is still true, and it is why PyRIT sits at the end of the chain rather than the start.
+    </div>
+
+    <div class="callout warn">
+      <strong>Two traps, one of them expensive</strong>
+      <strong>The repo moved.</strong> <code>github.com/Azure/PyRIT</code> is <strong>archived read-only as of 2026-03-27</strong>. Use <code>github.com/microsoft/PyRIT</code>. Anything pinned to the old path is pinned to a snapshot that will never move again. <strong>And PyRIT is a library, not a pipeline.</strong> The CI wiring is yours to build. Claims about built-in pre-commit security gates circulate widely and are vendor-blog level, not documentation; if a plan of yours depends on one existing, check it before the plan does.
+    </div>
+
+    <div class="prompt-box"><span class="label">CI layering · check each tool's own docs for current flags</span># nightly · cheap broad baseline, catches the obvious regressions
+garak --model_type &lt;provider&gt; --model_name beacon-support-staging --probes &lt;set&gt;
+
+# every pull request · the gate, wired to Beacon's own policy
+promptfoo redteam run --config beacon-redteam.yaml --output findings.json
+#   fail the build on any severity at or above high, or on a regression case flipping
+
+# per engagement round · adaptive, application-specific, results retained
+python -m beacon.campaign        # your PyRIT orchestrator + its memory DB
+
+# and the step nobody automates, which is the point of the whole chain:
+#   every confirmed finding from the campaign is written back as a promptfoo
+#   regression case, so the gate above grows every time a human finds something.
+#
+# NOTE: PyRIT is a library. The wiring above is yours to build. There is no
+# built-in pre-commit gate, whatever a vendor blog says.</div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Try it yourself - this week <span class="tag exercise">◐ 60-75 min total</span></h2>
+    </div>
+    <ul>
+      <li>Write the suite manifest for a system you own. List all eight classes even where you have nothing, and mark the empty ones <code>UNTESTED</code> in capitals. The uncomfortable part is the list of capitals, and that list is the deliverable.</li>
+      <li>Find your organisation's control inventory or risk register and look for a row where a prompt-level instruction is named as a mitigation. Bring the 3.6-versus-55 comparison to whoever owns that row. Do not argue for deleting the instruction; argue for moving it out of the mitigation column.</li>
+      <li>Compute your regression coverage: how many previously confirmed findings were re-run against the current build? For most teams the honest answer is zero, because nobody kept them. Fix that before you buy another tool.</li>
+      <li>Run garak once against a staging endpoint you are authorized to test. It will take an evening and it will tell you whether your baseline is a baseline or a hope.</li>
+      <li>Pick the class you have never tested and write one sentence explaining why. If the sentence is "it seemed unlikely", you have just written the board's definition of unknown risk in your own handwriting.</li>
+    </ul>
+  </section>
+
+  <!-- ============ SOURCES ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Source material</span>
+      <h2>Official sources covered</h2>
+    </div>
+    <p class="lede">Every framework, figure and quotation on this page traces to a primary source catalogued in this course's source map, verified 2026-08-14. This page covers:</p>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP LLM01:2026 - "no reliable prevention mechanism exists today", no clean equivalent to parameterized queries</span><span class="note">Part 2 · the reason the matrix says zero · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">UK NCSC - "there is only ever 'next token'", and prompt injection is not SQL injection</span><span class="note">Part 2 · 8 Dec 2025 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP Top 10 for LLM Applications, 2026 edition - the four IDs that moved</span><span class="note">Demo 2 · manifest labelling · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NIST AI 100-2e2025 §3.6 - names garak and PyRIT specifically</span><span class="note">Part 4 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">PyRIT: MIT-licensed, from the Microsoft AI Red Team; memory layer is what makes it a regression tool</span><span class="note">Part 4 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Repo relocation: github.com/Azure/PyRIT archived read-only 2026-03-27, use github.com/microsoft/PyRIT</span><span class="note">Part 4 · [P] · verify before you pin</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MITRE ATLAS <code>maturity</code> field as a test-prioritisation axis</span><span class="note">Part 3 · cite the dataset version, not the rendered site · [P]</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The board's inherent-risk figures and defence-effectiveness matrix</span><span class="note">Teaching model. Encodes the direction the literature reports, <strong>not measurements</strong>. The arithmetic - coverage, residual risk, untested-class accounting - is real and computed live</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Coverage proxies and their limits</span><span class="note">Part 3 · <strong>there is no official coverage metric for adversarial testing of AI systems</strong>; the five proxies are practice, not standard</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The suite manifest and CI snippet</span><span class="note">Demo 2 + Part 4 · assembled structure; tool flags change, check each tool's own docs</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Claims about built-in pre-commit gates in PyRIT</span><span class="note">Part 4 · <strong>vendor-blog level, not documentation</strong>. PyRIT is a library; CI wiring is yours</span></div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions before you go 🎯 <span class="tag exercise">◐ 90 seconds</span></h2>
+    </div>
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">1 · At rung 3 the residual risk index moves from 99.3 to 96.4 after a fortnight of testing. What did the engagement deliver?</p>
+      <button class="qopt" type="button">A · Very little. A 2.9-point move does not justify a fortnight, and the team should have hardened first and measured later</button>
+      <button class="qopt" type="button">B · The quantity of risk barely changed, but all of it changed from guessed to measured - unknown risk went from 86.1% to zero while the total moved 99.3 to 96.4</button>
+      <button class="qopt" type="button">C · Proof that the system-prompt guard was working, since the total stayed roughly flat</button>
+      <p class="qwhy">This is the whole session in one number pair, and it is why red teams get defunded by people reading only the left-hand column. Before rung 3, seven of eight classes were assumptions held by whoever last touched the system. After it, all eight are measurements with a build, an endpoint and a trial count attached. Option A inverts the causation: rungs 4 to 6 were only spendable <em>because</em> rung 3 showed where the risk actually sat, which was not in the one class the team had already tested.</p>
+    </div>
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">2 · Your control inventory lists "system prompt instructs the model to ignore injected commands" as the mitigation for prompt injection. What does this board say about that?</p>
+      <button class="qopt" type="button">A · It is the right first control, since it is free and applies to every class at once</button>
+      <button class="qopt" type="button">B · It should be deleted, since a control that weak is worse than nothing</button>
+      <button class="qopt" type="button">C · Keep it as hygiene but never count it: it removes 3.6 points on a bare fully probed system where least-privilege plus human approval alone removes 55, deleting it from the hardened config costs 0.63, and it scores a flat zero against indirect injection, context poisoning, improper output handling and unbounded consumption</button>
+      <p class="qwhy">Three measurements defeating three separate defences of the control. Option B overshoots: the instruction does remove about 5% of direct injection and a little refusal bypass, for free, so leaving it in is correct. The failure mode is putting it in the mitigation column of a risk register, where it becomes the reason a system shipped. It scores zero where it does because it asks the model to police text arriving through the same channel, in the same representation, as the text it is meant to obey - and OWASP and NCSC both say plainly that the architecture makes no such distinction.</p>
+    </div>
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">3 · Which coverage proxy measures something real, and what should you say about coverage metrics generally?</p>
+      <button class="qopt" type="button">A · Regression coverage - the share of previously confirmed findings re-run against this build. And say plainly that there is no official coverage metric for adversarial testing of AI systems; the rest are practice, not standard</button>
+      <button class="qopt" type="button">B · Taxonomy coverage, because it maps directly onto OWASP and ATLAS identifiers an auditor recognises</button>
+      <button class="qopt" type="button">C · ASR under a fixed budget, because it is a single number a board can track quarter on quarter</button>
+      <button class="qopt" type="button">D · Surface coverage, because it counts the real endpoints rather than an abstract taxonomy</button>
+      <p class="qwhy">Regression coverage is the only one whose items are known-true facts about your own system, so checking them again measures a real thing. Taxonomy coverage is trivially gamed, since the presence of a test says nothing about its strength. ASR under a fixed budget is comparable only to itself, and moves when you change the judge or the token budget without the system changing at all. Surface coverage needs a complete inventory that agents rewrite at runtime. None of them is a standard, and saying so is part of delivering the number.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Builder session 7 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>Untested = unknown, never safe</b><span>An untested class carries full inherent risk. A meter that treats "we did not look" as "we are fine" is worse than no meter.</span></div>
+      <div class="cheat-item"><b>Rung 3 is the session</b><span>99.3 to 96.4 while unknown goes 86.1% to zero. The quantity barely moved; all of it moved from guessed to measured.</span></div>
+      <div class="cheat-item"><b>The anti-lever, three numbers</b><span>Prompt guard removes 3.6 on a bare system. Least-privilege plus approval removes 55. Deleting the guard when hardened costs 0.63.</span></div>
+      <div class="cheat-item"><b>Four flat zeroes</b><span>Indirect injection, context poisoning, improper output handling, unbounded consumption. Hygiene, never mitigation.</span></div>
+      <div class="cheat-item"><b>Bounding beats resisting</b><span>Rung 5 is the biggest move and makes the bot no better at resisting anything. It bounds the consequence of losing.</span></div>
+      <div class="cheat-item"><b>No official coverage metric exists</b><span>Five proxies, all practice. Regression coverage is the only one that measures something real.</span></div>
+      <div class="cheat-item"><b>garak then promptfoo then PyRIT</b><span>Cheap broad baseline, then the CI gate wired to your policy, then the adaptive campaign whose findings become regression cases.</span></div>
+      <div class="cheat-item"><b>PyRIT: memory, MIT, and the moved repo</b><span>The memory layer makes it a regression tool. Azure/PyRIT archived 2026-03-27; use microsoft/PyRIT. CI wiring is yours to build.</span></div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>Builder session 7 of 10 · learn-ai-red-team-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← Course home</a> &nbsp;·&nbsp; <a href="b8-run-the-engagement.html">Next: Run the engagement →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/surface-live.js?v=1"></script>
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

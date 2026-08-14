@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leader session 1 · What a red team is for - learn ai red team with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-red-team-with-phoebe</a> / Leader session 1 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI Red Team with Phoebe · Leader track · Session 1 of 6</div>
+    <h1>What a red team is for: <span class="accent">it can prove presence, never absence</span></h1>
+    <p class="sub">You will be handed a red-team result at some point, probably in a slide, probably shortly before a launch decision. This session is about what that result licenses you to say. It is built around one published sequence in which the same defence was tested twice, honestly both times, and the two results meant completely different things. By the end you will be able to read a finding, ask the three questions that matter, and refuse the one sentence nobody is entitled to write.</p>
+    <div class="chip-row">
+      <span class="chip level">🟢 Leader track</span>
+      <span class="chip audience">Heads of security · eng leaders · risk and compliance</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-18 · The sequence, and what it actually proved</span>
+      <span class="a3" style="flex:5">18-40 · Decisions: benchmarking, claims, the report</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>What this course is, and the line it does not cross</h2>
+    </div>
+    <div class="callout warn">
+      <strong>⚠ Authorization</strong>
+      This course is about testing AI systems <strong>you own, or are contracted in writing to test</strong>. Every exercise runs against Beacon, a fictional company, inside a scope document written in the builder track. The course names attack <em>classes</em> so your teams can build test cases, and pairs each class with the defence that addresses it. It contains no exploit payloads and teaches no attack craft. Testing a system you are not authorized to test is a crime in most jurisdictions, and no framing in a governance deck changes that.
+    </div>
+    <p class="lede">MITRE ATLAS defines the practice precisely, in mitigation <strong>AML.M0035</strong>: an AI red team runs <strong>recurring, authorized, threat-informed</strong> exercises, before deployment and throughout operation. Three adjectives, and every one of them is doing work. Recurring, because a point-in-time result decays. Authorized, because that is what separates this from the thing it resembles. Threat-informed, because otherwise you are just poking at a chatbot. Notice what the definition does not contain: any promise about what the exercise will establish.</p>
+    <div class="legend">
+      <span class="pill solid">Live - presented in session</span>
+      <span class="pill light">Self-study - read after class</span>
+      <span class="pill inkpill">Official sources covered</span>
+    </div>
+    <div class="callout win">
+      <strong>★ What you walk out with today</strong>
+      One asymmetry you will never unsee: existence is provable and absence is not. The vocabulary to tell red teaming, safety benchmarking and adversarial testing apart, because your suppliers will use the words interchangeably and they are not interchangeable. And a four-line list of what a red-team report may claim, which you can hold any report against, including one written by your own people.
+    </div>
+    <div class="callout tip">
+      <strong>Where this sits among its siblings</strong>
+      <a href="https://phoebefu6.github.io/learn-agent-launch-with-phoebe/">Agent Launch</a> owns the go or no-go decision and requires an adversarial slice as evidence. This course is where that slice comes from, and where you learn what it is worth. <a href="https://phoebefu6.github.io/learn-ai-observability-with-phoebe/">AI Observability</a> owns the telemetry your findings surface in. The builder track that runs alongside this one does the hands-on work; this track is for the people who sign things.
+    </div>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="sequence">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · the centrepiece</span>
+      <h2>The same defence, tested twice, honestly both times <span class="tag concept">7 min live</span></h2>
+    </div>
+    <p class="lede">Anthropic published a defence called Constitutional Classifiers, and published two adversarial exercises against it. Read the two results next to each other before reading anything else in this course. Everything a leader needs to know about this discipline is contained in the gap between them.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 344" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A prototype bug bounty with 183 participants over more than 3,000 hours found no universal jailbreak. A later public demo with 339 jailbreakers over roughly 3,700 hours found one. The first result was not wrong; it bounded the search, not the system.">
+        <style>
+          .ccH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .ccL { font: 600 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .ccX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .ccR { font: 700 14px Inter, sans-serif; fill: #FFFFFF; }
+          .ccK { font: 600 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="ccH" x="24" y="30">Same classifier, same claim. Only the size of the search changed.</text>
+
+        <rect x="24" y="44" width="404" height="30" rx="8" fill="#5A6070"/>
+        <text class="ccL" x="42" y="64">Exercise one · prototype bug bounty</text>
+        <rect x="24" y="82" width="404" height="124" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="ccH" x="44" y="106">183 participants</text>
+        <text class="ccX" x="44" y="126">More than 3,000 hours of effort, across two months</text>
+        <rect x="44" y="140" width="364" height="48" rx="8" fill="#2E3138"/>
+        <text class="ccR" x="60" y="170">Found: no universal jailbreak</text>
+
+        <rect x="452" y="44" width="404" height="30" rx="8" fill="#C2410C"/>
+        <text class="ccL" x="470" y="64">Exercise two · public demo, wider net</text>
+        <rect x="452" y="82" width="404" height="124" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="ccH" x="472" y="106">339 jailbreakers</text>
+        <text class="ccX" x="472" y="126">Roughly 3,700 hours, a much larger public search</text>
+        <rect x="472" y="140" width="364" height="48" rx="8" fill="#C2410C"/>
+        <text class="ccR" x="488" y="170">Found: one universal jailbreak</text>
+
+        <rect x="24" y="226" width="832" height="100" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <rect x="44" y="244" width="14" height="14" rx="3" fill="#C2410C"/>
+        <text class="ccK" x="68" y="256">Nothing about the first result was wrong.</text>
+        <text class="ccX" x="44" y="282">It simply did not mean what "we red-teamed it and found nothing" is usually taken to mean. A null</text>
+        <text class="ccX" x="44" y="300">result bounds the effort that was spent looking. It is a fact about your search, not a property of</text>
+        <text class="ccX" x="44" y="318">the system. Existence can be proved. Absence cannot.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - two honest exercises, and the very different sentences they support</figcaption>
+    </figure>
+
+    <p>Sit with how ordinary the first result looks. A hundred and eighty-three people, three thousand hours, two months, nothing found. In most organisations that arrives as a green square. It should not, and the reason is not that the testers were lazy or the process was flawed. They were not, and it was not. The reason is structural: the space of things you can say to a language model in natural language is effectively unbounded, so no quantity of searching it can ever return the answer "there is nothing here". It can only ever return "we did not find anything, at this budget, with these people, in this window".</p>
+
+    <div class="callout example">
+      <span class="ex-pill">The same shape, at a different scale</span>
+      <p>NIST's CAISI ran a large-scale red-teaming competition: more than <strong>250,000 attempts</strong> by over <strong>400 participants</strong> against <strong>13 frontier models</strong>. At least one successful attack was found against <strong>every model</strong>. Not most. Every one. Attacks that worked on the more robust models transferred <em>down</em> to weaker ones, and not the other way round.</p>
+      <p>Microsoft states the theoretical corollary directly: <em>"For any output which has a non-zero probability of being generated by an LLM, there exists a sufficiently long prompt that will elicit this response."</em> If your assurance strategy depends on someone eventually finding nothing, it depends on an event that the underlying mathematics does not offer.</p>
+    </div>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>Why this is not an argument against defending anything<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>The wrong lesson to take is fatalism. The Constitutional Classifiers work is a genuinely good result, and Anthropic published the numbers that make it one: jailbreak success dropped from <strong>86% to 4.4%</strong>, with a refusal increase of only <strong>0.38%</strong>, at a <strong>23.7% compute overhead</strong>. That is a defence that moved a rate a long way while barely damaging the product, and it cost real money to run. All three of those figures belong in the conversation together, because a defence that halves attack success while doubling refusals of legitimate work has not improved anything you care about.</p>
+        <p>The right lesson is about the grammar of the claim, not its size. A rate that moves from 86% to 4.4% is a measured improvement against a stated attack set, under a stated budget, at a stated date. It is not a statement that the remaining 4.4% is the floor, and it is not a statement that the next search will find nothing. Anthropic says the general form of this themselves: <strong>"no system is completely immune to all attacks."</strong></p>
+        <p>So the leadership move is not to demand a zero. It is to stop treating zero as the thing that would settle the question, and to start asking what the surrounding system does when the model is fooled. That question has answers. The other one does not.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="not-benchmarking">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · three activities, three claims</span>
+      <h2>Red teaming is not safety benchmarking <span class="tag concept">6 min live</span></h2>
+    </div>
+    <p class="lede">Three different activities get sold to you under overlapping names, and each one licenses a different sentence. Microsoft, drawing on red teaming more than a hundred generative AI products, makes the first distinction one of its eight published lessons. Google makes the second one in its own terminology, and calls conflating them a common error.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 352" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Safety benchmarking measures preexisting notions of harm on curated datasets. Red teaming is end-to-end adversarial simulation that helps define new harm categories. Adversarial testing is the atomic version applied to one behaviour.">
+        <style>
+          .rbH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .rbL { font: 600 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .rbX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+        </style>
+
+        <text class="rbH" x="24" y="30">Three different activities that all get called "red teaming" in a supplier deck.</text>
+
+        <rect x="24" y="44" width="264" height="30" rx="8" fill="#5A6070"/>
+        <text class="rbL" x="40" y="64">Safety benchmarking</text>
+        <rect x="24" y="82" width="264" height="130" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="rbX" x="40" y="106">Measures preexisting notions</text>
+        <text class="rbX" x="40" y="124">of harm on curated datasets.</text>
+        <text class="rbX" x="40" y="142">Runs are comparable to each</text>
+        <text class="rbX" x="40" y="160">other. It cannot surface a</text>
+        <text class="rbX" x="40" y="178">harm category nobody has</text>
+        <text class="rbX" x="40" y="196">named yet.</text>
+
+        <rect x="308" y="44" width="264" height="30" rx="8" fill="#C2410C"/>
+        <text class="rbL" x="324" y="64">Red teaming</text>
+        <rect x="308" y="82" width="264" height="130" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="rbX" x="324" y="106">End-to-end adversarial</text>
+        <text class="rbX" x="324" y="124">simulation: a goal, inside a</text>
+        <text class="rbX" x="324" y="142">scenario, against the whole</text>
+        <text class="rbX" x="324" y="160">system. Explores unfamiliar</text>
+        <text class="rbX" x="324" y="178">situations and helps DEFINE</text>
+        <text class="rbX" x="324" y="196">new harm categories.</text>
+
+        <rect x="592" y="44" width="264" height="30" rx="8" fill="#2E3138"/>
+        <text class="rbL" x="608" y="64">Adversarial testing</text>
+        <rect x="592" y="82" width="264" height="130" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="rbX" x="608" y="106">Google's word for the atomic</text>
+        <text class="rbX" x="608" y="124">version: one narrow probe on</text>
+        <text class="rbX" x="608" y="142">one behaviour. Automatable,</text>
+        <text class="rbX" x="608" y="160">cheap, repeatable, and not</text>
+        <text class="rbX" x="608" y="178">the same claim as a full</text>
+        <text class="rbX" x="608" y="196">engagement.</text>
+
+        <rect x="24" y="232" width="832" height="104" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="rbH" x="44" y="256">Two of Microsoft's eight published lessons, in their own words</text>
+        <text class="rbX" x="44" y="282">"AI red teaming is not safety benchmarking."   and   "The work of securing AI systems will never be</text>
+        <text class="rbX" x="44" y="300">complete." The first tells you what a red-team result is not. The second tells you when to stop</text>
+        <text class="rbX" x="44" y="318">expecting a final one, which is never. All three columns are useful. Only one of them defines.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the three words your suppliers use interchangeably, and what each one buys</figcaption>
+    </figure>
+
+    <p>The practical consequence is a budgeting one. Benchmarks are cheap, repeatable and comparable, which is exactly why they get bought, and they measure a set of harms somebody already wrote down. If your organisation's whole assurance posture is a benchmark suite, then your organisation has no mechanism at all for discovering a harm category it has not already thought of. Red teaming is the mechanism, and its output is partly a new taxonomy rather than a number.</p>
+
+    <table class="clean">
+      <tr><th>Activity</th><th>What a result licenses you to say</th><th>What it cannot tell you</th></tr>
+      <tr><td><strong>Safety benchmarking</strong></td><td>"Against this published set of known harms, this build scored X, comparably with our last build."</td><td>Anything about a harm nobody has curated a dataset for yet</td></tr>
+      <tr><td><strong>Adversarial testing</strong></td><td>"This specific behaviour held or failed under this specific narrow probe, at this rate."</td><td>Whether a goal-directed attacker could chain several harmless steps into a real outcome</td></tr>
+      <tr><td><strong>Red teaming</strong></td><td>"Pursuing this goal in this scenario, we got here, this often, and here is what we now know exists."</td><td>That the surfaces nobody explored are clean, which is the whole subject of this session</td></tr>
+    </table>
+
+    <div class="callout tip">
+      <strong>The question to ask a supplier, once</strong>
+      "When you say you red-teamed it, do you mean you ran a benchmark suite, ran narrow probes, or ran goal-directed end-to-end simulation against the deployed system?" All three are legitimate answers. Only the third supports the sentence most suppliers attach to the word, and the answer is usually the first.
+    </div>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="claims">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · the four claims</span>
+      <h2>What a report may claim, and the one thing it may not <span class="tag concept">5 min live</span></h2>
+    </div>
+    <p class="lede">This is the page to print. Everything else in the leader track is elaboration on it. A red-team report can support exactly four kinds of statement, and if a fifth appears in an executive summary, someone has quietly changed the subject.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 396" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A red-team report may claim four things: which attacks succeeded at which rates against which build, which weaknesses and impacts exist with which blast radii, which mitigations changed which rates, and which surfaces were and were not explored. It may not claim the system is safe, secure or robust.">
+        <style>
+          .clT { font: 600 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .clH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .clX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .clN { font: 800 11px Inter, sans-serif; fill: #C2410C; }
+          .clW { font: 700 13px Inter, sans-serif; fill: #991B1B; }
+        </style>
+
+        <text class="clH" x="24" y="30">A red-team report may make exactly four claims. These are them.</text>
+
+        <rect x="24" y="44" width="832" height="30" rx="8" fill="#2E3138"/>
+        <text class="clT" x="42" y="64">What a report MAY claim</text>
+
+        <rect x="24" y="82" width="832" height="30" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1"/>
+        <text class="clN" x="42" y="101">1</text>
+        <text class="clX" x="58" y="101">These attacks succeeded, at these measured rates, under these conditions, against this build at this date.</text>
+
+        <rect x="24" y="118" width="832" height="30" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1"/>
+        <text class="clN" x="42" y="137">2</text>
+        <text class="clX" x="58" y="137">These specific weaknesses and impacts exist, with these blast radii.</text>
+
+        <rect x="24" y="154" width="832" height="30" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1"/>
+        <text class="clN" x="42" y="173">3</text>
+        <text class="clX" x="58" y="173">These specific mitigations changed those rates by these amounts.</text>
+
+        <rect x="24" y="190" width="832" height="30" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1"/>
+        <text class="clN" x="42" y="209">4</text>
+        <text class="clX" x="58" y="209">These risk surfaces were explored, and these were not.</text>
+
+        <rect x="24" y="240" width="832" height="30" rx="8" fill="#991B1B"/>
+        <text class="clT" x="42" y="260">What it may NOT claim, at any budget</text>
+
+        <rect x="24" y="278" width="832" height="100" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="clW" x="44" y="302">That the system is safe, secure, or robust. No engagement can support that sentence.</text>
+        <text class="clX" x="44" y="328">OpenAI's GPT-5.6 system card puts the general form of it: evaluations represent a lower bound for</text>
+        <text class="clX" x="44" y="346">potential capabilities. Additional prompting or fine-tuning, longer rollouts, novel interactions or</text>
+        <text class="clX" x="44" y="364">different scaffolding could elicit behaviours beyond what was observed.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the four sentences a report earns, and the fifth it never does</figcaption>
+    </figure>
+
+    <p>Claim four is the one that gets deleted. "These risk surfaces were explored, and these were not" is an admission of incompleteness written into the deliverable, and it is unpopular for exactly that reason. It is also the only claim on the list that protects you, because it is the difference between a board being told a system is fine and a board being told which parts of it nobody has looked at. The builder track turns this into an accounting rule: an untested class counts at full inherent risk, and the board hears "unknown", never "safe".</p>
+
+    <div class="callout warn">
+      <strong>If a stakeholder wants the sentence anyway</strong>
+      The correct answer is the UK NCSC's. Reduce the risk and reduce the impact, and if the system's security cannot tolerate the residual risk, <strong>it may not be a good use case for an LLM</strong>. That is a legitimate engagement outcome and it belongs in your vocabulary from session one. A red team that never once returns "do not ship this workflow as an agent" is a red team nobody is listening to.
+    </div>
+  </section>
+
+  <!-- ============ DECISION 1 ============ -->
+  <section class="section" id="decision-1">
+    <div class="section-kicker">
+      <span class="klabel">Decision 1 of 2</span>
+      <h2>Rewrite the sentence you are about to be handed <span class="tag demo">★ 10 min · table discussion</span></h2>
+    </div>
+    <p class="lede">A team brings you this, three days before a launch review: <em>"We ran a red team against the assistant. We found nothing. We are good to go."</em> Nobody in that sentence is lying. Your job is to turn it into something a board can act on. Work through it out loud, in threes.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Ask what was searched, and how hard.</strong> How many people, how many hours, over what window, against which build. The Constitutional Classifiers pair is your reference: 183 people and 3,000 hours produced a null, and 339 people and 3,700 hours did not. A null result with no effort figure attached is not a result, it is a mood.</p></div>
+      <div class="step"><p><strong>Ask which of the three activities happened.</strong> Benchmark suite, narrow adversarial probes, or goal-directed end-to-end simulation. Ask which endpoint was used: the raw model API or the shipped product. A finding against a bare API and a finding against the thing customers touch are different claims, and Microsoft's guidance is explicit that the report must say which.</p></div>
+      <div class="step"><p><strong>Ask what was not explored.</strong> This is claim four, and it is the question that changes the room. Expect discomfort. If the honest answer is "we only tested the chat box and the assistant also reads uploaded files", you have just learned more than the whole report told you.</p></div>
+      <div class="step"><p><strong>Now write the four claims yourself</strong>, in the report's own numbers, and see how much of the slide survives. Whatever cannot be written as one of the four goes in a section called Opinion, which is a fine thing to have as long as it is labelled.</p></div>
+      <div class="step"><p><strong>Decide what the null actually changes about your launch decision.</strong> Usually less than expected, and the useful follow-on question is architectural rather than behavioural: if the model is fooled tomorrow, what can it reach, and what can it do? That question is session two.</p></div>
+    </div>
+
+    <div class="callout tip">
+      <strong>Keep this line in your report template from day one</strong>
+      Microsoft's own guidance: the role of red teaming is to expose and raise understanding of the risk surface, and it is <strong>not a replacement for systematic measurement and rigorous mitigation work</strong>. People must not interpret specific examples as a metric for how pervasive that harm is. Without this line, one vivid example in a slide becomes an organisation's entire mental model of the risk, and one null result becomes its entire mental model of safety.
+    </div>
+  </section>
+
+  <!-- ============ DECISION 2 ============ -->
+  <section class="section" id="decision-2">
+    <div class="section-kicker">
+      <span class="klabel">Decision 2 of 2</span>
+      <h2>Sort four requests into the three activities <span class="tag demo">★ 8 min · in pairs</span></h2>
+    </div>
+    <p class="lede">Four things land in your inbox this quarter. For each one, decide which activity it actually is, what claim its result would support, and what it would cost you to believe more than that. Two minutes each, then compare.</p>
+
+    <table class="clean">
+      <tr><th>The request</th><th>The question to settle first</th></tr>
+      <tr><td><strong>A</strong> · "Our vendor scored 2% on a published jailbreak benchmark, better than the competitor's 6%."</td><td>Is this a comparison at all? Two vendors running different attack budgets, different judges and different prompt sets are not measuring the same quantity. Leader session 3 takes this apart properly.</td></tr>
+      <tr><td><strong>B</strong> · "We want a nightly automated suite that checks the assistant never leaks the system prompt."</td><td>Atomic adversarial testing, and a good thing to own. Ask what happens when it is green for six months: does anyone still run a goal-directed exercise, or has the suite quietly become the whole programme?</td></tr>
+      <tr><td><strong>C</strong> · "Give six engineers two weeks to try to make the support agent do something it should not, end to end."</td><td>Red teaming. Ask for the goal and the scenario in writing before it starts, and for the not-explored list at the end. Also ask who is authorized, in what tenant, with which tools live.</td></tr>
+      <tr><td><strong>D</strong> · "Legal wants a statement that the assistant is secure before we ship to the enterprise segment."</td><td>Not obtainable, from any of the three. What you can give legal is the four claims plus a residual-risk statement, and if that is not enough for the use case, that is itself the finding.</td></tr>
+    </table>
+
+    <div class="callout example">
+      <span class="ex-pill">The disagreement worth having at the table</span>
+      <p>Request B is where rooms split. One camp says an automated nightly suite is the only sustainable form of assurance, because human engagements do not scale and decay the moment the model version changes. The other says a suite is a set of things you already know, run repeatedly, and therefore cannot discover anything new by construction.</p>
+      <p>Both are right, and the resolution is that they are answers to different questions. The suite is regression: it tells you whether something you already fixed has come back. The engagement is discovery: it tells you what you did not know to look for. An organisation with only the first has stopped learning; an organisation with only the second forgets everything between rounds. Fund both, and never let a green suite be reported as the outcome of an engagement.</p>
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Try it yourself - this week <span class="tag exercise">◐ 40-55 min total</span></h2>
+    </div>
+    <ul>
+      <li>Find the most recent assurance claim your organisation has made about an AI system, internally or to a customer. Hold it against the four claims. Note which sentence it is that cannot be written as one of the four, because that sentence is your actual exposure.</li>
+      <li>Ask whichever team owns your largest AI deployment for the not-explored list. If no such list exists, that is the first finding and it costs nothing to fix.</li>
+      <li>Take one supplier assurance document and mark, line by line, whether each claim came from benchmarking, atomic adversarial testing, or a goal-directed engagement. Most documents do not let you tell, which is itself an answer.</li>
+      <li>Write down the sentence your organisation would need to hear before it would decline to ship an AI workflow. If you cannot write it, the NCSC finding "it may not be a good use case for LLMs" has no route into your governance, and no red team will be able to create one for you.</li>
+    </ul>
+  </section>
+
+  <!-- ============ SOURCES ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Source material</span>
+      <h2>Official sources covered</h2>
+    </div>
+    <p class="lede">Every framework, figure and quotation on this page traces to a primary source catalogued in this course's source map, verified 2026-08-14. This page covers:</p>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Anthropic Constitutional Classifiers - 183 participants over 3,000+ hours, no universal jailbreak; 339 jailbreakers over ~3,700 hours, one found</span><span class="note">Part 1 · the centrepiece · [P] vendor publication</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Constitutional Classifiers effectiveness: 86% to 4.4% jailbreak success, +0.38% refusals, 23.7% compute overhead</span><span class="note">Part 1 details card · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MITRE ATLAS AML.M0035 - AI red teaming as recurring, authorized, threat-informed</span><span class="note">Part 0 · the course thesis in the framework's own words · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Microsoft's eight lessons - "AI red teaming is not safety benchmarking" and "the work of securing AI systems will never be complete"</span><span class="note">Part 2 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Google's terminology distinction - red teaming as end-to-end simulation, adversarial testing as "much more atomic"</span><span class="note">Part 2 · [P] · note the report dates to July 2023</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NIST CAISI competition - 250,000+ attempts, 400+ participants, 13 frontier models, at least one success against every model</span><span class="note">Part 1 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OpenAI GPT-5.6 system card - "evaluations represent a lower bound for potential capabilities"</span><span class="note">Part 3 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">UK NCSC - "it may not be a good use case for LLMs" as a legitimate outcome</span><span class="note">Part 3 · [P] · a5 and a6 develop it</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The four-claims list as a single artefact</span><span class="note">Assembled for this course from Microsoft, NCSC, OpenAI and Anthropic statements · no standards body publishes it in this form</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">MITRE ATLAS technique and tactic counts</span><span class="note">Deliberately not quoted here · secondary sources disagree; b2 cites the machine-readable dataset version explicitly</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Comparative claims about automated versus human red teaming</span><span class="note">Not taught · the widely circulated head-to-head figures are not verifiable from a primary source</span></div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions before you go 🎯 <span class="tag exercise">◐ 90 seconds</span></h2>
+    </div>
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">1 · A bug bounty with 183 participants ran more than 3,000 hours against a defence and found no universal jailbreak. A later public exercise with 339 jailbreakers and roughly 3,700 hours found one. What was wrong with the first result?</p>
+      <button class="qopt" type="button">A · The first exercise used unqualified testers, which is why the second one succeeded</button>
+      <button class="qopt" type="button">B · Nothing was wrong with it. A null result bounds the search that was performed, not the system that was searched - it simply did not mean what "we red-teamed it and found nothing" is usually taken to mean</button>
+      <button class="qopt" type="button">C · The defence was changed between the two exercises, so the results are not comparable</button>
+      <p class="qwhy">This is the whole session. The first exercise was honest, well-run and correctly reported, and it still could not support the sentence people attach to it. Existence is provable: one success proves a thing exists. Absence is not, because the space of natural-language inputs is effectively unbounded, so searching it can only ever tell you how hard you looked. Options A and C both try to find a defect in the first exercise, which is the instinct this page exists to remove.</p>
+    </div>
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">2 · A supplier says their model "was red-teamed and scored 2% on a standard harm benchmark". What have they actually told you?</p>
+      <button class="qopt" type="button">A · That the system resists 98% of real-world attacks</button>
+      <button class="qopt" type="button">B · That their red team was more thorough than the competitor scoring 6%</button>
+      <button class="qopt" type="button">C · That a benchmark measured preexisting notions of harm on a curated dataset. Microsoft lists "AI red teaming is not safety benchmarking" as one of its eight lessons precisely because these get reported as the same thing</button>
+      <p class="qwhy">A benchmark can only measure harms somebody already curated a dataset for, which is useful and comparable and entirely silent about harm categories nobody has named. Red teaming is what helps define those categories in the first place, and Google adds a third term: adversarial testing, which is "much more atomic" and narrower again. All three are worth buying. Only one of them discovers anything, and the word on the invoice will not tell you which you got.</p>
+    </div>
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">3 · Which claim gets quietly deleted from executive summaries, and why does its absence matter most?</p>
+      <button class="qopt" type="button">A · "These risk surfaces were explored, and these were not" - it is the only one of the four claims that states incompleteness, and it is the difference between a board hearing that a system is fine and hearing which parts nobody has looked at</button>
+      <button class="qopt" type="button">B · The measured success rates, because they are technical detail</button>
+      <button class="qopt" type="button">C · The list of mitigations applied, because it changes between drafts</button>
+      <p class="qwhy">The fourth claim is unpopular by construction: it is an admission of what was not done, written into a deliverable that people want to read as reassurance. It is also the only claim that protects the person signing. The builder track hardens it into an accounting rule - an untested class counts at full inherent risk, and gets reported as unknown rather than safe - which is what stops a scope gap from silently becoming a green square.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Leader session 1 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>Existence yes, absence no</b><span>One success proves a thing exists. No amount of searching proves nothing is there. That asymmetry is the whole discipline.</span></div>
+      <div class="cheat-item"><b>183 people, 3,000 hours: nothing</b><span>Then 339 people and 3,700 hours found one. Same defence, both exercises honest. A null bounds your search, not the system.</span></div>
+      <div class="cheat-item"><b>AML.M0035</b><span>Recurring, authorized, threat-informed. All three adjectives are load-bearing, and none of them promises a conclusion.</span></div>
+      <div class="cheat-item"><b>Not safety benchmarking</b><span>Benchmarks measure known harms on curated data. Red teaming helps define harm categories nobody has named.</span></div>
+      <div class="cheat-item"><b>Not adversarial testing either</b><span>Google's split: engagement is end-to-end with a goal in a scenario; adversarial testing is "much more atomic".</span></div>
+      <div class="cheat-item"><b>The four claims</b><span>Attacks and rates against this build · weaknesses and blast radii · what mitigations changed · what was and was not explored.</span></div>
+      <div class="cheat-item"><b>The claim nobody earns</b><span>Safe, secure, robust. Evaluations are a lower bound on capability, never an upper bound on risk.</span></div>
+      <div class="cheat-item"><b>"Not a good use case for LLMs"</b><span>A legitimate engagement outcome, not a failure. If your governance has no route for it, no red team can create one.</span></div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>Leader session 1 of 6 · learn-ai-red-team-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← Course home</a> &nbsp;·&nbsp; <a href="a2-the-threat-model.html">Next: The threat model →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

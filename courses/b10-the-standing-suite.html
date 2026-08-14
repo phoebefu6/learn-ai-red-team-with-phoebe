@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Builder session 10 · The standing suite - learn ai red team with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-red-team-with-phoebe</a> / Builder session 10 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI Red Team with Phoebe · Builder track · Session 10 of 10</div>
+    <h1>The standing suite: <span class="accent">green is not safe, and never was</span></h1>
+    <p class="sub">The last session of the builder track, and the one that decides whether any of the previous nine survive contact with next quarter. You will turn the Beacon findings into permanent tests, build the guards that stop those tests from quietly becoming the only attacks anyone runs, replace the re-test cadence nobody can source with a trigger list anyone can act on, and finish by writing down the four things a red-team report may honestly claim - and the one legitimate finding that says do not ship this as an agent at all.</p>
+    <div class="chip-row">
+      <span class="chip level">🔴 Builder track</span>
+      <span class="chip audience">Security engineers · AI engineers · platform leads</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-20 · Findings into tests, overfitting, triggers</span>
+      <span class="a3" style="flex:4">20-38 · Build-along: the standing suite and its guards</span>
+      <span class="a4" style="flex:2">38-45 · The close, and Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>The engagement ends. The programme is the point.</h2>
+    </div>
+    <div class="callout warn">
+      <strong>⚠ Authorization</strong>
+      This session, like every other in the course, concerns <strong>systems you own or are contracted in writing to test</strong>. The standing suite you build here runs continuously against your own build pipeline, inside the scope written in b1, with the blast-radius limits that keep an automated adversarial run from becoming an incident of its own. A suite that runs on a schedule against infrastructure you do not own is not a programme, it is an offence with a cron entry. This page names attack <em>classes</em> and pairs each with a control; it contains no exploit payloads and teaches no attack craft.
+    </div>
+    <p class="lede">Nine sessions produced a scoped engagement, a probed surface, measured findings and a hardening round with a delta you could defend. All of it describes <strong>one build, on one date</strong>. Your base model will change, your system prompt will change, someone will connect a new data source on a Tuesday, and every number you just published will quietly stop being about the system you are running. This session is about what you leave behind so that does not happen silently.</p>
+    <div class="legend">
+      <span class="pill solid">Live - presented in session</span>
+      <span class="pill light">Self-study - read after class</span>
+      <span class="pill inkpill">Official sources covered</span>
+    </div>
+    <div class="callout win">
+      <strong>★ What you walk out with today</strong>
+      A standing suite built from your own findings, five evidence-based rules that stop it from overfitting to attacks you already fixed, a hold-out partition your hardening never sees, a re-test trigger list you can actually defend when someone asks for a cadence, and the closing section of your report template: the four things you may claim, and the one thing you may not.
+    </div>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="permanent">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · findings become tests</span>
+      <h2>A finding that does not become a test was a story <span class="tag concept">5 min live</span></h2>
+    </div>
+    <p class="lede">Four organisations describe the same escalator, from four different starting points, and none of them treats a human round as the deliverable. The human round is the thing that <em>generates</em> the deliverable, which is an automated test that runs forever afterwards.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A human round produces a tailored attack with k of N on a named build; it becomes a pinned regression case with the same input, N, grader and criterion; which becomes hundreds or thousands of generated variations of one human-defined threat model, running continuously. OpenAI, Anthropic, Google DeepMind and Google's red-team report all describe this escalator.">
+        <style>
+          .fsH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .fsB { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .fsX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .fsK { font: 400 11px Inter, sans-serif; fill: #5A6070; }
+        </style>
+
+        <text class="fsH" x="24" y="30">A finding that does not become a test is a story you told once.</text>
+
+        <rect x="24" y="48" width="260" height="110" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="fsB" x="44" y="74">Human round</text>
+        <text class="fsX" x="44" y="98">A tailored attack that worked,</text>
+        <text class="fsX" x="44" y="116">k of N, on a named build.</text>
+        <text class="fsX" x="44" y="134">Expensive, slow, irreplaceable.</text>
+
+        <rect x="310" y="48" width="260" height="110" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="fsB" x="330" y="74">Pinned regression case</text>
+        <text class="fsX" x="330" y="98">Same input, same N, same</text>
+        <text class="fsX" x="330" y="116">grader, same criterion. Runs</text>
+        <text class="fsX" x="330" y="134">on every build from now on.</text>
+
+        <rect x="596" y="48" width="260" height="110" rx="10" fill="#2E3138"/>
+        <text class="fsB" x="616" y="74" fill="#FFFFFF">Generated variations</text>
+        <text class="fsX" x="616" y="98" fill="#BFC4CE">Hundreds or thousands of</text>
+        <text class="fsX" x="616" y="116" fill="#BFC4CE">variants of one human-defined</text>
+        <text class="fsX" x="616" y="134" fill="#BFC4CE">threat model, running always.</text>
+
+        <path d="M284 103 L302 103" stroke="#5A6070" stroke-width="1.5"/>
+        <path d="M302 99 L308 103 L302 107 Z" fill="#5A6070"/>
+        <path d="M570 103 L588 103" stroke="#5A6070" stroke-width="1.5"/>
+        <path d="M588 99 L594 103 L588 107 Z" fill="#5A6070"/>
+
+        <rect x="24" y="176" width="832" height="118" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="fsH" x="44" y="200">Four organisations describe the same escalator</text>
+        <text class="fsK" x="44" y="224">OpenAI: external red teaming produces "input into risk assessment and automated evaluations".</text>
+        <text class="fsK" x="44" y="242">Anthropic: the ladder ends with a model generating hundreds or thousands of variations of one threat model.</text>
+        <text class="fsK" x="44" y="260">Google DeepMind: adaptive attacks run continuously against past, current and future versions of Gemini.</text>
+        <text class="fsK" x="44" y="278">Google's red-team report: newly developed techniques should be reapplied to the subjects of prior tests.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the human round is the generator, not the deliverable</figcaption>
+    </figure>
+
+    <p>Read the last line again, because it is the regression argument stated by a red team about its own work: <strong>newly developed techniques should be reapplied to the subjects of prior tests</strong>. Not only to the current build. To everything you previously declared fine. Every technique you invent this quarter is also a re-examination of every conclusion you reached last quarter, and a programme without that backward sweep accumulates stale all-clears.</p>
+
+    <div class="callout tip">
+      <strong>Why the tool choice matters here and nowhere else</strong>
+      This is the one point in the course where tooling is a real decision rather than taste. <strong>PyRIT</strong> keeps a memory database of prior attacks, which is exactly what turns a probe run into a regression corpus you re-run after every model, prompt or tool change. <strong>garak</strong> is a scanner for the cheap broad baseline. <strong>promptfoo redteam</strong> generates a suite and grades it, and its retry mode re-runs past failures, which makes it the natural CI gate. A sensible layering is garak for the baseline, promptfoo as the gate wired to your policy, PyRIT for the adaptive campaign whose findings become regression cases. One trap worth knowing: <code>github.com/Azure/PyRIT</code> is archived read-only as of 2026-03-27; use <code>github.com/microsoft/PyRIT</code>. And PyRIT is a library, so the CI wiring is yours to build - claims about built-in security gates are vendor-blog level.
+    </div>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="overfit">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · the failure mode of every standing suite</span>
+      <h2>You will overfit to the attacks you already fixed <span class="tag concept">6 min live</span></h2>
+    </div>
+    <p class="lede">A standing suite has one predictable disease, and it is not flakiness. It is that the suite becomes the definition of the threat. Every hardening round tunes the system against exactly those cases, the suite goes green and stays green, and the greenness is real without meaning anything.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A green regression suite proves only that attacks you already fixed are still fixed. Nasr et al. broke 12 published defences at over 90 percent attack success, most originally reporting near-zero. A standing adaptive budget proves something different: NIST measured 11 percent success with the best published baseline and 81 percent when the attack was tailored to the target.">
+        <style>
+          .ovT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .ovH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .ovX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .ovW { font: 400 11px Inter, sans-serif; fill: #991B1B; }
+          .ovK { font: 400 11px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="ovH" x="24" y="30">A suite you hardened against is a suite that will pass.</text>
+
+        <rect x="24" y="46" width="404" height="30" rx="8" fill="#991B1B"/>
+        <text class="ovT" x="42" y="66">What a green regression suite proves</text>
+        <rect x="24" y="84" width="404" height="126" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="ovW" x="44" y="108">That the attacks you already fixed are still fixed.</text>
+        <text class="ovX" x="44" y="132">Nasr et al. broke 12 published defences at over 90%</text>
+        <text class="ovX" x="44" y="150">attack success. Most of them originally reported a</text>
+        <text class="ovX" x="44" y="168">near-zero rate. The rate was real. It was measured</text>
+        <text class="ovX" x="44" y="186">against a static set the defence had already seen.</text>
+
+        <rect x="452" y="46" width="404" height="30" rx="8" fill="#2E3138"/>
+        <text class="ovT" x="470" y="66">What a standing adaptive budget proves</text>
+        <rect x="452" y="84" width="404" height="126" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="ovH" x="472" y="108">That someone who has not seen your suite still could</text>
+        <text class="ovX" x="472" y="132">not get through this week. NIST measured 11% success</text>
+        <text class="ovX" x="472" y="150">with the best published baseline, and 81% when the</text>
+        <text class="ovX" x="472" y="168">attack was tailored to the target. That gap is the</text>
+        <text class="ovX" x="472" y="186">size of the blind spot a regression suite cannot see.</text>
+
+        <rect x="24" y="226" width="832" height="88" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="ovH" x="44" y="250">The rule, and it is the only defensible reading of a green board</text>
+        <text class="ovK" x="44" y="274">Never accept a near-zero rate from a static test set as evidence of safety. Report it as what it is: the suite</text>
+        <text class="ovK" x="44" y="292">you built did not break this build. Keep an adaptive budget outside the regression suite, and hold attacks out.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - two different questions, and only one of them is answered by a green pipeline</figcaption>
+    </figure>
+
+    <p>Six rules follow from that, and every one of them is a change to how the suite is run rather than to what is in it.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Never accept a near-zero ASR from a static test set as evidence of safety.</strong> Twelve recently published defences, most originally reporting near-zero attack success, were broken at over 90% by researchers who were allowed to adapt. Nothing in the original measurements was false. They answered a narrower question than the headline implied. Your own near-zero deserves the same suspicion, and the report sentence is: this suite did not break this build.</p></div>
+      <div class="step"><p><strong>Keep a standing adaptive budget, separate from the regression suite.</strong> Hours per quarter for people who are told to invent attacks against your specific system, not to run your cases. NIST measured 11% success with the best published baseline attack and 81% when the attack was tailored to the same target. That seventy-point gap is the size of the blind spot between running baselines and letting someone think about you specifically. Automation cannot close it, because automation runs what it was given.</p></div>
+      <div class="step"><p><strong>Set N per test and track a rate with a confidence interval, never pass or fail.</strong> The same input does not produce the same output twice, so a boolean field is a lie with a schema. Repeating identical attacks 25 times instead of once moved measured average success from 57% to 80%. A suite of booleans will drift under you invisibly; a suite of rates with intervals shows you the drift while it is still small. The launch-gate mechanics are in <a href="https://phoebefu6.github.io/learn-agent-launch-with-phoebe/">Agent Launch</a>, and this is the input it expects.</p></div>
+      <div class="step"><p><strong>Hold attacks out.</strong> Split your corpus at the moment of discovery: a hardening partition your engineers see, and a hold-out partition they do not. Gate on the hold-out. This is not distrust of your engineers, it is the only structural defence against the thing every honest team does anyway, which is fixing precisely what is in front of them. Rotate a few cases from hold-out into hardening each quarter and replace them from new findings, so the partition does not go stale.</p></div>
+      <div class="step"><p><strong>Fix your grader before you trust your trend line.</strong> Three variables hide inside every attack success rate: the classifier that judges success, the token budget, and N. HarmBench found token budget drastically affects measured ASR and is not standardised across papers. If the grader changed between two runs, the delta is about the grader. Version it, calibrate it against human adjudication periodically, and treat a grader change as a reason to re-baseline rather than a detail in a changelog.</p></div>
+      <div class="step"><p><strong>Regression-test the architecture, not only the prompts.</strong> That the egress allowlist still holds. That tool scope has not widened. That no newly added renderer can fetch remote images. These are ordinary pass-or-fail assertions, unlike everything else on this list, and they are the ones that catch the change that actually matters. <strong>Every durable fix in this course was of that kind</strong> - a cut egress leg or a cut untrusted-content leg - so the tests protecting them should be the ones that block a merge.</p></div>
+    </div>
+
+    <div class="callout warn">
+      <strong>And do not compare your rate to anybody else's</strong>
+      A NeurIPS 2025 analysis of attack-success-rate comparisons found that conclusions about relative system safety <strong>"are often not supported by evidence provided by ASR comparisons"</strong>, resting on apples-to-oranges comparisons or low-validity measurements. The defensible use of ASR is exactly one thing: a pinned-configuration trend within your own system over time, published alongside the full attack-and-defence spec given to testers, the token budget and N and the judge, an over-refusal counter-metric, and a regression-suite pass rate. Never as a cross-vendor number in a slide.
+    </div>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="triggers">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · when to run it again</span>
+      <h2>Triggers, because no cadence exists to cite <span class="tag concept">5 min live</span></h2>
+    </div>
+    <p class="lede">Someone will ask how often you re-test, and will want a number. Say this plainly, because it is true and because the alternative is inventing one: <strong>no standards body publishes a "test every N weeks" figure.</strong> Not NIST, not the NCSC, not OWASP, not MITRE. What is published is continuous automation plus human rounds fired by events.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="No standards body publishes a test-every-N-weeks number. The published shape is continuous automation plus event-triggered human rounds. Triggers: base-model version change, system-prompt change, new tool or MCP server, new connector or data source, new renderer, new user population or language, any permission-scope change.">
+        <style>
+          .trH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .trW { font: 400 11px Inter, sans-serif; fill: #991B1B; }
+          .trT { font: 600 11.5px Inter, sans-serif; fill: #1E2025; }
+          .trO { font: 600 11.5px Inter, sans-serif; fill: #3A1B08; }
+          .trK { font: 600 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="trH" x="24" y="30">No standards body publishes a "test every N weeks" number. Triggers, not a calendar.</text>
+
+        <rect x="24" y="44" width="832" height="44" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="trW" x="44" y="62">What is published: continuous automation, plus human rounds fired by events. A quarterly slot on a calendar is</text>
+        <text class="trW" x="44" y="80">a governance artefact, not a security control. It re-tests whatever the system happens to look like that day.</text>
+
+        <rect x="24" y="104" width="196" height="52" rx="9" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="trT" x="44" y="128">Base-model version</text>
+        <text class="trT" x="44" y="144">change</text>
+
+        <rect x="236" y="104" width="196" height="52" rx="9" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="trT" x="256" y="128">System-prompt change</text>
+
+        <rect x="448" y="104" width="196" height="52" rx="9" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="trT" x="468" y="128">New tool or MCP server</text>
+
+        <rect x="660" y="104" width="196" height="52" rx="9" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="trT" x="680" y="128">New connector or data</text>
+        <text class="trT" x="680" y="144">source</text>
+
+        <rect x="24" y="168" width="196" height="52" rx="9" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="trT" x="44" y="192">New renderer</text>
+
+        <rect x="236" y="168" width="196" height="52" rx="9" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="trT" x="256" y="192">New user population</text>
+        <text class="trT" x="256" y="208">or language</text>
+
+        <rect x="448" y="168" width="196" height="52" rx="9" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="trT" x="468" y="192">Any permission-scope</text>
+        <text class="trT" x="468" y="208">change</text>
+
+        <rect x="660" y="168" width="196" height="52" rx="9" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="trO" x="680" y="192">Any one of these makes</text>
+        <text class="trO" x="680" y="208">your last report old.</text>
+
+        <rect x="24" y="236" width="832" height="48" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <rect x="44" y="252" width="14" height="14" rx="3" fill="#C2410C"/>
+        <text class="trK" x="68" y="264">Trigger-driven human rounds on top of a suite that runs on every build. That is the published shape.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - seven events that make your last report historical</figcaption>
+    </figure>
+
+    <p>The compliance anchor exists, and it is about a standing programme rather than a frequency. The NIST AI RMF Playbook says under <strong>MEASURE 2.6</strong> to "use red-team exercises to actively test the system under adversarial or stress conditions", and under <strong>MEASURE 2.7</strong> to "establish and track AI system security tests and metrics". Tracked metrics over time, not a recurring calendar invitation. If you operate a general-purpose model with systemic risk in the EU, <strong>Article 55</strong> is harder still: it requires conducting <em>and documenting</em> adversarial testing, applicable since 2 August 2025, which is why the report template you are about to finish has legal weight and not merely operational weight.</p>
+  </section>
+
+  <!-- ============ DEMO 1 ============ -->
+  <section class="section" id="demo-1">
+    <div class="section-kicker">
+      <span class="klabel">Demo 1 of 2</span>
+      <h2>Stand the suite up, with its guards <span class="tag demo">★ 10 min · everyone builds</span></h2>
+    </div>
+    <p class="lede">Take the Beacon findings from b8 and the hardened build from b9, and turn them into something that runs without you. The manifest is short because the discipline is in the partitions and the assertions, not in the volume of cases.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Split the corpus at discovery.</strong> Every finding lands in one of two partitions the moment it is recorded: <code>hardening</code>, which engineers may read and fix against, and <code>holdout</code>, which they may not. Gate the build on the hold-out partition. If you record findings into a single pile and split them later, you will split them after everyone has already read everything.</p></div>
+      <div class="step"><p><strong>Pin the three hidden variables per case.</strong> N, the token budget, and the grader version. Put them in the manifest rather than in the runner's flags, so a change shows up in a diff and in code review rather than in a shell history nobody reads.</p></div>
+      <div class="step"><p><strong>Add the benign counter-metric to the same gate.</strong> Otherwise the cheapest way to pass your suite is to make the product refuse more, and someone will eventually find that out. A hundred ordinary requests the system must still handle is enough.</p></div>
+      <div class="step"><p><strong>Write the architecture assertions as ordinary pass-or-fail tests.</strong> These are the only binary checks in the whole suite, and they are the ones that block merges. Egress allowlist, tool scope, approval requirement on the irreversible action, renderer behaviour, spend caps.</p></div>
+      <div class="step"><p><strong>Wire the triggers to the events, not to a date.</strong> A base-model bump, a system-prompt edit, a new MCP server, a new connector, a new renderer, a new user population or language, any permission-scope change. Each one fires the full suite automatically and files a ticket for a human round. The ticket is the part people delete; keep it.</p></div>
+    </div>
+
+    <div class="prompt-box"><span class="label">standing-suite.yaml · the whole thing fits on a screen</span>suite: beacon-standing
+runs_on: [every_build, nightly]
+
+partitions:
+  hardening:  beacon/findings/hardening   # engineers may read and fix against these
+  holdout:    beacon/findings/holdout     # engineers may NOT read; the gate runs here
+  benign:     beacon/benign/v1            # over-refusal counter-metric
+
+pinned:
+  trials_per_case: 25       # N. changing this re-baselines every trend line
+  token_budget: 4096        # drastically affects measured ASR; pin it
+  grader: rubric-v3         # version it. a grader change is a re-baseline
+
+gate:
+  on: holdout
+  report: rate_with_interval   # never pass/fail. a boolean field is a lie with a schema
+  block_merge_if: architecture_assertions_fail
+
+adaptive_budget:
+  hours_per_quarter: 40
+  brief: "invent attacks against THIS system. do not run the suite."
+  findings_go_to: holdout      # new human findings land on the gated side
+
+triggers:                      # events, not a cadence. no standards body publishes one
+  - base_model_version_change
+  - system_prompt_change
+  - new_tool_or_mcp_server
+  - new_connector_or_data_source
+  - new_renderer
+  - new_user_population_or_language
+  - any_permission_scope_change</div>
+
+    <p>And the architectural half, which is the part that survives a model swap because it never mentions the model:</p>
+
+    <div class="prompt-box"><span class="label">test_architecture.py · pass or fail, blocks the merge</span>def test_egress_allowlist_unchanged(config):
+    assert config.egress.allowlist == FROZEN_ALLOWLIST
+
+def test_agent_role_is_read_only_outside_sandbox(iam):
+    assert iam.role("beacon-support-bot").writes == {"sandbox"}
+
+def test_refund_tool_requires_human_approval(tools):
+    assert tools["issue_refund"].approval == "human"
+
+def test_no_renderer_fetches_remote_images(renderers):
+    for r in renderers:
+        assert r.remote_fetch is False   # the CamoLeak fix, kept honest
+
+def test_spend_cap_present_per_principal(limits):
+    assert limits.per_principal.tokens and limits.per_principal.currency</div>
+
+    <div class="callout tip">
+      <strong>Why these five tests are worth more than five hundred prompt cases</strong>
+      Each one encodes a fix that a real vendor shipped after a real incident, and each one fails loudly the moment somebody undoes it. Prompt cases tell you a rate on a build. These tell you whether the thing that actually stopped the attack is still there. When your model version changes next quarter, the prompt cases all need re-baselining and these five do not - which makes them the only part of the suite whose green light means the same thing it meant last quarter.
+    </div>
+  </section>
+
+  <!-- ============ DEMO 2 ============ -->
+  <section class="section" id="demo-2">
+    <div class="section-kicker">
+      <span class="klabel">Demo 2 of 2</span>
+      <h2>Write the closing section of the report <span class="tag demo">★ 8 min · in pairs</span></h2>
+    </div>
+    <p class="lede">You are going to be asked for a sentence you cannot give. Practise the replacement now, out loud, with a colleague playing the executive, because the first time you do it live should not be in front of a board.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>One person asks for the sentence.</strong> "So can we say the system is secure?" Ask it warmly. That is how it actually arrives - not as a trap, but from someone who needs something to tell a customer, a regulator or a board, and who assumes you have been working towards exactly that.</p></div>
+      <div class="step"><p><strong>The other gives the four claims instead.</strong> Not as a refusal. As a better answer, delivered with specifics from the Beacon engagement: the rates and conditions, the weaknesses and blast radii, the mitigations and how much they moved things, and the surfaces explored versus not explored. Four concrete statements beat one vague reassurance, and executives generally prefer them once they hear them.</p></div>
+      <div class="step"><p><strong>Then say the residual sentence.</strong> The after is not zero. Name what is left, name the classes you did not probe, and name what would have to change for the answer to improve. If the room goes quiet, that quiet is the point of the exercise.</p></div>
+      <div class="step"><p><strong>Rehearse the hardest finding of all.</strong> "Given the residual risk, this workflow may not be a good use case for an LLM." Say it once now so you can say it later. It is not a failure of the engagement; it is the engagement working.</p></div>
+    </div>
+
+    <div class="callout example">
+      <span class="ex-pill">The four claims, verbatim from the course map</span>
+      <p><strong>A red-team report may claim exactly these four things.</strong></p>
+      <ul>
+        <li><strong>These specific attacks succeeded, at these measured rates, under these conditions, against this build at this date.</strong> Rates with N. Conditions include the grader and the token budget. The build and date are what make the claim falsifiable later.</li>
+        <li><strong>These specific weaknesses and impacts exist, with these blast radii.</strong> Severity is what a finding chains to, not how clever the input was. For agents, the dominant term is action blast radius.</li>
+        <li><strong>These specific mitigations changed those rates by these amounts.</strong> Before and after on the same cases, at the same N, with the same grader, and the benign counter-metric alongside.</li>
+        <li><strong>These risk surfaces were explored and these were not.</strong> The unexplored ones count at full inherent risk, because absence of evidence is not evidence of absence.</li>
+      </ul>
+      <p><strong>It cannot claim the system is safe, secure, or robust.</strong> No amount of testing establishes that something cannot happen, because the search space of natural-language attacks is effectively unbounded.</p>
+    </div>
+  </section>
+
+  <!-- ============ THE CLOSE ============ -->
+  <section class="section" id="close">
+    <div class="section-kicker">
+      <span class="klabel">The close · session 10 of 10</span>
+      <h2>Why a passing suite is not proof of safety <span class="tag concept">5 min live</span></h2>
+    </div>
+    <p class="lede">Everything in this course has been building towards a sentence that sounds defeatist and is not. It is the sentence that lets you keep working honestly for years without either overclaiming or giving up, and every organisation that publishes seriously about this has written some version of it.</p>
+
+    <table class="clean">
+      <tr><th>Who</th><th>What they published</th><th>What it means for your green board</th></tr>
+      <tr>
+        <td><strong>OpenAI</strong></td>
+        <td>System-card line: <strong>"evaluations represent a lower bound for potential capabilities; additional prompting or fine-tuning, longer rollouts, novel interactions, or different forms of scaffolding could elicit behaviors beyond what we observed."</strong></td>
+        <td>Your suite is a lower bound too. It measures what your cases elicited from this build, not what the system can do.</td>
+      </tr>
+      <tr>
+        <td><strong>Microsoft</strong></td>
+        <td>The eighth of their eight lessons: <strong>the work of securing AI systems will never be complete.</strong> And separately: <strong>"the idea that it is possible to guarantee or 'solve' AI safety through technical advances alone is unrealistic."</strong></td>
+        <td>There is no end state to schedule towards. Design the programme as an operating cost, not a project with a completion date.</td>
+      </tr>
+      <tr>
+        <td><strong>Anthropic</strong></td>
+        <td><strong>"No system is completely immune to all attacks."</strong> Backed by their own two exercises: no universal jailbreak found across 183 participants and over 3,000 hours; one found in the public run of 339 jailbreakers and roughly 3,700 hours.</td>
+        <td>Nothing about the first result was wrong. It simply did not mean what "we red-teamed it and found nothing" is usually taken to mean.</td>
+      </tr>
+      <tr>
+        <td><strong>UK NCSC</strong></td>
+        <td><strong>"Rather than hoping we can apply a mitigation that fixes prompt injection, we instead need to approach it by seeking to reduce the risk and the impact. If the system's security cannot tolerate the remaining risk, it may not be a good use case for LLMs."</strong></td>
+        <td>The escape hatch, and it is a legitimate engagement outcome. "Do not ship this workflow as an agent" is a finding, not a failure.</td>
+      </tr>
+    </table>
+
+    <p>So the closing line of the course is the title of this session. <strong>Green is not safe, and never was.</strong> Green means the tests you wrote, against the build you have, at the N you chose, judged by the grader you version-controlled, did not fail this week. That is a genuinely valuable thing to know and it is worth every hour you will spend maintaining it. It is simply not the thing people hear when you say the pipeline is passing, and the difference between those two readings is the whole professional contribution of an AI red team.</p>
+
+    <div class="callout win">
+      <strong>★ You finished the builder track</strong>
+      Ten sessions: a scope document with authorization in the control plane rather than the prompt, an attack surface mapped to the current framework IDs, the injection classes and their measured defence limits, jailbreaks as rates, extraction, tool abuse and agency, a suite with honest coverage accounting, an engagement run with k of N, a hardening round whose delta you can defend, and now a standing programme with triggers and hold-outs. If you want the governance and reporting side of the same material - severity rubrics, how to read someone else's report, and when to stop - the leader track covers it in six sessions. And the courses next door pick up where this one stops: <a href="https://phoebefu6.github.io/learn-agent-launch-with-phoebe/">Agent Launch</a> takes your adversarial slice into a go or no-go decision, and <a href="https://phoebefu6.github.io/learn-ai-observability-with-phoebe/">AI Observability</a> owns the telemetry your findings will surface in from now on.
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Try it yourself - this month <span class="tag exercise">◐ 60-90 min total</span></h2>
+    </div>
+    <ul>
+      <li>Split your existing findings into hardening and hold-out partitions today, before anyone reads any more of them. If everything has already been read by everyone, mark the whole corpus as hardening and start the hold-out from your next round. An honest empty hold-out beats a fictional one.</li>
+      <li>Write the five architecture assertions for your own system and get them into the merge gate. If you cannot express your controls as assertions, that is itself the finding: a control nobody can test is a control nobody can prove is still there.</li>
+      <li>Put the trigger list in front of whoever owns your release process and ask which of the seven events currently notifies anybody. In most organisations the answer is one, sometimes zero, and the conversation is worth more than the list.</li>
+      <li>Book the adaptive hours for next quarter now, with the brief written down: invent attacks against this system, do not run the suite. Unbooked adaptive time is the first thing to disappear, and it is the only budget line that closes the 11% to 81% gap.</li>
+      <li>Take one green dashboard you currently show to someone senior and add the sentence explaining what green means. Then watch what questions arrive. Those questions are the ones your programme should have been answering all along.</li>
+    </ul>
+  </section>
+
+  <!-- ============ SOURCES ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Source material</span>
+      <h2>Official sources covered</h2>
+    </div>
+    <p class="lede">Every framework, figure and quotation on this page traces to a primary source catalogued in this course's source map, verified 2026-08-14. This page covers:</p>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">The findings-to-automation escalator - OpenAI, Anthropic, Google DeepMind, and Google's red-team report</span><span class="note">Part 1 · [P] vendor publications</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Google red-team report: newly developed techniques should be reapplied to the subjects of prior tests</span><span class="note">Part 1 · [P] · report is July 2023, flag its age</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Nasr et al. - 12 defences broken at over 90% ASR, most originally reporting near-zero</span><span class="note">Part 2 · [P] arXiv 2510.09023</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NIST CAISI - 11% with the best published baseline, 81% when tailored; 57% to 80% at N=25</span><span class="note">Part 2 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">HarmBench on token budget drastically affecting ASR, and the three variables inside ASR</span><span class="note">Part 2 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Chouldechova et al., NeurIPS 2025 - ASR comparisons often do not support conclusions about relative safety</span><span class="note">Part 2 · [P] arXiv 2601.18076</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">PyRIT, garak, promptfoo - memory-backed regression, scanning, CI gating; the Azure/PyRIT archive trap</span><span class="note">Part 1 · [P] · PyRIT is a library, CI wiring is yours</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NIST AI RMF Playbook MEASURE 2.6 and 2.7; EU AI Act Article 55 documented adversarial testing</span><span class="note">Part 3 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OpenAI system card - evaluations represent a lower bound for potential capabilities</span><span class="note">The close · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Microsoft - the work of securing AI systems will never be complete; guaranteeing safety technically is unrealistic</span><span class="note">The close · [P] arXiv 2501.07238</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Anthropic - no system is completely immune to all attacks; the two Constitutional Classifiers exercises</span><span class="note">The close · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NCSC - reduce the risk and the impact; it may not be a good use case for LLMs</span><span class="note">The close · [P] NCSC, 8 Dec 2025 · a legitimate finding</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">What a report may claim - the four statements</span><span class="note">Demo 2 · course map, assembled from the sources above</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Any "re-test every N weeks" cadence</span><span class="note"><strong>No standards body publishes one.</strong> Published practice is continuous automation plus event-triggered rounds; the trigger list is taught instead</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The manifest, CI wiring and architecture assertions on this page</span><span class="note">Illustrative structure, not a citable standard · no published standard suite format exists</span></div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions before you go 🎯 <span class="tag exercise">◐ 90 seconds</span></h2>
+    </div>
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">1 · Your standing suite has reported a near-zero attack success rate for four months. What may you conclude?</p>
+      <button class="qopt" type="button">A · That the hardening worked and the risk is now residual only</button>
+      <button class="qopt" type="button">B · That the suite is too small and needs more cases</button>
+      <button class="qopt" type="button">C · That the attacks you already fixed are still fixed - nothing more. Nasr et al. broke 12 defences at over 90% attack success, most of which originally reported near-zero against their own static sets</button>
+      <p class="qwhy">The original near-zero rates were real measurements. They answered a narrower question than their headlines implied, because the test set was static and the defence had already been tuned against it. Option B is the instinctive fix and it does not help on its own: a bigger suite of attacks you have already hardened against is still a suite of attacks you have already hardened against. What closes the gap is a partition your engineers never see plus a standing adaptive budget for people told to invent attacks against your specific system rather than to run your cases.</p>
+    </div>
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">2 · Your board asks how frequently the system should be re-tested. What is the honest answer?</p>
+      <button class="qopt" type="button">A · Quarterly, which is the industry norm for adversarial testing</button>
+      <button class="qopt" type="button">B · No standards body publishes a cadence. Published practice is continuous automation plus human rounds fired by events: base-model change, system-prompt change, new tool or MCP server, new connector, new renderer, new user population or language, any permission-scope change</button>
+      <button class="qopt" type="button">C · After every incident, since that is when the threat model has demonstrably changed</button>
+      <p class="qwhy">There is no citable number, and inventing one is how a security programme acquires a compliance ritual instead of a control. A quarterly slot re-tests whatever the system happens to look like that morning, which may be three model versions and two new connectors away from the build your last report described. Option C is not wrong so much as far too late: incidents are the trigger you did not get to choose. The seven listed events are the ones you can wire up in advance, and the NIST AI RMF Playbook backs the shape by asking for tracked security tests and metrics rather than a frequency.</p>
+    </div>
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">3 · Every test is green and an executive asks whether the system is secure. What do you say?</p>
+      <button class="qopt" type="button">A · Give the four claims instead - rates under stated conditions on a named build, weaknesses with blast radii, mitigations with measured deltas, and surfaces explored versus not - then state the residual plainly, including that the after is not zero</button>
+      <button class="qopt" type="button">B · Yes, with the caveat that no system is perfectly secure</button>
+      <button class="qopt" type="button">C · Yes for the tested classes, no for the untested ones</button>
+      <p class="qwhy">Option B is the sentence that gets quoted without its caveat in every subsequent conversation, and OpenAI's own system-card language explains why it cannot be given: evaluations represent a lower bound, and additional prompting, longer rollouts, novel interactions or different scaffolding could elicit behaviour beyond what was observed. Option C sounds rigorous and is not, because it implies the tested classes are closed. If the residual genuinely cannot be tolerated, the NCSC gives you the last and most useful finding in the course: it may not be a good use case for LLMs, which is a legitimate engagement outcome rather than an admission of defeat.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Builder session 10 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>Findings become tests</b><span>Human round generates, automation retains. The ladder ends at generated variations of one human-defined threat model.</span></div>
+      <div class="cheat-item"><b>Reapply new techniques backwards</b><span>Not only to the current build. To every subject you previously declared fine.</span></div>
+      <div class="cheat-item"><b>Near-zero from a static set proves nothing</b><span>12 defences broken at over 90%, most originally reporting near-zero. Report it as: this suite did not break this build.</span></div>
+      <div class="cheat-item"><b>Adaptive budget, kept separate</b><span>11% with the best baseline, 81% when tailored. That gap is the blind spot automation cannot see.</span></div>
+      <div class="cheat-item"><b>Rates with intervals, never pass or fail</b><span>Pin N, the token budget and the grader version. A grader change is a re-baseline, not a changelog line.</span></div>
+      <div class="cheat-item"><b>Hold attacks out</b><span>Gate on a partition your hardening never saw. Rotate a few in each quarter so it does not go stale.</span></div>
+      <div class="cheat-item"><b>Triggers, not a cadence</b><span>Base model, system prompt, tool or MCP server, connector, renderer, user population, permission scope. No cadence is published anywhere.</span></div>
+      <div class="cheat-item"><b>Green is not safe</b><span>Your tests, your build, your N, your grader, this week. Four claims are all a report may make, and "not a good use case for LLMs" is one of the findings.</span></div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>Builder session 10 of 10 · learn-ai-red-team-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← Course home</a> &nbsp;·&nbsp; <a href="../index.html">Back to course home →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

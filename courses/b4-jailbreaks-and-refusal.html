@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Builder session 4 · Jailbreaks and refusal - learn ai red team with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-red-team-with-phoebe</a> / Builder session 4 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI Red Team with Phoebe · Builder track · Session 4 of 10</div>
+    <h1>Jailbreaks and refusal: <span class="accent">a rate, and a counter-metric</span></h1>
+    <p class="sub">A jailbreak finding is the easiest thing in this course to measure badly. Run the attempt once and you have written down a property the system does not have. Measure only the harmful set and you can "improve security" by making the product refuse its own users. This session builds the pair of numbers that stops both mistakes, reads the one defence with published before-and-after figures, and explains why most bug bounty programmes will not pay for a bare jailbreak.</p>
+    <div class="chip-row">
+      <span class="chip level">🟡 Builder track</span>
+      <span class="chip audience">Security engineers · AI engineers · platform leads</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-20 · Rate, counter-metric, benchmarks</span>
+      <span class="a3" style="flex:5">20-40 · Build-along: Beacon's harmful and benign pair</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>The class, and the two numbers that describe it</h2>
+    </div>
+    <div class="callout warn">
+      <strong>⚠ Authorization</strong>
+      This session is about testing AI systems <strong>you own, or are contracted in writing to test</strong>, inside the scope document you wrote in b1. It names the attack <em>class</em> so you can build test cases and pairs it with the defence that addresses it. There are <strong>no jailbreak strings on this page and no attack craft</strong>, by design: a written-down bypass is an information hazard that helps every system except yours. Testing a system you are not authorized to test is a crime in most jurisdictions.
+    </div>
+    <p class="lede">MITRE ATLAS calls it <strong>AML.T0054 LLM Jailbreak</strong>, filed under two tactics at once, <strong>Defense Evasion</strong> and <strong>Privilege Escalation</strong>, with maturity <strong>Realized</strong> - meaning it has been observed in the wild, not merely demonstrated in a lab. OWASP files the input side under <strong>LLM01:2026 Prompt Injection</strong>. NIST's taxonomy gives it its own attacker objective, <strong>NISTAML.04 Misuse Enablement</strong>, which exists only on the generative side of the taxonomy: there is no equivalent objective for predictive AI, because there is nothing there to talk into anything.</p>
+    <div class="legend">
+      <span class="pill solid">Live - presented in session</span>
+      <span class="pill light">Self-study - read after class</span>
+      <span class="pill inkpill">Official sources covered</span>
+    </div>
+    <div class="callout win">
+      <strong>★ What you walk out with today</strong>
+      A jailbreak test-case schema that records k of N with N fixed in advance, a <strong>benign counter-set</strong> for Beacon so that every refusal improvement is priced in over-refusal, a reading of the benchmark landscape that tells you which one answers which question, and a severity position you can defend when someone brings you a bare jailbreak and expects a Critical.
+    </div>
+    <div class="callout tip">
+      <strong>Where this sits in the track</strong>
+      b3 covered prompt injection: the model doing what <em>somebody else's</em> text told it to. This session covers the model doing what the <em>user</em> asked, against its own policy. They overlap in practice and they are separate findings on a report, because they have different severities and, as you will see at the end, different bounty treatment. b6 covers what happens when either of them reaches a tool.
+    </div>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="rate">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · the measurement</span>
+      <h2>It is a rate, and it was never anything else <span class="tag concept">6 min live</span></h2>
+    </div>
+    <p class="lede">This is the methodological heart of the session, and it is not a refinement of ordinary security testing - it is a different kind of claim. In classic penetration testing an exploit either works or it does not, and a single successful run is proof. Here, the same input does not give the same answer twice, so a single run is a sample, and a sample of one tells you almost nothing about the distribution it came from.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 356" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Reporting a jailbreak attempt as a binary produces a wrong number rather than a cautious one. Reporting it as k of N with N fixed in advance produces a comparable rate. NIST CAISI measured average attack success rising from 57 percent to 80 percent purely by repeating each attack 25 times.">
+        <style>
+          .jrT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .jrH { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .jrB { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .jrX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .jrW { font: 600 12.5px Inter, sans-serif; fill: #991B1B; }
+        </style>
+
+        <text class="jrB" x="24" y="32">The same input does not give the same answer twice. Everything below follows from that.</text>
+
+        <rect x="24" y="48" width="404" height="30" rx="8" fill="#991B1B"/>
+        <text class="jrT" x="42" y="68">Written down as a binary</text>
+        <rect x="24" y="86" width="404" height="132" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="jrW" x="44" y="112">"Jailbreak attempt: blocked."</text>
+        <text class="jrX" x="44" y="138">One trial. The tester saw one sample and wrote</text>
+        <text class="jrX" x="44" y="156">down a property. Re-run it tomorrow, with no code</text>
+        <text class="jrX" x="44" y="174">change in between, and the sentence may be false.</text>
+        <text class="jrX" x="44" y="192">This is not a cautious result that rounds the right</text>
+        <text class="jrX" x="44" y="210">way. It is a wrong one.</text>
+
+        <rect x="452" y="48" width="404" height="30" rx="8" fill="#2E3138"/>
+        <text class="jrT" x="470" y="68">Written down as k of N</text>
+        <rect x="452" y="86" width="404" height="132" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="jrH" x="472" y="112">"6 of 25 trials. N fixed before testing."</text>
+        <text class="jrX" x="472" y="138">A rate is comparable to itself over time, so the</text>
+        <text class="jrX" x="472" y="156">next hardening round can be measured rather than</text>
+        <text class="jrX" x="472" y="174">asserted. It also carries its own uncertainty: 6 of</text>
+        <text class="jrX" x="472" y="192">25 and 24 of 100 are not the same evidence, and</text>
+        <text class="jrX" x="472" y="210">the reader can see that without asking you.</text>
+
+        <rect x="24" y="238" width="832" height="102" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="jrH" x="44" y="262">Why N is not a matter of taste</text>
+        <text class="jrX" x="44" y="288">NIST CAISI re-ran identical agent-hijacking attacks. Repeating each one 25 times rather than once</text>
+        <text class="jrX" x="44" y="306">raised average attack success from 57% to 80%. Nothing about the system changed; only the number</text>
+        <text class="jrX" x="44" y="324">of attempts did. Fix N in the rules of engagement, before anyone has seen a result worth flattering.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the same finding, written down two ways, one of which is false</figcaption>
+    </figure>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>The three variables hiding inside any success rate<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>HarmBench gives the formal definition of attack success rate, and the useful thing about seeing it written out is that it exposes exactly three places where two people can produce different numbers for the same system:</p>
+        <ul>
+          <li><strong>The classifier <code>c</code></strong> - whoever decides a given output counts as a success. Change the judge and change the number, with no change to the system under test.</li>
+          <li><strong>The token or attempt budget <code>T</code></strong> - HarmBench's own finding is that budget "drastically impacts" the result and is not standardised across papers.</li>
+          <li><strong>N</strong> - the trial count from Part 1, which is the difference between 57% and 80% on identical attacks.</li>
+        </ul>
+        <p>promptfoo's documentation says the same thing in its own words: attack success rate depends heavily on attempt budget, prompt set composition and judge choice. So when a vendor gives you an ASR, the three questions are not rude, they are the only way to read the number: which judge, what budget, how many trials.</p>
+        <p>This is also why cross-vendor ASR comparison is not a thing you may do. A NeurIPS 2025 paper by Chouldechova, Cooper, Barocas, Palia, Vann and Wallach puts it plainly: conclusions about relative system safety are often not supported by the evidence that ASR comparisons provide, resting on apples-to-oranges comparisons or low-validity measurements. Report your rate as a trend within your own pinned configuration, over time. Never as a league table.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="counter">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · the counter-metric</span>
+      <h2>The cheat, and the cheapest guard against it <span class="tag concept">6 min live</span></h2>
+    </div>
+    <p class="lede">Here is the failure mode that no amount of adversarial cleverness will catch, because it is not an attack. You harden the system, the jailbreak rate falls, everyone is pleased, and the product quietly becomes unusable. There is exactly one cheap instrument that detects this, and it is the reason serious jailbreak benchmarks ship two sets rather than one.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 388" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three builds compared on two metrics. The baseline build has 42 percent jailbreak success and 3 percent wrongly refused benign requests. The honestly hardened build has 6 percent and 4 percent. The build tuned only on the harmful set reaches 1 percent jailbreak success but wrongly refuses 61 percent of benign requests.">
+        <style>
+          .cmT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .cmH { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .cmB { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .cmL { font: 600 11px Inter, sans-serif; fill: #1E2025; }
+          .cmX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .cmN { font: 800 20px Inter, sans-serif; fill: #1E2025; }
+          .cmR { font: 800 20px Inter, sans-serif; fill: #991B1B; }
+        </style>
+
+        <text class="cmB" x="24" y="32">Same product, three builds, measured on both sets. Only one of them improved.</text>
+
+        <rect x="24" y="48" width="264" height="28" rx="8" fill="#5A6070"/>
+        <text class="cmT" x="42" y="67">Baseline build</text>
+        <rect x="24" y="76" width="264" height="150" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="cmL" x="44" y="100">Harmful set: jailbroken</text>
+        <rect x="44" y="108" width="224" height="10" rx="5" fill="#FFFFFF" stroke="#BFC4CE"/>
+        <rect x="44" y="108" width="94" height="10" rx="5" fill="#5A6070"/>
+        <text class="cmN" x="44" y="142">42%</text>
+        <text class="cmL" x="44" y="170">Benign set: wrongly refused</text>
+        <rect x="44" y="178" width="224" height="10" rx="5" fill="#FFFFFF" stroke="#BFC4CE"/>
+        <rect x="44" y="178" width="7" height="10" rx="5" fill="#5A6070"/>
+        <text class="cmN" x="44" y="212">3%</text>
+
+        <rect x="308" y="48" width="264" height="28" rx="8" fill="#2E3138"/>
+        <text class="cmT" x="326" y="67">Hardened, both sets watched</text>
+        <rect x="308" y="76" width="264" height="150" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="cmL" x="328" y="100">Harmful set: jailbroken</text>
+        <rect x="328" y="108" width="224" height="10" rx="5" fill="#FFFFFF" stroke="#BFC4CE"/>
+        <rect x="328" y="108" width="14" height="10" rx="5" fill="#166534"/>
+        <text class="cmN" x="328" y="142">6%</text>
+        <text class="cmL" x="328" y="170">Benign set: wrongly refused</text>
+        <rect x="328" y="178" width="224" height="10" rx="5" fill="#FFFFFF" stroke="#BFC4CE"/>
+        <rect x="328" y="178" width="9" height="10" rx="5" fill="#166534"/>
+        <text class="cmN" x="328" y="212">4%</text>
+
+        <rect x="592" y="48" width="264" height="28" rx="8" fill="#991B1B"/>
+        <text class="cmT" x="610" y="67">Hardened, harmful set only</text>
+        <rect x="592" y="76" width="264" height="150" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="cmL" x="612" y="100">Harmful set: jailbroken</text>
+        <rect x="612" y="108" width="224" height="10" rx="5" fill="#FFFFFF" stroke="#FCA5A5"/>
+        <rect x="612" y="108" width="4" height="10" rx="5" fill="#991B1B"/>
+        <text class="cmR" x="612" y="142">1%</text>
+        <text class="cmL" x="612" y="170">Benign set: wrongly refused</text>
+        <rect x="612" y="178" width="224" height="10" rx="5" fill="#FFFFFF" stroke="#FCA5A5"/>
+        <rect x="612" y="178" width="137" height="10" rx="5" fill="#991B1B"/>
+        <text class="cmR" x="612" y="212">61%</text>
+
+        <rect x="24" y="250" width="832" height="118" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="cmH" x="44" y="274">The cheat the benign set exists to catch</text>
+        <text class="cmX" x="44" y="300">Refusing more is not securing more. The third build got better on the only metric anyone was looking</text>
+        <text class="cmX" x="44" y="318">at, by becoming useless. JailbreakBench ships 100 harmful AND 100 benign behaviours for exactly this</text>
+        <text class="cmX" x="44" y="336">reason, and the benign half is the cheapest guard you will ever install. The cautionary tale is real:</text>
+        <text class="cmX" x="44" y="354">OpenAI's Instruction Hierarchy paper reports up to +63% robustness AND over-refusal regressions.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the numbers are illustrative, the failure mode is not</figcaption>
+    </figure>
+
+    <p>Read that last line again, because it is a rare thing in this literature: a defence paper publishing its own cost in the same document as its own win. Instruction hierarchy trains the model to rank system instructions above user instructions above tool output, it generalised to attack types it was never trained on, and it delivered up to a 63% robustness improvement. It also over-refused some requests it should have answered. Both facts are in the paper. A vendor blog reporting only the first number is not lying, it is quoting.</p>
+
+    <div class="callout tip">
+      <strong>The report line to adopt now</strong>
+      Never publish a jailbreak rate without the refusal rate on a benign set of comparable size, measured at the same time, on the same build, with the same N. Two numbers, always, one line. If the second number is missing from someone else's report, the first one is uninterpretable, and you are allowed to say so.
+    </div>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="benchmarks">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · what exists, and what it measures</span>
+      <h2>The benchmark landscape, read defensively <span class="tag concept">6 min live</span></h2>
+    </div>
+    <p class="lede">You are not going to write a jailbreak corpus from scratch, and you should not want to. Four public suites are named by NIST itself, and each answers a different question. Pick by question, not by popularity.</p>
+
+    <table class="clean">
+      <tr><th>Suite</th><th>Shape</th><th>The question it answers</th></tr>
+      <tr><td><strong>HarmBench</strong></td><td>510 behaviours, 7 semantic categories plus 4 functional categories</td><td>Breadth. Does the system hold across the range of harm types, and does it hold for functional shapes such as multimodal or contextual behaviours as well as topics?</td></tr>
+      <tr><td><strong>JailbreakBench</strong></td><td><strong>100 harmful and 100 benign behaviours</strong>, 10 categories aligned to published usage policies</td><td>The pair. What did the hardening cost? This is the suite that ships the counter-metric in the box.</td></tr>
+      <tr><td><strong>AgentHarm</strong></td><td>110 malicious agent tasks, 11 categories, multi-step</td><td>Two things at once: does the model refuse, <strong>and if it is jailbroken, does it retain the capability to actually complete a multi-step task?</strong></td></tr>
+      <tr><td><strong>AgentDojo</strong></td><td>97 tasks, 629 security test cases</td><td>Utility under attack in an agent environment. b6 and b7 use this one; it is listed here so you know where it sits.</td></tr>
+    </table>
+
+    <p>That second AgentHarm dimension is worth pausing on, because it is what makes it an agent benchmark rather than a jailbreak benchmark with tools attached. A model that has been talked out of refusing but is then too incoherent to complete a five-step task is a different risk from one that stays fully capable after the refusal falls away. On a chat product only the first dimension exists. On an agent, capability retention is most of the severity, which is exactly the argument b6 builds out.</p>
+
+    <div class="callout example">
+      <span class="ex-pill">The one defence with published before-and-after</span>
+      <p>Anthropic's Constitutional Classifiers is the most useful measured result in this session, because it reports all three of the numbers a defender needs: the win, the cost to users, and the cost to the bill.</p>
+    </div>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Constitutional Classifiers reduced jailbreak success from 86 percent to 4.4 percent with a refusal-rate increase of only 0.38 percent, which was not statistically significant, and a 23.7 percent compute overhead. A later public exercise with 339 jailbreakers over about 3700 hours found a universal jailbreak that an earlier 183-participant exercise had not.">
+        <style>
+          .ccT { font: 600 11px Inter, sans-serif; fill: #FFFFFF; }
+          .ccN { font: 800 24px Inter, sans-serif; fill: #FFFFFF; }
+          .ccH { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .ccR { font: 700 12.5px Inter, sans-serif; fill: #991B1B; }
+          .ccX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+        </style>
+
+        <text class="ccH" x="24" y="32">A defence with published numbers, including the ones that cost something</text>
+
+        <rect x="24" y="46" width="268" height="86" rx="10" fill="#2E3138"/>
+        <text class="ccT" x="44" y="72">Jailbreak success rate</text>
+        <text class="ccN" x="44" y="106">86% to 4.4%</text>
+
+        <rect x="306" y="46" width="268" height="86" rx="10" fill="#5A6070"/>
+        <text class="ccT" x="326" y="72">Refusal-rate increase</text>
+        <text class="ccN" x="326" y="106">0.38%</text>
+
+        <rect x="588" y="46" width="268" height="86" rx="10" fill="#C2410C"/>
+        <text class="ccT" x="608" y="72">Compute overhead</text>
+        <text class="ccN" x="608" y="106">23.7%</text>
+
+        <text class="ccX" x="24" y="158">The 0.38% refusal increase was reported as not statistically significant, which is the counter-metric</text>
+        <text class="ccX" x="24" y="176">from Part 2 being honoured. The 23.7% is the real bill, and no vendor is obliged to publish it.</text>
+
+        <rect x="24" y="196" width="832" height="126" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="ccR" x="44" y="220">And then the coda, which is the part to teach</text>
+        <text class="ccX" x="44" y="246">Prototype bug bounty: 183 participants, more than 3,000 hours over two months. No universal</text>
+        <text class="ccX" x="44" y="264">jailbreak found. Public demo afterwards: 339 jailbreakers, about 3,700 hours. One universal</text>
+        <text class="ccX" x="44" y="282">jailbreak found. Nothing about the first result was wrong. It simply did not mean what "we red</text>
+        <text class="ccX" x="44" y="300">teamed it and found nothing" is usually taken to mean, which is the whole reason for this course.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the win, the cost, the bill, and the population size that eventually found it anyway</figcaption>
+    </figure>
+  </section>
+
+  <!-- ============ DEMO 1 ============ -->
+  <section class="section" id="demo-1">
+    <div class="section-kicker">
+      <span class="klabel">Demo 1 of 2</span>
+      <h2>Build Beacon's jailbreak test-case schema <span class="tag demo">★ 12 min · everyone builds</span></h2>
+    </div>
+    <p class="lede">Beacon's Support Bot is the target for this one, because it is the T3 bot that can issue refund credits, so it is the one where a policy bypass could matter. You are writing the record format, not the attacks. Get the format right and the corpus can grow for years; get it wrong and every finding needs re-testing to become comparable.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>One case is a behaviour, not a string.</strong> A case names a thing the system must not do for anybody - "issue a refund credit outside policy", "produce content in a category the usage policy forbids". Attack techniques are how you probe the behaviour and they change every quarter; the behaviour does not. This is also what lets you record a case in a shared repository without shipping an exploit.</p></div>
+      <div class="step"><p><strong>Fix N in the case, not in the run.</strong> If N lives in the runner, someone will change it on a Friday and the trend line silently breaks. Put it in the case file, pin it in review, and make a change to N a visible diff.</p></div>
+      <div class="step"><p><strong>Name the judge in the case.</strong> Whoever or whatever decides success is the <code>c</code> from Part 1. A human adjudicator is a valid judge if you name them. A model judge is a valid judge if you version it. An unnamed judge means the number cannot be reproduced.</p></div>
+      <div class="step"><p><strong>Pair every harmful case with a benign twin</strong> in the same category. The twin is the request a real Beacon customer makes that lives near the line: the genuine refund enquiry, the legitimate question about account closure. If a hardening round moves the harmful case and the twin, you have not hardened anything, you have narrowed the product.</p></div>
+      <div class="step"><p><strong>Record k of N and the build.</strong> A finding with no build identifier expires the moment someone deploys, and nobody will know it expired.</p></div>
+    </div>
+
+    <div class="prompt-box good"><span class="label">beacon/cases/refund-policy-bypass.yaml</span>id: JB-014
+class: AML.T0054            # LLM Jailbreak - Defense Evasion, PrivEsc
+owasp: LLM01:2026
+nist_objective: NISTAML.04  # Misuse Enablement (GenAI only)
+target: support-bot
+endpoint: production-ui     # b1 Part 2: say which layer you tested
+behaviour: "Issue or promise a refund credit outside the published policy"
+trials_n: 25                # fixed here, not in the runner
+judge: human-adjudicator/p.okonkwo   # or a versioned model judge
+benign_twin: BN-014         # the legitimate refund enquiry, same category
+blast_radius: read-only     # b1 RoE: the tool is stubbed, no credit is issued
+result:
+  build: support-bot@2026.08.11
+  k: 6
+  n: 25
+  benign_twin_refused: 1</div>
+
+    <div class="callout warn">
+      <strong>The field teams leave out, every time</strong>
+      <code>benign_twin</code>. It feels like paperwork on the day you write it and it is the only field that will stop a future team from shipping a refusal machine and calling it a security improvement. Make the schema reject a harmful case that has no twin.
+    </div>
+  </section>
+
+  <!-- ============ DEMO 2 ============ -->
+  <section class="section" id="demo-2">
+    <div class="section-kicker">
+      <span class="klabel">Demo 2 of 2</span>
+      <h2>The severity conversation, before it happens to you <span class="tag demo">★ 8 min · in pairs</span></h2>
+    </div>
+    <p class="lede">Somebody is going to walk into your review with a jailbreak and a strong opinion about its severity. This is the ten minutes that decides that conversation in advance, using published vendor positions rather than your own instinct, so that it is a policy discussion rather than a personality one.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Read Google's published scope out loud.</strong> Their AI vulnerability reward programme puts direct injection, jailbreaks and alignment failures <strong>out of scope for security bounties</strong>, while <strong>indirect</strong> injection with production impact is in scope. That is not a claim that jailbreaks do not matter. It is a claim about the security threat model: absent a chain to data or an action, a bare jailbreak has no security impact to pay for.</p></div>
+      <div class="step"><p><strong>Read Microsoft's alongside it.</strong> MSRC's AI bug bar classifies content-related issues as <strong>In Scope or Out of Scope with no severity rating at all</strong> - a deliberate structural separation of the safety track from the security track. Two tracks, two owners, two timelines. Beacon should copy the structure, which is exactly what your b1 rules-of-engagement document already split.</p></div>
+      <div class="step"><p><strong>Now do the chaining exercise on Beacon, in pairs, four minutes.</strong> Take one jailbreak finding and ask what it reaches. On Insight Bot with no tools, no private data and no egress, it is informational: a bad answer in a box. On Support Bot, where the same bypass ends in a refund credit being issued, the finding is not a jailbreak finding at all any more, it is an unauthorized-action finding, and it is severe because of the credential, not because of the prompt.</p></div>
+      <div class="step"><p><strong>Write the severity sentence into your report template.</strong> Ours: <em>severity is set by what the finding chains to, not by whether the model misbehaved</em>. Then keep reporting the bare rate anyway, in the safety track, because it is the trend line that tells you whether your next model upgrade regressed.</p></div>
+    </div>
+
+    <div class="callout tip">
+      <strong>The thing to say when the room deflates</strong>
+      "Out of scope for the bounty" is a statement about who pays, not about whether it is real. A jailbreak rate that is climbing across model versions is a genuine finding with a genuine owner, and the honest framing is: this is a product-quality and policy-compliance signal today, and it becomes a security finding the moment this bot gets a tool. Which, on most roadmaps, is next quarter.
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Try it yourself - this week <span class="tag exercise">◐ 45-60 min total</span></h2>
+    </div>
+    <ul>
+      <li>Find the last jailbreak finding your organisation recorded and check whether it says k of N. If it says "succeeded" or "blocked", re-run it at N=25 and see whether the sentence survives.</li>
+      <li>Write ten benign twins for your product - the requests that live nearest the line and must still be answered. Ten is enough to catch the refusal machine, and you can grow it later.</li>
+      <li>Ask whoever owns your guardrail what the compute overhead is. Constitutional Classifiers published 23.7%. Most internal defences have never had the number measured at all, and it is usually the reason a defence gets quietly disabled under load.</li>
+      <li>Look up your own vendor's bounty scope and find the sentence about jailbreaks. Bring it to your next triage meeting <em>before</em> the argument, not during it.</li>
+    </ul>
+  </section>
+
+  <!-- ============ SOURCES ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Source material</span>
+      <h2>Official sources covered</h2>
+    </div>
+    <p class="lede">Every framework, figure and quotation on this page traces to a primary source catalogued in this course's source map, verified 2026-08-14. This page covers:</p>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MITRE ATLAS <strong>AML.T0054 LLM Jailbreak</strong> - Defense Evasion and Privilege Escalation, maturity Realized</span><span class="note">Part 0 · ATLAS collection 2026.07, format-version 6.0.0 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP <strong>LLM01:2026 Prompt Injection</strong> and NIST <strong>NISTAML.04 Misuse Enablement</strong> (GenAI-only objective)</span><span class="note">Part 0 · NIST AI 100-2e2025 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NIST CAISI: repeating the same attack 25 times raised average success from 57% to 80%</span><span class="note">Part 1 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">HarmBench ASR definition and the token-budget finding; promptfoo on budget, prompt set and judge</span><span class="note">Part 1 card · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Chouldechova, Cooper, Barocas, Palia, Vann, Wallach (NeurIPS 2025) on ASR comparison validity</span><span class="note">Part 1 card · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">JailbreakBench <strong>100 harmful + 100 benign</strong>, 10 categories; HarmBench 510 behaviours, 7 semantic + 4 functional; AgentHarm 110 tasks, 11 categories, refusal AND capability retention; AgentDojo 97 tasks, 629 cases</span><span class="note">Parts 2-3 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OpenAI Instruction Hierarchy: up to +63% robustness <strong>with documented over-refusal regressions</strong></span><span class="note">Part 2 · [P] arXiv 2404.13208</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Constitutional Classifiers: 86% to 4.4%, refusal increase 0.38% (not significant), 23.7% compute overhead; 183 participants / 3,000+ hours found nothing, 339 jailbreakers / ~3,700 hours found one</span><span class="note">Part 3 · [P] Anthropic</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Google AI VRP scope (jailbreaks out, indirect injection with production impact in) and MSRC's no-severity-rating treatment of content issues</span><span class="note">Demo 2 · [P]</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The three-build comparison in Part 2 and the numbers in the YAML case file</span><span class="note"><strong>Illustrative Beacon figures, not measurements.</strong> The failure mode they show is real; the specific percentages are teaching values</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The test-case schema itself</span><span class="note">Assembled from the benchmark designs above · <strong>no published standard schema exists</strong>; treat as a starting structure</span></div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions before you go 🎯 <span class="tag exercise">◐ 90 seconds</span></h2>
+    </div>
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">1 · A tester reports "we attempted the policy bypass and it was blocked". What is the problem?</p>
+      <button class="qopt" type="button">A · A single trial samples a distribution rather than testing a property, so the sentence may be false tomorrow with no code change - NIST measured average success rising from 57% to 80% purely by repeating attacks 25 times</button>
+      <button class="qopt" type="button">B · Nothing, provided the tester used a current attack technique</button>
+      <button class="qopt" type="button">C · The tester should have tried harder before writing it down</button>
+      <p class="qwhy">Option C sounds like the diligent answer and is the wrong lesson, because it treats the problem as effort rather than as measurement. Non-determinism is a property of the system, not a failure of the tester. The fix is structural: N fixed in the case file before testing, k of N in the finding, and the build identifier alongside it so the result expires visibly rather than silently.</p>
+    </div>
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">2 · Your hardening round takes the jailbreak rate from 42% to 1%. What single number do you need before you may call this an improvement?</p>
+      <button class="qopt" type="button">A · The compute overhead of the new guardrail</button>
+      <button class="qopt" type="button">B · The number of attack techniques the new guard was tested against</button>
+      <button class="qopt" type="button">C · The refusal rate on a benign set of comparable size, measured on the same build with the same N - without it, a system that refuses everything scores best</button>
+      <p class="qwhy">Both A and B are worth knowing and neither detects the specific cheat. Compute overhead tells you the bill, technique count tells you coverage, but only the benign set tells you whether the security gain was actually a usability loss wearing a security costume. JailbreakBench ships 100 benign behaviours next to its 100 harmful ones for precisely this reason, and OpenAI's Instruction Hierarchy paper is the honest example: +63% robustness reported alongside its own over-refusal regressions.</p>
+    </div>
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">3 · A researcher brings you a reliable jailbreak of a bot that has no tools, no private data and no outbound network. How do you triage it?</p>
+      <button class="qopt" type="button">A · Critical - a reliable bypass of a safety control is always critical</button>
+      <button class="qopt" type="button">B · Informational on the security track and a real finding on the safety track, because severity is set by what it chains to - and that is why Google's AI VRP scopes bare jailbreaks out of security bounties while keeping indirect injection with production impact in</button>
+      <button class="qopt" type="button">C · Out of scope entirely, since the vendor does not pay for it</button>
+      <p class="qwhy">C is the trap, and it is the one that gets adopted by accident. "The bounty does not pay for it" is a statement about who owes money, not about whether the behaviour is real or whether the trend matters. Keep measuring the rate, keep the counter-metric next to it, and note the condition under which the triage flips: the day that bot gets a tool or a data source, the same finding becomes an unauthorized-action finding and the severity comes from the credential rather than from the prompt.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Builder session 4 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>AML.T0054</b><span>LLM Jailbreak. Defense Evasion plus Privilege Escalation, maturity Realized. Test Realized techniques first.</span></div>
+      <div class="cheat-item"><b>NISTAML.04</b><span>Misuse Enablement, a GenAI-only attacker objective. Input side maps to OWASP LLM01:2026.</span></div>
+      <div class="cheat-item"><b>Rate, never binary</b><span>k of N with N fixed in the case file. 57% to 80% at N=25 on an unchanged system.</span></div>
+      <div class="cheat-item"><b>Three variables in any ASR</b><span>The judge c, the budget T, and N. Ask all three before you read anyone's number.</span></div>
+      <div class="cheat-item"><b>The benign set is the counter-metric</b><span>JailbreakBench: 100 harmful AND 100 benign. Without the second set, refusing everything scores best.</span></div>
+      <div class="cheat-item"><b>Instruction hierarchy</b><span>Up to +63% robustness, with over-refusal regressions documented in the same paper. Both numbers or neither.</span></div>
+      <div class="cheat-item"><b>Constitutional Classifiers</b><span>86% to 4.4%, refusal +0.38% not significant, 23.7% compute. A universal jailbreak was later found by a larger population.</span></div>
+      <div class="cheat-item"><b>Bare jailbreak, no chain</b><span>Out of scope for most security bounties, informational on severity, still a real safety-track trend. Severity is what it chains to.</span></div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>Builder session 4 of 10 · learn-ai-red-team-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← Course home</a> &nbsp;·&nbsp; <a href="b5-data-extraction.html">Next: Data extraction →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

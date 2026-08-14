@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leader session 6 · When to stop - learn ai red team with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-red-team-with-phoebe</a> / Leader session 6 of 6</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI Red Team with Phoebe · Leader track · Session 6 of 6</div>
+    <h1>When to stop: <span class="accent">"not a good use case for an LLM" is a finding</span></h1>
+    <p class="sub">The last session of the leader track, and the one that gives you permission to use everything in the first five. If a workflow cannot tolerate the risk that remains after you have bounded it properly, the correct engagement outcome is to say so, in writing, and not ship it as an agent. This session grounds that in the UK NCSC's published position, hangs it on the governance hooks that already apply to you, looks honestly at how the vendor market handles disclosure, and closes the track with the four things a red-team report may actually claim.</p>
+    <div class="chip-row">
+      <span class="chip level">🟠 Leader track</span>
+      <span class="chip audience">Heads of security · eng leaders · risk and compliance</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-18 · The NCSC position and residual risk</span>
+      <span class="a3" style="flex:4">18-40 · Governance, disclosure, and what you may claim</span>
+      <span class="a4" style="flex:1">40-45 · Close</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>The last session, and the line it does not cross</h2>
+    </div>
+    <div class="callout warn">
+      <strong>⚠ Authorization</strong>
+      This course is about testing AI systems <strong>you own, or are contracted in writing to test</strong>. Every exercise runs against Beacon, a fictional company, inside a scope document written in the builder track. The course names attack and defence <em>classes</em> so a defender can build test cases. It contains no exploit payloads and teaches no attack craft. Testing a system you are not authorized to test is a crime in most jurisdictions, and no governance framework cited on this page changes that.
+    </div>
+    <div class="callout tip">
+      <strong>Not legal advice</strong>
+      This session summarises published regulatory and standards material so that you know which instruments exist, roughly what they require, and which of your artefacts they touch. It is <strong>not legal advice</strong>, it is not a compliance opinion, and it is certainly not a determination of whether any obligation applies to your organisation. Applicability turns on your role in the value chain, your jurisdiction, your risk classification and dates that keep moving. Take the specifics to counsel, and take the quotations on this page to them as the starting point rather than the conclusion.
+    </div>
+    <p class="lede">Five sessions of measurement have been building to a question that measurement cannot answer. Once you know the rate, know the blast radius, and know what your defences actually hold, somebody has to decide whether the remainder is acceptable. That is not a security decision. It is a business decision made by the person who owns the workflow, and the most useful thing this course can do is make sure that person is given a real choice, including the choice to decline.</p>
+    <div class="legend">
+      <span class="pill solid">Live - presented in session</span>
+      <span class="pill light">Self-study - read after class</span>
+      <span class="pill inkpill">Official sources covered</span>
+    </div>
+    <div class="callout win">
+      <strong>★ What you walk out with today</strong>
+      The NCSC framing in its own words, the sentence that turns "we should not build this" into a legitimate deliverable, the governance hooks that already require adversarial testing and its documentation, the published picture of how AI vendors handle disclosure, and the four-item list of what your report may claim - which is the closing artefact of the whole leader track.
+    </div>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="ncsc">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · the NCSC position</span>
+      <h2>Prompt injection is not SQL injection, and that is a design instruction <span class="tag concept">8 min live</span></h2>
+    </div>
+    <p class="lede">On 8 December 2025 the UK's National Cyber Security Centre published the clearest short statement any government body has made on this, and it is worth reading precisely rather than paraphrasing, because the precision is where the decision lives.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 345" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SQL injection has a fix that removes the class, through parameterised queries. The UK NCSC states prompt injection may never be properly mitigated in the same way, and instructs defenders to reduce risk and impact instead.">
+        <style>
+          .ncT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .ncX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .ncW { font: 400 11px Inter, sans-serif; fill: #991B1B; }
+          .ncH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .ncK { font: 600 12.5px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <rect x="24" y="24" width="404" height="30" rx="8" fill="#2E3138"/>
+        <text class="ncT" x="42" y="44">SQL injection: a fix exists</text>
+        <rect x="24" y="62" width="404" height="130" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="ncX" x="44" y="88">Parameterised queries separate instruction from</text>
+        <text class="ncX" x="44" y="106">data at the interface. The boundary is enforced</text>
+        <text class="ncX" x="44" y="124">by the system, not inferred from the text.</text>
+        <text class="ncH" x="44" y="156">The fix removes the class.</text>
+        <text class="ncX" x="44" y="176">You mitigate once and stop measuring.</text>
+
+        <rect x="452" y="24" width="404" height="30" rx="8" fill="#991B1B"/>
+        <text class="ncT" x="470" y="44">Prompt injection: NCSC, 8 Dec 2025</text>
+        <rect x="452" y="62" width="404" height="130" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="ncW" x="472" y="88">"there's a good chance prompt injection will</text>
+        <text class="ncW" x="472" y="106">never be properly mitigated in the same way."</text>
+        <text class="ncX" x="472" y="134">"Under the hood of an LLM, there's no distinction</text>
+        <text class="ncX" x="472" y="152">made between 'data' or 'instructions'; there is</text>
+        <text class="ncX" x="472" y="170">only ever 'next token'."</text>
+
+        <rect x="24" y="204" width="832" height="96" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="ncH" x="44" y="228">The instruction that follows, and it is the whole of session 6</text>
+        <text class="ncX" x="44" y="252">"Rather than hoping we can apply a mitigation that fixes prompt injection, we instead need to approach it by</text>
+        <text class="ncX" x="44" y="270">seeking to reduce the risk and the impact. If the system's security cannot tolerate the remaining risk, it may</text>
+        <text class="ncX" x="44" y="288">not be a good use case for LLMs."   UK NCSC</text>
+
+        <rect x="24" y="314" width="14" height="14" rx="3" fill="#C2410C"/>
+        <text class="ncK" x="48" y="326">Teach it as an outcome: "do not ship this workflow as an agent" is a finding, not a failure.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - why the SQL analogy breaks, and what the NCSC tells you to do instead</figcaption>
+    </figure>
+
+    <p>Two more lines from the same post are worth having in your head before the next architecture review. On deny-listing, the NCSC notes that <strong>"since LLMs are so complex there are infinite ways to rephrase an attack"</strong> - which is the reason a blocklist of known-bad phrasings is a maintenance burden rather than a control. And the "next token" line is not a rhetorical flourish. It is a statement about the mechanism, and it is why every attempt to make the model reliably distinguish trusted from untrusted text has to fight the way the system fundamentally works rather than a bug in it.</p>
+
+    <p class="lede">Notice what the NCSC does <em>not</em> say. It does not say do not use LLMs. It says reduce the risk and the impact, and then it says something that most vendor guidance carefully avoids saying: sometimes what remains is still too much.</p>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>How to make "do not ship this" a deliverable rather than an argument<span class="mini">4 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>A recommendation to not build something lands very differently depending on how it arrives. Three things make it land as a finding rather than as obstruction, and all three are within your control as the person commissioning the engagement.</p>
+        <ul>
+          <li><strong>Write it in the same format as every other finding.</strong> Measured rate at a stated N, blast radius by data classification and by irreversible action, the mitigations tried, and the residual after each. A recommendation that arrives inside the finding template reads as the conclusion of the evidence. The same recommendation in an email reads as an opinion.</li>
+          <li><strong>Offer the bounded version alongside it.</strong> Almost never is the answer "no AI here". It is usually "not as an autonomous agent with these permissions". Draft-and-approve instead of act. Read-only instead of write. A narrower data scope. The finding then presents a choice with two shippable options rather than a veto.</li>
+          <li><strong>Name who decides.</strong> This is a risk-acceptance decision belonging to the business owner of the workflow, not to the red team and not to security. Your job is to make sure the residual risk is stated in terms that person can actually weigh, and that their acceptance is recorded. The failure mode is not that a business accepts risk. It is that nobody can say afterwards who accepted it or what they were told.</li>
+        </ul>
+        <p>One more thing worth saying to an anxious team: this outcome is rare enough to be credible. Most engagements end with a bounded system and a set of controls. If your red team recommends against shipping on every second engagement, the problem is the red team. If it has never once recommended against shipping, the problem is also the red team.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="governance">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · governance hooks</span>
+      <h2>Where adversarial testing is already written down <span class="tag concept">8 min live</span></h2>
+    </div>
+    <p class="lede">Leaders funding this work usually need an external reason as well as an internal one. There is a better set of hooks available than most people realise, and one of them is unusually hard: it requires not just the testing but the documentation of it, which is precisely why the reporting template from session 3 has legal weight and not only operational weight.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Governance hooks for adversarial testing: EU AI Act Articles 15 and 55, NIST AI RMF Playbook MEASURE 2.6 and 2.7, and international secure AI development guidance, with the scoping trap that Article 15 sits in the high-risk chapter while GPAI is governed separately.">
+        <style>
+          .gvH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .gvX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .gvT { font: 700 13px Inter, sans-serif; fill: #2E3138; }
+          .gvO { font: 700 13px Inter, sans-serif; fill: #3A1B08; }
+          .gvK { font: 400 11px Inter, sans-serif; fill: #3A1B08; }
+        </style>
+
+        <text class="gvH" x="24" y="30">The hooks that already apply, and the one that requires documentation.</text>
+
+        <rect x="24" y="46" width="404" height="124" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="gvT" x="44" y="72">EU AI Act Article 15 - high risk</text>
+        <text class="gvX" x="44" y="96">Requires measures to prevent, detect, respond to,</text>
+        <text class="gvX" x="44" y="114">resolve and control for data and model poisoning,</text>
+        <text class="gvX" x="44" y="132">adversarial examples and model evasion, and</text>
+        <text class="gvX" x="44" y="150">confidentiality attacks.</text>
+
+        <rect x="452" y="46" width="404" height="124" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="gvO" x="472" y="72">EU AI Act Article 55 - GPAI, systemic risk</text>
+        <text class="gvX" x="472" y="96">Applicable from 2 Aug 2025. Providers must conduct</text>
+        <text class="gvX" x="472" y="114">AND DOCUMENT adversarial testing, mitigate systemic</text>
+        <text class="gvX" x="472" y="132">risk, and report serious incidents to the AI Office</text>
+        <text class="gvX" x="472" y="150">without undue delay. Documentation is the hook.</text>
+
+        <rect x="24" y="182" width="832" height="104" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="gvT" x="44" y="208">NIST AI RMF Playbook - the anchor for a programme rather than an exercise</text>
+        <text class="gvX" x="44" y="232">MEASURE 2.6: "Use red-team exercises to actively test the system under adversarial or stress conditions."</text>
+        <text class="gvX" x="44" y="250">MEASURE 2.7: "Establish and track AI system security tests and metrics (e.g., red-teaming activities,</text>
+        <text class="gvX" x="44" y="268">frequency and rate of anomalous events...)." The second one is what turns findings into a standing metric.</text>
+
+        <rect x="24" y="298" width="832" height="76" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="gvX" x="44" y="320">CISA, NCSC-UK, NSA and 21 partners, Guidelines for Secure AI System Development: secure by design, with</text>
+        <text class="gvX" x="44" y="338">responsible release contingent on testing that includes red teaming, and continuous monitoring in operation.</text>
+        <text class="gvX" x="44" y="356">Singapore IMDA and AI Verify publish a starter kit naming benchmarking and red teaming as the two methods.</text>
+
+        <rect x="24" y="386" width="832" height="60" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="gvK" x="44" y="408">Scoping trap: Article 15 sits in the high-risk chapter, while GPAI models are governed separately under Articles</text>
+        <text class="gvK" x="44" y="426">51-56. At least one peer-reviewed analysis argues GPAI carries no equivalent explicit robustness obligation.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - four instruments, and the scoping trap between two chapters of the same act</figcaption>
+    </figure>
+
+    <div class="callout win">
+      <strong>★ Article 55 is the sentence to bring to a budget conversation</strong>
+      For general-purpose AI models with systemic risk, applicable from <strong>2 August 2025</strong>, providers must perform model evaluation <strong>including conducting and documenting adversarial testing</strong>, mitigate systemic risk, report serious incidents to the AI Office without undue delay, and ensure adequate cybersecurity. It is the clearest hard legal hook for adversarial testing anywhere today. Read the word <em>documenting</em> twice. An engagement that produced findings but no defensible written record satisfies neither the regulation nor the person who will have to explain it later.
+    </div>
+
+    <p>The NIST pair is the other half, and it is the half that changes your operating model rather than your paperwork. <strong>MEASURE 2.6</strong> gets you the exercise. <strong>MEASURE 2.7</strong> gets you the programme: tests and metrics, tracked, with frequency and rate of anomalous events among the things you establish. A one-off engagement satisfies the first. Only a standing suite with a re-test trigger list satisfies the second, which is exactly what the builder track's final session builds.</p>
+
+    <div class="callout tip">
+      <strong>The trigger list, since no standards body publishes a cadence</strong>
+      No published standard names a re-test interval, and anyone quoting one to you is quoting a blog. Published practice is continuous automation plus <strong>event-triggered</strong> human rounds. The trigger list worth adopting: base-model version change, system-prompt change, new tool or MCP server, new connector or data source, new renderer, new user population or language, and any permission-scope change. Attach it to your MEASURE 2.7 metric and you have a defensible programme rather than a calendar reminder.
+    </div>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="disclosure">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · disclosure, and what you may claim</span>
+      <h2>The market you are buying from, and the report you are signing <span class="tag concept">7 min live</span></h2>
+    </div>
+    <p class="lede">Before the closing artefact, one piece of evidence about the ecosystem. Piao, Li and Woods at Edinburgh studied the vulnerability disclosure posture of 264 AI vendors, and the picture is worth having in front of you the next time somebody says a finding will be handled through the vendor's normal channel.</p>
+
+    <table class="clean">
+      <tr><th>What they found across 264 AI vendors</th><th>The number</th><th>Why it matters to you</th></tr>
+      <tr><td><strong>No disclosure policy at all</strong></td><td><strong>36%</strong></td><td>More than a third have no published route for a researcher, or for you, to report a finding responsibly</td></tr>
+      <tr><td><strong>Policies that mention AI risks</strong></td><td><strong>18%</strong></td><td>Even where a policy exists, it usually describes classic software vulnerabilities and is silent on AI-specific behaviour</td></tr>
+      <tr><td><strong>Most common out-of-scope items</strong></td><td>jailbreaking, hallucination</td><td>Precisely the two categories your users will report to you first, and the two your vendor is least likely to accept</td></tr>
+      <tr><td><strong>Posture split</strong></td><td>46 proactive · 115 silent · 103 restrictive</td><td>Silence is the modal posture. Restrictive is more common than proactive</td></tr>
+      <tr><td><strong>Timing</strong></td><td>later than research, later than incidents</td><td>Vendors address AI vulnerability disclosure after the research community and after real incidents, not before</td></tr>
+    </table>
+
+    <p>Two practical consequences. First, when you procure, ask for the disclosure policy and read whether it mentions AI at all; the answer is a reasonable proxy for how a serious finding will be received. Second, plan your own disclosure path before you need it, including the information-hazard question: a not-yet-known technique written up carelessly accelerates misuse of systems other than yours, which is one of OpenAI's own published limitations of red teaming.</p>
+
+    <p class="lede">Which brings the leader track to its closing artefact. Five sessions of measurement, evidence and governance exist to support exactly four sentences, and to forbid one.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 345" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A red-team report may claim only four things: which attacks succeeded at which rates under which conditions against which build, which weaknesses and impacts exist with which blast radii, which mitigations changed those rates by how much, and which risk surfaces were explored and which were not. It cannot claim the system is safe, secure or robust.">
+        <style>
+          .rcT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .rcG { font: 400 11px Inter, sans-serif; fill: #166534; }
+          .rcX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .rcR { font: 400 11px Inter, sans-serif; fill: #991B1B; }
+          .rcB { font: 800 18px Inter, sans-serif; fill: #991B1B; }
+          .rcH { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+        </style>
+
+        <rect x="24" y="24" width="520" height="30" rx="8" fill="#166534"/>
+        <text class="rcT" x="42" y="44">What a report may claim - only these four things</text>
+        <rect x="24" y="62" width="520" height="176" rx="10" fill="#F0FDF4" stroke="#166534" stroke-width="1.5"/>
+        <text class="rcG" x="44" y="88">1 · These specific attacks succeeded, at these measured rates,</text>
+        <text class="rcG" x="44" y="106">under these conditions, against this build at this date.</text>
+        <text class="rcG" x="44" y="134">2 · These specific weaknesses and impacts exist, with these</text>
+        <text class="rcG" x="44" y="152">blast radii.</text>
+        <text class="rcG" x="44" y="180">3 · These specific mitigations changed those rates by these</text>
+        <text class="rcG" x="44" y="198">amounts.</text>
+        <text class="rcG" x="44" y="226">4 · These risk surfaces were explored, and these were not.</text>
+
+        <rect x="560" y="24" width="296" height="30" rx="8" fill="#991B1B"/>
+        <text class="rcT" x="578" y="44">What it cannot claim</text>
+        <rect x="560" y="62" width="296" height="176" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="rcB" x="580" y="94">Safe. Secure. Robust.</text>
+        <text class="rcX" x="580" y="122">No amount of testing establishes</text>
+        <text class="rcX" x="580" y="140">that something cannot happen. The</text>
+        <text class="rcX" x="580" y="158">search space of natural-language</text>
+        <text class="rcX" x="580" y="176">attacks is effectively unbounded,</text>
+        <text class="rcX" x="580" y="194">and the attacker moves second.</text>
+        <text class="rcR" x="580" y="222">Absence of evidence, again.</text>
+
+        <rect x="24" y="250" width="832" height="76" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="rcH" x="44" y="274">If a stakeholder wants the word "safe", the correct answer is the NCSC's</text>
+        <text class="rcX" x="44" y="298">Reduce the risk and the impact. If the system's security cannot tolerate the remaining risk, it may not be a good</text>
+        <text class="rcX" x="44" y="316">use case for an LLM. That sentence is the honest end of a leader track, and it is a decision leaders make.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the closing artefact of the leader track, in four claims and one refusal</figcaption>
+    </figure>
+
+    <div class="callout example">
+      <span class="ex-pill">In the vendors' own words</span>
+      <p>You are not asking for a standard nobody meets. The people who build these systems say the same thing about their own evaluations. OpenAI's system card: <em>"evaluations represent a lower bound for potential capabilities; additional prompting or fine-tuning, longer rollouts, novel interactions, or different forms of scaffolding could elicit behaviors beyond what we observed."</em> Anthropic: no system is completely immune to all attacks. Microsoft: it is still possible that some injections might evade these defences, and the idea that it is possible to guarantee or solve AI safety through technical advances alone is unrealistic. If a supplier's marketing is more confident than the frontier labs' own documentation, that gap is itself a finding.</p>
+    </div>
+  </section>
+
+  <!-- ============ DISCUSSION 1 ============ -->
+  <section class="section" id="discussion-1">
+    <div class="section-kicker">
+      <span class="klabel">Discussion 1 of 2</span>
+      <h2>Run the stop decision on Beacon's Support Bot <span class="tag demo">★ 10 min · in threes</span></h2>
+    </div>
+    <p class="lede">Beacon's engagement is finished. The Support Bot reads inbound customer email, holds access to account records, and can issue refund credits. The measured findings are on the table and the board review is on Thursday. Decide, as a group, what the report recommends, and be able to defend it in the language of Part 1.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>State the residual, not the fear.</strong> Write the remaining risk as a sentence with numbers in it: this class succeeded k of N times against this build at this date, reaching this data classification and this set of irreversible actions, with these mitigations in place. If your group cannot write that sentence, the decision is premature and the finding is "we do not yet know", which is also a legitimate output.</p></div>
+      <div class="step"><p><strong>Try the bounded versions before the refusal.</strong> Draft-and-approve instead of act. Read-only credentials with refund issuance behind a human. A narrower retrieval scope so the bot never sees records outside the requesting customer's account. Each of these is a different product, with a different residual. Price at least two before recommending against any.</p></div>
+      <div class="step"><p><strong>Now ask the NCSC question directly.</strong> Can Beacon's security tolerate what remains, given that no mitigation on the table removes the class? If yes, the recommendation is ship with these bounds and this monitoring. If no, the recommendation is do not ship this workflow as an agent, and that is a finding.</p></div>
+      <div class="step"><p><strong>Name the accepter and record the acceptance.</strong> Whoever owns the workflow accepts the residual, in writing, having been told the numbers. This is the artefact that makes the difference eighteen months later when somebody asks how this was allowed. Do not let the security team be the accepter by default, which is what happens when nobody is named.</p></div>
+    </div>
+
+    <div class="callout warn">
+      <strong>Where groups usually go wrong</strong>
+      They debate whether the risk is acceptable before anyone has written the residual as a measured sentence, and the discussion becomes a contest of confidence rather than a reading of evidence. Insist on the sentence first. The decision is often obvious once it exists, and the times it is not obvious are the times a business owner genuinely should be the one deciding.
+    </div>
+  </section>
+
+  <!-- ============ DISCUSSION 2 ============ -->
+  <section class="section" id="discussion-2">
+    <div class="section-kicker">
+      <span class="klabel">Discussion 2 of 2</span>
+      <h2>Audit one report you have already signed <span class="tag demo">★ 8 min · in pairs</span></h2>
+    </div>
+    <p class="lede">Bring the most recent AI security assessment, penetration test or assurance summary your organisation has accepted. In pairs, run it against the closing artefact. This is uncomfortable by design, and it is the fastest way to make the four claims stick.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Highlight every sentence that asserts a property rather than a measurement.</strong> "The system is secure against prompt injection" is a property. "This attack class succeeded 3 of 25 times against build 4.2 on 14 August" is a measurement. Count both. The ratio tells you what kind of document you signed.</p></div>
+      <div class="step"><p><strong>Find the fourth claim, which is the one almost always missing.</strong> Which risk surfaces were explored, and which were not? A report without an explicit not-tested list invites the reader to assume the tested set was complete, and the accounting rule from the builder track is that an untested class counts at full inherent risk. The board hears "unknown", never "safe".</p></div>
+      <div class="step"><p><strong>Check whether N appears anywhere.</strong> If findings are binary rather than k of N, the reliability of every one of them is unknown, and severity decisions made on top of them inherited that gap.</p></div>
+      <div class="step"><p><strong>Decide what you will require next time,</strong> and write it into the engagement brief rather than into a review comment on the draft report. The three requirements that fix most of this: state N, state which endpoints were tested, and include the not-tested list.</p></div>
+    </div>
+
+    <div class="callout tip">
+      <strong>Closing the track</strong>
+      Six sessions, and the through-line has not changed since session 1: you cannot make the model refuse to be fooled, you can bound what being fooled gets an attacker, and you can report honestly on both. If you want the mechanics - writing the rules of engagement, mapping the surface, building the suite, running the engagement, hardening and retesting - the builder track starts at the bottom of this page.
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Try it yourself - this week <span class="tag exercise">◐ 45-60 min total</span></h2>
+    </div>
+    <ul>
+      <li>Take one AI workflow in your organisation and write its residual risk as a single sentence with numbers in it. If you cannot, you have found this week's real task, and it is not a governance task.</li>
+      <li>Ask counsel one narrow question rather than a broad one: given our role in the value chain, which of Article 15 or Articles 51-56 is the relevant chapter for the systems we build, and which for the models we buy? The scoping trap in Part 2 is exactly the kind of thing that is cheap to ask about early and expensive to discover late.</li>
+      <li>Turn your last engagement into a MEASURE 2.7 metric. Pick the two or three numbers you will track over time, pin the configuration they are measured under, and attach the trigger list. One exercise becomes a programme the moment a metric outlives it.</li>
+      <li>Pull the disclosure policy of your three most important AI vendors and check whether AI risks are mentioned at all. Given that 36% of 264 vendors have no policy and only 18% mention AI risks, expect at least one blank.</li>
+      <li>Draft your own disclosure and embargo path before you need it, including who may publish, and the information-hazard check on whether a write-up would accelerate misuse of systems other than yours.</li>
+      <li>Read your last report's executive summary out loud and stop at every sentence that would fail the four-claims test. Then rewrite one of them properly. That single rewrite teaches the standard better than the whole of this page.</li>
+    </ul>
+  </section>
+
+  <!-- ============ SOURCES ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Source material</span>
+      <h2>Official sources covered</h2>
+    </div>
+    <p class="lede">Every framework, figure and quotation on this page traces to a primary source catalogued in this course's source map, verified 2026-08-14. Regulatory material is summarised, not interpreted, and this page is not legal advice. This page covers:</p>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">UK NCSC, 8 Dec 2025 - prompt injection is not SQL injection, the "next token" statement, deny-listing, and "it may not be a good use case for LLMs"</span><span class="note">Part 1 · [P] · quoted verbatim</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">EU AI Act Article 15 - prevent, detect, respond to, resolve and control for poisoning, adversarial examples and confidentiality attacks</span><span class="note">Part 2 · [P] · high-risk chapter</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">EU AI Act Article 55 - GPAI with systemic risk, applicable from 2 Aug 2025, conducting AND documenting adversarial testing</span><span class="note">Part 2 · [P] · the clearest hard legal hook today</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NIST AI RMF Playbook MEASURE 2.6 and MEASURE 2.7</span><span class="note">Part 2 · [P] · the compliance anchor for a standing programme with metrics</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">CISA / NCSC-UK / NSA and 21 partners, Guidelines for Secure AI System Development (Nov 2023)</span><span class="note">Part 2 · [P] · secure by design, release contingent on testing including red teaming</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Singapore IMDA / AI Verify, Starter Kit for Safety Testing of LLM-Based Applications</span><span class="note">Part 2 · [P] · names benchmarking and red teaming as the two methods</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Piao, Li and Woods (Edinburgh) - 264 AI vendors, 36% no disclosure policy, 18% mention AI risks, 46 / 115 / 103 posture split</span><span class="note">Part 3 · [P] · jailbreaking and hallucination most commonly out of scope</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">What a report may claim - the four claims, and the refusal</span><span class="note">Part 3 · course closing artefact · assembled from the primary sources across the track</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Vendor statements: OpenAI system card lower-bound language, Anthropic, Microsoft on guaranteeing AI safety</span><span class="note">Part 3 · [P] all three</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OpenAI's published limitations of red teaming - information hazards and point-in-time relevance</span><span class="note">Part 3 · [P]</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The Article 15 versus Articles 51-56 scoping question</span><span class="note">Part 2 · at least one peer-reviewed analysis argues GPAI carries no equivalent explicit robustness obligation · <strong>summary only, take it to counsel</strong></span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Re-test cadence</span><span class="note">Part 2 · <strong>no standards body publishes an interval</strong> · the trigger list is published practice, not a standard</span></div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions before you go 🎯 <span class="tag exercise">◐ 90 seconds</span></h2>
+    </div>
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">1 · The NCSC writes that if the system's security cannot tolerate the remaining risk, it may not be a good use case for LLMs. How should an engagement treat that sentence?</p>
+      <button class="qopt" type="button">A · As rhetoric, since in practice every workflow can be secured with enough layers of defence</button>
+      <button class="qopt" type="button">B · As a signal to escalate to the model vendor for a stronger guardrail configuration</button>
+      <button class="qopt" type="button">C · As a legitimate engagement outcome - "do not ship this workflow as an agent" is a finding, written in the finding template, with the bounded alternatives priced alongside it and a named business owner accepting or declining the residual</button>
+      <p class="qwhy">Option A is contradicted by session 5's evidence: the layers reduce a rate and the stack in LLMail-Inject still let one attempt in six through. Option B moves the decision to somebody who cannot see your blast radius. The whole point of the NCSC framing is that the remaining risk is measured on your side of the boundary, and the decision belongs to the person who owns the workflow. Making the refusal a properly formatted finding, with bounded alternatives, is what stops it reading as obstruction.</p>
+    </div>
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">2 · Which governance hook most directly explains why your reporting template matters legally rather than only operationally?</p>
+      <button class="qopt" type="button">A · EU AI Act Article 55, applicable from 2 Aug 2025, which requires providers of GPAI with systemic risk to conduct AND DOCUMENT adversarial testing, mitigate systemic risk, and report serious incidents to the AI Office without undue delay</button>
+      <button class="qopt" type="button">B · NIST AI RMF Playbook MEASURE 2.6, which calls for red-team exercises under adversarial or stress conditions</button>
+      <button class="qopt" type="button">C · The CISA, NCSC-UK and NSA Guidelines for Secure AI System Development</button>
+      <p class="qwhy">All three are real hooks and all three are worth citing, but only Article 55 attaches an explicit documentation obligation, which is what converts a good engagement into a defensible record. Note the scoping trap that goes with it: Article 15 sits in the high-risk chapter while GPAI models are governed separately under Articles 51-56, so which chapter applies depends on your role in the value chain. That is a question for counsel, not for a slide. MEASURE 2.7 is the other one to remember, because tracking tests and metrics is what makes a programme rather than an exercise.</p>
+    </div>
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">3 · A stakeholder asks you to write that the system is secure against prompt injection. What may the report actually say?</p>
+      <button class="qopt" type="button">A · That it is secure, provided the report also lists the attacks that were tried</button>
+      <button class="qopt" type="button">B · Only four things: which attacks succeeded at which measured rates under which conditions against this build at this date; which weaknesses and impacts exist with which blast radii; which mitigations changed those rates by how much; and which risk surfaces were explored and which were not</button>
+      <button class="qopt" type="button">C · That it is secure at the time of testing, since a point-in-time claim is defensible</button>
+      <button class="qopt" type="button">D · That residual risk is within appetite, which is the same thing in business language</button>
+      <p class="qwhy">Options A and C are the two ways this goes wrong in practice, and C is the more seductive because the caveat sounds rigorous. Neither survives the fact that no amount of testing establishes that something cannot happen. Option D quietly substitutes a decision for a measurement: risk appetite is the business owner's judgement about a stated residual, not a property your report can assert. The fourth claim is the one most reports omit, and omitting it lets the reader assume the tested set was complete. If a stakeholder still wants the word, the honest reply is the NCSC's: reduce the risk and the impact, and if the security cannot tolerate what remains, it may not be a good use case for an LLM.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Leader session 6 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>NCSC, 8 Dec 2025</b><span>SQL injection can be properly mitigated with parameterised queries; there is a good chance prompt injection never will be, in the same way.</span></div>
+      <div class="cheat-item"><b>There is only ever "next token"</b><span>Under the hood there is no distinction between data and instructions. That is the mechanism, not a bug to be patched.</span></div>
+      <div class="cheat-item"><b>Deny-lists lose</b><span>Since LLMs are so complex there are infinite ways to rephrase an attack. A blocklist is maintenance, not a control.</span></div>
+      <div class="cheat-item"><b>"Not a good use case" is a finding</b><span>Reduce risk and impact; if security cannot tolerate the remainder, do not ship the workflow as an agent. Write it in the finding template, price the bounded alternatives, name who accepts.</span></div>
+      <div class="cheat-item"><b>EU AI Act Art. 55</b><span>GPAI with systemic risk, from 2 Aug 2025: conduct AND DOCUMENT adversarial testing, mitigate, report serious incidents to the AI Office. Documentation is why the template matters legally.</span></div>
+      <div class="cheat-item"><b>Art. 15 vs Arts. 51-56</b><span>Article 15 is the high-risk chapter; GPAI is governed separately. Which one applies depends on your role. Summary only, not legal advice.</span></div>
+      <div class="cheat-item"><b>MEASURE 2.6 and 2.7</b><span>2.6 gets you the exercise. 2.7 gets you tracked tests and metrics, which is the standing programme. No standards body publishes a cadence, so use the trigger list.</span></div>
+      <div class="cheat-item"><b>The four claims, and the refusal</b><span>Rates under conditions against a build · weaknesses with blast radii · what the mitigations changed · what was and was not explored. It cannot claim safe, secure or robust.</span></div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>Leader session 6 of 6 · learn-ai-red-team-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← Course home</a> &nbsp;·&nbsp; <a href="b1-scope-and-rules-of-engagement.html">Next: Builder track starts here →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>

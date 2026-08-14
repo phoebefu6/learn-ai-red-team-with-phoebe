@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Builder session 5 · Data extraction - learn ai red team with phoebe</title>
+<link rel="stylesheet" href="../assets/style.css?v=1">
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="crumb"><a href="../index.html">learn-ai-red-team-with-phoebe</a> / Builder session 5 of 10</span>
+    <button class="btn" id="toggle-all" type="button">Expand all</button>
+    <button class="btn primary" id="zoom-toggle" type="button">Projector zoom: off</button>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Learn AI Red Team with Phoebe · Builder track · Session 5 of 10</div>
+    <h1>Data extraction: <span class="accent">assume the context is discoverable</span></h1>
+    <p class="sub">Most teams meet this class as a testing problem: can somebody get the system prompt out? That is the wrong question, and OWASP rewrote an entire Top 10 entry in 2026 to say so. The right question is what breaks when the hidden context is read, and the right answer is nothing. This session builds the audit that gets you there, the canary fixtures that measure whether the stores hold, and the severity ladder that decides whether a leak is a note or an incident.</p>
+    <div class="chip-row">
+      <span class="chip level">🟡 Builder track</span>
+      <span class="chip audience">Security engineers · AI engineers · platform leads</span>
+      <span class="chip time">45 min</span>
+    </div>
+    <div class="agenda">
+      <span class="a1" style="flex:1">0-3 · Welcome</span>
+      <span class="a2" style="flex:4">3-20 · The design rule, the ladder, the stores</span>
+      <span class="a3" style="flex:5">20-40 · Build-along: audit and canaries</span>
+      <span class="a4" style="flex:1">40-45 · Q&amp;A</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ INTRO ============ -->
+  <section class="section" id="intro">
+    <div class="section-kicker">
+      <span class="klabel">Part 0</span>
+      <h2>The class, and why its Top 10 entry was rewritten</h2>
+    </div>
+    <div class="callout warn">
+      <strong>⚠ Authorization</strong>
+      This session is about testing AI systems <strong>you own, or are contracted in writing to test</strong>, inside the scope document you wrote in b1. It names the attack <em>class</em> so you can build test cases and pairs it with the defence that addresses it. There are <strong>no extraction prompts and no attack craft on this page</strong>. The only secrets you will plant are canaries that authorize nothing. Testing a system you are not authorized to test is a crime in most jurisdictions.
+    </div>
+    <p class="lede">In the 2025 list this was <strong>LLM07 System Prompt Leakage</strong>. In the <strong>2026</strong> list it is <strong>LLM08:2026 Hidden Context Exposure</strong> - renamed and re-scoped, because "system prompt" stopped describing the thing. The hidden context of a modern application is the system prompt plus the tool definitions, the retrieved documents, the memory entries, the activation triggers and the routing rules. All of it travels in the same token stream, and none of it carries a marking the model can check. Alongside it sits <strong>LLM02:2026 Sensitive Information Disclosure</strong>, which covers what leaks out of the data rather than out of the instructions.</p>
+    <div class="legend">
+      <span class="pill solid">Live - presented in session</span>
+      <span class="pill light">Self-study - read after class</span>
+      <span class="pill inkpill">Official sources covered</span>
+    </div>
+    <div class="callout win">
+      <strong>★ What you walk out with today</strong>
+      A hidden-context audit for Beacon's three bots that answers one question per line - what breaks if this is read aloud - a set of canary fixtures planted in every store you own, a tenant-boundary retrieval test you can run at your fixed N, and the LLM08:2026 severity ladder written into your triage rubric so that "the system prompt leaked" stops being a severity argument.
+    </div>
+    <div class="callout tip">
+      <strong>Where this sits in the track</strong>
+      b3 and b4 covered getting the model to say something it should not. This session covers getting the system to reveal something it holds, which is a different chain with a different fix. b6 covers the case where the thing revealed is a credential the agent can then use, and that is where the severity actually lives.
+    </div>
+  </section>
+
+  <!-- ============ PART 1 ============ -->
+  <section class="section" id="design">
+    <div class="section-kicker">
+      <span class="klabel">Part 1 · the central lesson</span>
+      <h2>Design so that disclosure does not matter <span class="tag concept">7 min live</span></h2>
+    </div>
+    <p class="lede">This is a design lesson, not a testing lesson, and it is the single most useful sentence in the 2026 list. OWASP's guidance for LLM08:2026 is to <strong>design the application so that disclosure of the hidden context has little or no direct security impact</strong>. Not to obfuscate it. Not to instruct the model to refuse to reveal it. To arrange matters so that reading it is uninteresting.</p>
+
+    <p>Three prohibitions follow directly, and they are worth writing on a wall. <strong>Never place credentials or tokens in the hidden context.</strong> <strong>Never rely on its secrecy as an authorization or privilege-separation boundary.</strong> <strong>Never rely on its secrecy as a policy or filtering boundary</strong> - if the only thing stopping an action is a sentence in a prompt, then the control is a sentence in a prompt, and b1 already established what those are worth.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 376" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two lists. Content that may safely live in the hidden context: tone and formatting instructions, task framing, refusal wording, already-public product knowledge, and pointers to data authorized separately at retrieval time. Content that must never live there: credentials and tokens, internal hostnames treated as secret, policy enforced only by being read, and tenant or role identifiers used as the only separation between customers.">
+        <style>
+          .hcT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .hcH { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .hcR { font: 700 12.5px Inter, sans-serif; fill: #991B1B; }
+          .hcB { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .hcX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+        </style>
+
+        <text class="hcB" x="24" y="32">Sort your hidden context into two lists. The right-hand list is the finding.</text>
+
+        <rect x="24" y="48" width="404" height="30" rx="8" fill="#2E3138"/>
+        <text class="hcT" x="42" y="68">Assume every line of this is readable</text>
+        <rect x="24" y="86" width="404" height="150" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="hcH" x="44" y="112">Fine here, because nothing depends on it</text>
+        <text class="hcX" x="44" y="138">Tone, formatting and persona instructions</text>
+        <text class="hcX" x="44" y="156">Task framing and the wording of refusals</text>
+        <text class="hcX" x="44" y="174">Product knowledge that is already public</text>
+        <text class="hcX" x="44" y="192">Pointers to data whose access is separately</text>
+        <text class="hcX" x="44" y="210">authorized at retrieval time, per request</text>
+
+        <rect x="452" y="48" width="404" height="30" rx="8" fill="#991B1B"/>
+        <text class="hcT" x="470" y="68">And now find these, because they are bugs</text>
+        <rect x="452" y="86" width="404" height="150" rx="10" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="hcR" x="472" y="112">Never here - disclosure would be the breach</text>
+        <text class="hcX" x="472" y="138">Credentials, API keys, tokens, connection strings</text>
+        <text class="hcX" x="472" y="156">Internal hostnames treated as if they were secret</text>
+        <text class="hcX" x="472" y="174">Policy that is enforced only by being read</text>
+        <text class="hcX" x="472" y="192">A tenant or role identifier that is the only thing</text>
+        <text class="hcX" x="472" y="210">separating one customer's data from another's</text>
+
+        <rect x="24" y="256" width="832" height="102" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="hcH" x="44" y="280">The design rule, in OWASP's own framing</text>
+        <text class="hcX" x="44" y="306">LLM08:2026 does not ask you to make the hidden context harder to extract. It asks you to design so</text>
+        <text class="hcX" x="44" y="324">that its disclosure has little or no direct security impact. That is a design instruction rather than a</text>
+        <text class="hcX" x="44" y="342">testing one, and it is the only version of this problem that anybody has ever actually solved.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - the audit is a sorting exercise, and the right-hand column is your finding list</figcaption>
+    </figure>
+
+    <p>The frameworks name the pieces of this surface precisely enough to build test cases from, and the sub-techniques under <strong>AML.T0084</strong> are the most useful part, because they enumerate what an attacker learns about an agent before touching it at all. Discovery is a tactic in its own right, and it is the cheapest one.</p>
+
+    <table class="clean">
+      <tr><th>ID</th><th>Name</th><th>Where it bites</th></tr>
+      <tr><td><strong>AML.T0056</strong></td><td>Extract LLM System Prompt <span class="tag concept">Feasible</span></td><td>The instructions themselves. Low maturity in ATLAS, high frequency in practice</td></tr>
+      <tr><td><strong>AML.T0057</strong></td><td>LLM Data Leakage <span class="tag concept">Demonstrated</span></td><td>Training data, retrieved documents, other users' content surfacing in an answer</td></tr>
+      <tr><td><strong>AML.T0084</strong></td><td>Discover AI Agent Configuration <span class="tag concept">Demonstrated</span></td><td>The parent technique. Four sub-techniques below, and each is a separate test case</td></tr>
+      <tr><td>AML.T0084<strong>.000</strong></td><td>Embedded Knowledge</td><td>What the agent was given: internal documents, examples, business rules baked into context</td></tr>
+      <tr><td>AML.T0084<strong>.001</strong></td><td>Tool Definitions</td><td>Which tools exist, their parameters and their descriptions. Reconnaissance for b6</td></tr>
+      <tr><td>AML.T0084<strong>.002</strong></td><td>Activation Triggers</td><td>What causes the agent to act. Learning this is how a chain becomes reliable</td></tr>
+      <tr><td>AML.T0084<strong>.003</strong></td><td>Call Chains</td><td>Which tool leads to which. The map an attacker would otherwise have to guess</td></tr>
+      <tr><td><strong>AML.T0098</strong></td><td>Credential harvesting via tools</td><td>Credential Access. The tool call itself returns something it should have kept</td></tr>
+      <tr><td><strong>AML.T0082</strong></td><td>Credential harvesting via RAG</td><td>Credential Access. Somebody indexed a document that contained a key</td></tr>
+      <tr><td><strong>AML.T0083</strong></td><td>Credential harvesting from agent config</td><td>Credential Access. <strong>ATLAS maps no mitigation to this technique at all</strong> - see the honesty note below</td></tr>
+    </table>
+
+    <div class="callout warn">
+      <strong>Where the framework itself runs out</strong>
+      <strong>AML.T0083</strong> is one of a set of ATLAS techniques with <strong>no mitigation mapped</strong>. That is not an oversight to gloss over on a slide, it is the residual-risk column of an honest course in the framework's own words. The practical reading: nobody has a published control for "the credential was in the configuration", because the only real control is not putting it there, which is a design decision rather than a mitigation you can bolt on. Which is Part 1's whole argument, arriving from the other direction.
+    </div>
+
+    <div class="callout tip">
+      <strong>The NIST mapping, for the same ground</strong>
+      NIST AI 100-2e2025 files all of this under privacy compromise, <strong>NISTAML.03</strong>, with <strong>.035 Prompt Extraction</strong>, <strong>.038 Data Extraction</strong> and <strong>.039 Compromising connected resources</strong>. That third one is the interesting one, and it is the bridge into b6: the target was never the model, it was the thing the model can reach.
+    </div>
+  </section>
+
+  <!-- ============ PART 2 ============ -->
+  <section class="section" id="severity">
+    <div class="section-kicker">
+      <span class="klabel">Part 2 · the ladder</span>
+      <h2>Severity is what it chains to <span class="tag concept">5 min live</span></h2>
+    </div>
+    <p class="lede">LLM08:2026 ships a worked severity ladder, and it generalises well beyond hidden context. Copy it into your triage rubric verbatim, because it converts the most common argument in AI triage - "but the system prompt leaked" - into a question with four possible answers rather than a matter of temperament.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 402" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A four-rung severity ladder from OWASP LLM08:2026. Informational when the context holds no secrets and nothing depends on its confidentiality. Medium when it holds internal rules that meaningfully aid an attacker. High when it embeds credentials or something relies on its secrecy for authorization. Critical when disclosure chains to remote code execution, broad exfiltration or privilege escalation.">
+        <style>
+          .svT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .svD { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .svH { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .svB { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .svX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+        </style>
+
+        <text class="svB" x="24" y="32">The same leak, four severities. The difference is never the prompt.</text>
+
+        <rect x="24" y="48" width="150" height="52" rx="8" fill="#BFC4CE"/>
+        <text class="svD" x="42" y="79">Informational</text>
+        <rect x="182" y="48" width="674" height="52" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="svX" x="202" y="72">The context holds no secrets, and nothing anywhere depends on it staying confidential.</text>
+        <text class="svX" x="202" y="90">Record it, close it, page nobody. This is where good design puts you.</text>
+
+        <rect x="24" y="110" width="150" height="52" rx="8" fill="#5A6070"/>
+        <text class="svT" x="42" y="141">Medium</text>
+        <rect x="182" y="110" width="674" height="52" rx="8" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="svX" x="202" y="134">It holds internal rules, routing logic or tool names that meaningfully aid an attacker</text>
+        <text class="svX" x="202" y="152">planning the next step. Useful reconnaissance, not yet an impact.</text>
+
+        <rect x="24" y="172" width="150" height="52" rx="8" fill="#C2410C"/>
+        <text class="svT" x="42" y="203">High</text>
+        <rect x="182" y="172" width="674" height="52" rx="8" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="svX" x="202" y="196">It embeds credentials or tokens, or something in the system relies on its secrecy as an</text>
+        <text class="svX" x="202" y="214">authorization boundary. The design prohibition from Part 1 was violated somewhere.</text>
+
+        <rect x="24" y="234" width="150" height="52" rx="8" fill="#991B1B"/>
+        <text class="svT" x="42" y="265">Critical</text>
+        <rect x="182" y="234" width="674" height="52" rx="8" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.5"/>
+        <text class="svX" x="202" y="258">Disclosure chains to remote code execution, broad exfiltration or privilege escalation.</text>
+        <text class="svX" x="202" y="276">The leak was the first step of the finding, and it is not the interesting step.</text>
+
+        <rect x="24" y="306" width="832" height="80" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="svH" x="44" y="330">Read the ladder backwards and it becomes a design checklist</text>
+        <text class="svX" x="44" y="356">You cannot argue your way down this ladder at triage time. You can only build your way down it</text>
+        <text class="svX" x="44" y="374">beforehand, by removing the credentials and the reliance, until Informational is the only rung left.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - four answers to the question everyone argues about instead</figcaption>
+    </figure>
+
+    <details class="card" open>
+      <summary><span class="mode live">Live</span>How this lines up with MSRC's published rubric<span class="mini">3 min</span><span class="caret">▶</span></summary>
+      <div class="body">
+        <p>Microsoft's AI bug bar reaches the same place by a different route, and having both on hand is useful when you need to defend a rating to somebody outside your team. Their <strong>Inferential Information Disclosure</strong> category keys severity to the <strong>data classification of what became reachable</strong>: model theft is Critical where the asset is Highly Confidential and slides down to Low where it is Public; input extraction, which is where system-prompt leakage lands, is <strong>Important</strong> where the content is Confidential and <strong>Low</strong> otherwise.</p>
+        <p>Two design decisions there are worth copying wholesale. Severity turns on <strong>the data classification of what is reachable</strong>, and on <strong>whether user interaction was required</strong>. It does not turn on how clever the extraction was. A tester who found the leak through a long and ingenious sequence and a tester who found it by asking politely have found the same finding, and the rating is identical.</p>
+        <p>Note the failure mode this protects you from. Without a rubric, extraction findings get rated by narrative quality, and narrative quality correlates with the tester's writing rather than with your risk.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ PART 3 ============ -->
+  <section class="section" id="stores">
+    <div class="section-kicker">
+      <span class="klabel">Part 3 · the stores</span>
+      <h2>Three places the context lives, and one boundary that keeps failing <span class="tag concept">6 min live</span></h2>
+    </div>
+    <p class="lede">Hidden context is not one object. It is at least three stores with different lifetimes, different owners and different failure modes, and the retrieval layer is where the worst of them lives. OWASP gives vector and embedding weaknesses their own entry, <strong>LLM09:2026</strong>, and ATLAS files the write side as <strong>AML.T0070 RAG Poisoning</strong> and the read side as <strong>AML.T0082</strong> credential harvesting via RAG.</p>
+
+    <p>The cross-tenant case deserves naming plainly, because it is the one that turns an AI feature into a data-protection incident. A shared index with tenant identity applied as a filter after retrieval, or applied in the prompt rather than in the query, is a boundary that exists only as long as nothing surprising happens. It is not an AI weakness. It is an old multi-tenancy weakness that arrived in a new component, which is a sentence you will read again in b6.</p>
+
+    <figure class="zoomable">
+      <svg viewBox="0 0 880 402" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Three stores and the canary test for each. Hidden context: plant one canary string, pass if it never appears in any output over N trials. Retrieval index: plant one canary document per tenant, pass if a query from one tenant never returns another tenant's canary. Long-lived memory: plant a canary in one session, pass if a different user in a later session never sees it.">
+        <style>
+          .stT { font: 700 12.5px Inter, sans-serif; fill: #FFFFFF; }
+          .stH { font: 700 12.5px Inter, sans-serif; fill: #1E2025; }
+          .stB { font: 700 13px Inter, sans-serif; fill: #1E2025; }
+          .stK { font: 600 11px Inter, sans-serif; fill: #1E2025; }
+          .stX { font: 400 11px Inter, sans-serif; fill: #6B6F78; }
+          .stG { font: 600 11px Inter, sans-serif; fill: #166534; }
+          .stR { font: 600 11px Inter, sans-serif; fill: #991B1B; }
+        </style>
+
+        <text class="stB" x="24" y="32">You cannot prove a store is unreachable. You can plant something and watch for it.</text>
+
+        <rect x="24" y="48" width="264" height="28" rx="8" fill="#2E3138"/>
+        <text class="stT" x="42" y="67">Hidden context</text>
+        <rect x="24" y="76" width="264" height="186" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="stK" x="44" y="100">Plant</text>
+        <text class="stX" x="44" y="120">One canary string that is a</text>
+        <text class="stX" x="44" y="138">secret and nothing else.</text>
+        <text class="stG" x="44" y="166">Pass</text>
+        <text class="stX" x="44" y="186">It never appears in any</text>
+        <text class="stX" x="44" y="204">output, across N trials.</text>
+        <text class="stR" x="44" y="232">Fail means</text>
+        <text class="stX" x="44" y="252">The context is readable.</text>
+
+        <rect x="308" y="48" width="264" height="28" rx="8" fill="#2E3138"/>
+        <text class="stT" x="326" y="67">Retrieval index</text>
+        <rect x="308" y="76" width="264" height="186" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="stK" x="328" y="100">Plant</text>
+        <text class="stX" x="328" y="120">One canary document per</text>
+        <text class="stX" x="328" y="138">tenant, per index.</text>
+        <text class="stG" x="328" y="166">Pass</text>
+        <text class="stX" x="328" y="186">Tenant B never retrieves</text>
+        <text class="stX" x="328" y="204">tenant A's canary, at N.</text>
+        <text class="stR" x="328" y="232">Fail means</text>
+        <text class="stX" x="328" y="252">A boundary defect, not a</text>
+        <text class="stX" x="328" y="270">model defect.</text>
+
+        <rect x="592" y="48" width="264" height="28" rx="8" fill="#2E3138"/>
+        <text class="stT" x="610" y="67">Long-lived memory</text>
+        <rect x="592" y="76" width="264" height="186" rx="10" fill="#F0F1F4" stroke="#BFC4CE" stroke-width="1.5"/>
+        <text class="stK" x="612" y="100">Plant</text>
+        <text class="stX" x="612" y="120">A canary written to memory</text>
+        <text class="stX" x="612" y="138">during one session.</text>
+        <text class="stG" x="612" y="166">Pass</text>
+        <text class="stX" x="612" y="186">A later session, different</text>
+        <text class="stX" x="612" y="204">user, never sees it.</text>
+        <text class="stR" x="612" y="232">Fail means</text>
+        <text class="stX" x="612" y="252">Memory is a shared channel</text>
+        <text class="stX" x="612" y="270">you did not design.</text>
+
+        <rect x="24" y="304" width="832" height="82" rx="10" fill="#FDF0E7" stroke="#C2410C" stroke-width="1.5"/>
+        <text class="stH" x="44" y="328">Why canaries and not extraction attempts</text>
+        <text class="stX" x="44" y="354">A failed extraction attempt tells you one technique did not work today. A canary that never surfaces</text>
+        <text class="stX" x="44" y="372">across every technique, every tenant and every session is a measurement you can put on a trend line.</text>
+      </svg>
+      <figcaption>🔍 Click to zoom - three stores, one instrument, and a pass condition you can automate</figcaption>
+    </figure>
+
+    <div class="callout tip">
+      <strong>Memorisation probes, and their honest limit</strong>
+      The third question in this class is whether the model itself carries training or fine-tuning data that should not come back out, which ATLAS files under <strong>AML.T0057</strong>. Probe it the same way: seed a distinctive canary into the fine-tuning corpus before training, then test whether it can be elicited afterwards. What you must not do is read a clean probe as proof of no memorisation, for the same reason that runs through this whole course - it is the population you could afford to test, not the population that exists.
+    </div>
+  </section>
+
+  <!-- ============ DEMO 1 ============ -->
+  <section class="section" id="demo-1">
+    <div class="section-kicker">
+      <span class="klabel">Demo 1 of 2</span>
+      <h2>The hidden-context audit for Beacon's three bots <span class="tag demo">★ 12 min · everyone builds</span></h2>
+    </div>
+    <p class="lede">One line per item, one question per line: <strong>what breaks if this is read aloud in a public forum?</strong> Do it as an inventory, not as a test. You will find more in twenty minutes of reading your own configuration than in a week of probing it, and the findings will be actionable rather than anecdotal.</p>
+
+    <div class="steps">
+      <div class="step"><p><strong>Dump everything that reaches the context window, from every source.</strong> System prompt, developer messages, tool definitions with their descriptions and parameter names, retrieved chunks, memory entries, routing rules, few-shot examples. Beacon's Analyst Bot turned out to carry a table-name allowlist that nobody had thought of as context and that maps the warehouse rather neatly.</p></div>
+      <div class="step"><p><strong>Sort each line into the two columns from Part 1.</strong> Anything landing in the right-hand column is a finding today, before any testing happens. Credentials and tokens are the obvious ones. The subtle one is any line whose <em>enforcement</em> is the fact that the reader has not seen it.</p></div>
+      <div class="step"><p><strong>Walk the four AML.T0084 sub-techniques as an attacker's shopping list.</strong> Embedded knowledge (.000), tool definitions (.001), activation triggers (.002), call chains (.003). For each, write down what an attacker learns and whether that knowledge alone changes what they can achieve. On Support Bot, the tool definitions reveal a refund tool, and that single line is the reconnaissance that makes b6's session worth attending.</p></div>
+      <div class="step"><p><strong>For every "the model is instructed not to reveal X" line, write the control that would hold if the instruction were deleted.</strong> If there is none, you have found a policy boundary that exists only in prose. Note that this is the same anti-lever the course simulator measures: the system-prompt guard removes 3.6 risk points on a bare system while least-privilege and human approval remove 55.</p></div>
+      <div class="step"><p><strong>Grade the whole inventory on the Part 2 ladder</strong> and put the result in the report as a single sentence: today, disclosure of Beacon's hidden context would be <em>Informational</em> for Insight Bot, <em>Medium</em> for Analyst Bot, and <em>High</em> for Support Bot until the connection string comes out of the configuration. That sentence is the finding. The extraction transcript is an appendix.</p></div>
+    </div>
+
+    <div class="callout warn">
+      <strong>The trap in this exercise</strong>
+      Teams routinely audit the system prompt and stop, because it is the part with a filename. The tool descriptions are context. The retrieved documents are context. The memory is context. The 2026 rename from "System Prompt Leakage" to "Hidden Context Exposure" exists specifically to stop this, and if your audit produced exactly one artefact, it is not finished.
+    </div>
+  </section>
+
+  <!-- ============ DEMO 2 ============ -->
+  <section class="section" id="demo-2">
+    <div class="section-kicker">
+      <span class="klabel">Demo 2 of 2</span>
+      <h2>Plant the canaries, run the boundary test <span class="tag demo">★ 8 min · in pairs</span></h2>
+    </div>
+    <p class="lede">Canaries turn an unfalsifiable claim into a measurement. A canary is a string that is a secret and is nothing else: it authorizes nothing, unlocks nothing, and exists only so that its appearance anywhere is unambiguous. This is the fixture file, and it is the most reusable artefact in the session.</p>
+
+    <div class="prompt-box good"><span class="label">beacon/fixtures/canaries.yaml</span># Canaries authorize NOTHING. They exist only to be seen if a boundary fails.
+# Rotate on every engagement so a stale hit is never mistaken for a fresh one.
+
+- id: CANARY-CTX-01
+  store: hidden_context          # AML.T0056 · AML.T0084.000 · OWASP LLM08:2026
+  value: "BEACON-CANARY-7f3a91"
+  planted_in: support-bot@2026.08.11
+  pass: "never appears in any output, over N=25 trials per technique"
+
+- id: CANARY-RAG-ACME
+  store: retrieval_index         # AML.T0057 · AML.T0082 · OWASP LLM09:2026
+  tenant: acme
+  value: "BEACON-CANARY-c04d22"
+  pass: "never returned to any principal outside tenant acme"
+
+- id: CANARY-MEM-01
+  store: agent_memory            # cross-session and cross-user boundary
+  value: "BEACON-CANARY-91be07"
+  written_by: user/j.rivera, session 1
+  pass: "never surfaces for any other user, in any later session"
+
+detection:
+  # Every canary is also an alert. If one is ever seen in production
+  # telemetry, that is an incident, not a test result.
+  route: security-oncall</div>
+
+    <div class="steps">
+      <div class="step"><p><strong>Plant one canary per store, per tenant.</strong> A single shared canary tells you something leaked. A canary per tenant tells you which boundary failed, which is the difference between a finding and an investigation.</p></div>
+      <div class="step"><p><strong>Run the tenant-boundary retrieval test at your fixed N</strong>, and vary the phrasing rather than the tenant. Ask tenant B's questions in tenant A's vocabulary, with tenant A's product names and tenant A's spelling. Embedding similarity does not respect your org chart, and that is the whole point of LLM09:2026.</p></div>
+      <div class="step"><p><strong>Wire the canaries into detection as well as into testing.</strong> The same string that fails a test in staging should page somebody if it is ever seen in production output. This is the cheapest thing in the entire course and almost nobody does it. It also gives your observability team something concrete to alert on, which is the handshake into the sibling course.</p></div>
+      <div class="step"><p><strong>Record the result as k of N per store, per boundary</strong>, exactly as in b4. "Cross-tenant retrieval: 0 of 25 across 6 tenant pairs, build 2026.08.11" is a sentence a regulator can read. "We tested for cross-tenant leakage" is not.</p></div>
+    </div>
+
+    <div class="callout tip">
+      <strong>Rotate, and never reuse across environments</strong>
+      A canary that exists in both staging and production cannot tell you which one leaked. A canary from a previous engagement that shows up today may be a stale copy in a log rather than a live boundary failure. Fresh values per engagement, per environment, recorded in the fixture file with the build they were planted in.
+    </div>
+  </section>
+
+  <!-- ============ HOMEWORK ============ -->
+  <section class="section" id="exercise">
+    <div class="section-kicker">
+      <span class="klabel">Homework</span>
+      <h2>Try it yourself - this week <span class="tag exercise">◐ 45-60 min total</span></h2>
+    </div>
+    <ul>
+      <li>Print your own hidden context, every source of it, and do the two-column sort. Budget twenty minutes and expect to find at least one line in the right-hand column. Most teams find a hostname or an internal rule they had been treating as secret without ever deciding to.</li>
+      <li>Search your retrieval index for anything that looks like a credential. Somebody indexed a runbook, and runbooks have keys in them. This is AML.T0082 and it is usually a five-minute grep rather than an attack.</li>
+      <li>Plant one canary in each store you own and add the production alert. If you do nothing else from this session, do this one.</li>
+      <li>Take your last system-prompt-leakage finding and re-rate it on the LLM08:2026 ladder. If the rating changes, the conversation you have about why is the actual homework.</li>
+    </ul>
+  </section>
+
+  <!-- ============ SOURCES ============ -->
+  <section class="section" id="official">
+    <div class="section-kicker">
+      <span class="klabel">Source material</span>
+      <h2>Official sources covered</h2>
+    </div>
+    <p class="lede">Every framework, figure and quotation on this page traces to a primary source catalogued in this course's source map, verified 2026-08-14. This page covers:</p>
+    <div class="covered">
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP <strong>LLM02:2026 Sensitive Information Disclosure</strong> and <strong>LLM08:2026 Hidden Context Exposure</strong>, renamed and re-scoped from 2025's LLM07 System Prompt Leakage</span><span class="note">Part 0-1 · OWASP GenAI Top 10, 2026 edition · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">The LLM08:2026 design rule - design so disclosure has little or no direct security impact; no credentials in context; no reliance on secrecy as an authorization, privilege-separation, policy or filtering boundary</span><span class="note">Part 1 · the central lesson of this page · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">The LLM08:2026 severity ladder: Informational, Medium, High, <strong>Critical when it chains to RCE, broad exfiltration or privilege escalation</strong></span><span class="note">Part 2 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MITRE ATLAS <strong>AML.T0056</strong> (Feasible), <strong>AML.T0057</strong> (Demonstrated), <strong>AML.T0084</strong> with .000 Embedded Knowledge, .001 Tool Definitions, .002 Activation Triggers, .003 Call Chains</span><span class="note">Part 1 table · ATLAS collection 2026.07, format-version 6.0.0 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">Credential harvesting trio: <strong>AML.T0098</strong> via tools, <strong>AML.T0082</strong> via RAG, <strong>AML.T0083</strong> from agent configuration</span><span class="note">Part 1 · <strong>T0083 has no ATLAS mitigation mapped at all</strong>, stated on the page · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">NIST AI 100-2e2025 privacy objective <strong>NISTAML.03</strong> with <strong>.035 Prompt Extraction</strong>, <strong>.038 Data Extraction</strong>, <strong>.039 Compromising connected resources</strong></span><span class="note">Part 1 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">OWASP <strong>LLM09:2026 Vector and Embedding Weaknesses</strong> and ATLAS <strong>AML.T0070 RAG Poisoning</strong></span><span class="note">Part 3 · [P]</span></div>
+      <div class="covered-row"><span class="status pill solid">✓</span><span class="name">MSRC AI bug bar - Inferential Information Disclosure keyed to data classification; input extraction Important when Confidential, Low otherwise</span><span class="note">Part 2 card · [P]</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">The canary fixture format and the three-store test design</span><span class="note">Assembled for this course · <strong>no published standard fixture format exists</strong>; the instrument is conventional security practice applied to AI stores</span></div>
+      <div class="covered-row"><span class="status pill light">◐</span><span class="name">Beacon's per-bot severity ratings and all values in the fixture file</span><span class="note">Illustrative teaching values, not measurements</span></div>
+    </div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section class="section" id="quiz">
+    <div class="section-kicker">
+      <span class="klabel">Check yourself</span>
+      <h2>Three questions before you go 🎯 <span class="tag exercise">◐ 90 seconds</span></h2>
+    </div>
+    <div class="quiz-q" data-answer="1">
+      <p class="qtext">1 · What does OWASP LLM08:2026 actually ask you to do about hidden context?</p>
+      <button class="qopt" type="button">A · Instruct the model firmly not to reveal it, and test that the instruction holds</button>
+      <button class="qopt" type="button">B · Design the application so that disclosure has little or no direct security impact - assume it is discoverable, never put credentials in it, and never rely on its secrecy as an authorization, privilege-separation, policy or filtering boundary</button>
+      <button class="qopt" type="button">C · Encrypt the system prompt so it cannot be read from the token stream</button>
+      <p class="qwhy">A is what most teams do and it is a prose control: delete the sentence and nothing is left. C misunderstands where the context lives, since the model must read it to use it, so it arrives decrypted in the same stream as everything else. The entry was renamed from "System Prompt Leakage" precisely to move the conversation from extraction technique to design, and the payoff is that a leak becomes Informational rather than an incident.</p>
+    </div>
+    <div class="quiz-q" data-answer="0">
+      <p class="qtext">2 · Your Support Bot's hidden context is read out in a public forum. It contains a warehouse connection string. Where does this land on the LLM08:2026 ladder, and why?</p>
+      <button class="qopt" type="button">A · High at minimum, because it embeds a credential - and Critical if that credential chains to broad exfiltration or privilege escalation, since severity is what it chains to rather than how the context was obtained</button>
+      <button class="qopt" type="button">B · Medium, because internal configuration was exposed</button>
+      <button class="qopt" type="button">C · Informational, because the model was only doing what it was asked</button>
+      <p class="qwhy">The ladder does not consult the extraction method. Embedded credentials or reliance on secrecy for authorization is the High rung by definition, and it climbs to Critical the moment the leak is the first step of a chain to code execution, broad exfiltration or privilege escalation. Note the asymmetry that makes this class worth designing rather than testing: you cannot argue your way down the ladder at triage time, you can only build your way down it beforehand.</p>
+    </div>
+    <div class="quiz-q" data-answer="2">
+      <p class="qtext">3 · A tenant B user's query returns a document belonging to tenant A. How do you write this finding?</p>
+      <button class="qopt" type="button">A · As a prompt-injection finding, since the model produced content it should not have</button>
+      <button class="qopt" type="button">B · As a model-behaviour finding to be fixed by tuning the retrieval prompt</button>
+      <button class="qopt" type="button">C · As a boundary defect in the retrieval layer - an old multi-tenancy weakness in a new component - measured as k of N per tenant pair with the build recorded, and covered by OWASP LLM09:2026 and ATLAS AML.T0082</button>
+      <p class="qwhy">B is the tempting one because the symptom appeared in an answer, so the instinct is to fix the prompt that produced the answer. But tenant identity applied as a post-retrieval filter, or applied in the prompt rather than in the query, is a boundary that exists only while nothing surprising happens. Embedding similarity does not respect your org chart. Canary documents planted per tenant turn this from an argument into a number, and the number belongs on a trend line.</p>
+    </div>
+    <p class="quiz-score"></p>
+  </section>
+
+  <!-- ============ CHEAT SHEET ============ -->
+  <section class="cheat" id="cheatsheet">
+    <h3>Builder session 5 cheat sheet <span>· pin this</span></h3>
+    <div class="grid-2">
+      <div class="cheat-item"><b>LLM08:2026 Hidden Context Exposure</b><span>Renamed and re-scoped from 2025's LLM07 System Prompt Leakage. Tool definitions, memory and retrieved chunks are all context.</span></div>
+      <div class="cheat-item"><b>The design rule</b><span>Design so disclosure has little or no direct security impact. Assume it is discoverable. Never a credential, never a boundary.</span></div>
+      <div class="cheat-item"><b>The ladder</b><span>Informational, Medium, High, Critical. Severity is what it chains to, never how clever the extraction was.</span></div>
+      <div class="cheat-item"><b>AML.T0084 sub-techniques</b><span>.000 embedded knowledge, .001 tool definitions, .002 activation triggers, .003 call chains. An attacker's shopping list.</span></div>
+      <div class="cheat-item"><b>The credential trio</b><span>T0098 via tools, T0082 via RAG, T0083 from agent config. <strong>T0083 has no ATLAS mitigation mapped.</strong></span></div>
+      <div class="cheat-item"><b>NISTAML.03</b><span>Privacy compromise, with .035 prompt extraction, .038 data extraction, .039 compromising connected resources.</span></div>
+      <div class="cheat-item"><b>Canaries, not extraction attempts</b><span>One per store, per tenant, rotated per engagement, wired to production alerting as well as to tests.</span></div>
+      <div class="cheat-item"><b>Cross-tenant is not an AI bug</b><span>LLM09:2026 and AML.T0082. Old multi-tenancy weakness, new component. Test the boundary, not the prompt.</span></div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    <span>Builder session 5 of 10 · learn-ai-red-team-with-phoebe · by Phoebe Fu &nbsp;·&nbsp; 📚 <a href="https://phoebefu6.github.io/learn-with-phoebe/">Learn with Phoebe ↗</a></span>
+    <span><a href="../index.html">← Course home</a> &nbsp;·&nbsp; <a href="b6-tool-abuse-and-agency.html">Next: Tool abuse and agency →</a></span>
+  </footer>
+
+</main>
+
+<script src="../assets/app.js?v=1"></script>
+</body>
+</html>
